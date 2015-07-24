@@ -1,0 +1,26 @@
+<assembly>
+    <id>bin</id>
+    <formats>
+        <!-- zip,tar,tar.gz,tar.bz2,jar,dir,war -->
+        <format>zip</format>
+    </formats>
+    <dependencySets>
+        <!-- 依赖包的输出路径 -->
+        <dependencySet>
+            <outputDirectory>/lib</outputDirectory>
+        </dependencySet>
+    </dependencySets>
+    <!-- 需要打包的文件集 -->
+    <fileSets>
+        <fileSet>
+            <directory>prod.data</directory>
+            <outputDirectory>/prod.data</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <includes>
+                <include>build.xml</include>
+                <include>build.properties</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+</assembly>
