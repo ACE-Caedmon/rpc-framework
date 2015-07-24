@@ -2,7 +2,7 @@
 */.settings/
 .settings/
 logs/
-*/target/
+/target/*
 */logs/*
 *.iml
 *.log
