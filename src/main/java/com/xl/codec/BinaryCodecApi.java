@@ -33,7 +33,7 @@ public class BinaryCodecApi {
             isEncrypt=session.getAttribute(Session.NEED_ENCRYPT);
         }
         ByteBuf buf=PooledByteBufAllocator.DEFAULT.buffer();
-        ByteDataBuffer data=new ByteDataBuffer(buf);
+        DefaultPracticalBuffer data=new DefaultPracticalBuffer(buf);
         data.writeBoolean(packet.isFromCall());
         data.writeBoolean(packet.getSync());
         data.writeInt(packet.getCmd());
@@ -89,7 +89,7 @@ public class BinaryCodecApi {
         return encryptPacket;
 
     }
-    public static ByteDataBuffer decodeBody(BinaryPacket packet, ChannelHandlerContext ctx){
+    public static DefaultPracticalBuffer decodeBody(BinaryPacket packet, ChannelHandlerContext ctx){
         ByteBuf content=packet.getContent();
         int length=content.readableBytes();
         int hasReadLength=0;
@@ -112,6 +112,6 @@ public class BinaryCodecApi {
         }else {
             result.writeBytes(content, length - hasReadLength);
         }
-        return new ByteDataBuffer(result);
+        return new DefaultPracticalBuffer(result);
     }
 }

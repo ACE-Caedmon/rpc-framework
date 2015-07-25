@@ -7,8 +7,7 @@ import io.netty.buffer.ByteBuf;
  * @author Chenlong
  * 缓冲区包装装饰器类，提供在Bytebuf之上更常用的接口
  * */
-public interface DataBuffer {
-
+public interface PracticalBuffer {
 	byte readByte();
 	boolean readBoolean();
 	short readShort();
@@ -20,8 +19,7 @@ public interface DataBuffer {
 	void readBytes(byte[] dst);
 	Builder readProtoBuf(Builder builder);
 	<T> T readJSON(Class<T> clazz);
-	<T> T readJSON();
-	DataBuffer readBinary(int length);
+	PracticalBuffer readBinary(int length);
 	void writeByte(byte b);
 	void writeBoolean(boolean b);
 	void writeShort(short s);
@@ -32,7 +30,7 @@ public interface DataBuffer {
 	void writeString(String s);
 	void writeProtoBuf(Builder<?> builder);
 	void writeJSON(Object bean);
-	void writeBytes(DataBuffer buffer);
+	void writeBytes(PracticalBuffer buffer);
 	ByteBuf getByteBuf();
 	void writeBytes(byte[] bytes);
 

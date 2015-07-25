@@ -14,7 +14,7 @@ public class PassportTable implements Output{
 	public PassportTable(List<Short> passports) {
 		this.passports = passports;
 	}
-	public void encode(DataBuffer buf) {
+	public void encode(PracticalBuffer buf) {
 		if(passports.size()==256){
 			for(Short passport:passports){
 				buf.writeShort(passport);

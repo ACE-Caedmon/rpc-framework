@@ -18,4 +18,7 @@ public interface IServerControl {
     @CmdMethod(cmd = Command.ServerControl_login)
     @CmdResponse
     Map<String,UserInfo> login(@CmdRequest String name,@CmdRequest String password);
+    @CmdMethod(cmd = Command.ServerControl_getUserInfo)
+    @CmdResponse
+    Map<String,Integer> getUserInfo(@CmdRequest String name,@CmdRequest String password);
 }

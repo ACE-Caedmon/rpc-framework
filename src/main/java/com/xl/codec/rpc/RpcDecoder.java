@@ -2,7 +2,7 @@ package com.xl.codec.rpc;
 
 import com.xl.annotation.MsgType;
 import com.xl.codec.BinaryCodecApi;
-import com.xl.codec.DataBuffer;
+import com.xl.codec.PracticalBuffer;
 import com.xl.codec.RpcPacket;
 import com.xl.codec.binary.BinaryPacket;
 import com.xl.dispatch.method.ControlMethod;
@@ -69,7 +69,7 @@ import java.util.List;
 	@Override
 	protected void decode(ChannelHandlerContext ctx, BinaryPacket packet,
 			List<Object> out) throws Exception {
-        DataBuffer buffer= BinaryCodecApi.decodeBody(packet, ctx);
+        PracticalBuffer buffer= BinaryCodecApi.decodeBody(packet, ctx);
         boolean fromCall=buffer.readBoolean();
         //是否为同步消息
         boolean sync=buffer.readBoolean();

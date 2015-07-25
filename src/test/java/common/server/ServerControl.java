@@ -37,4 +37,11 @@ public class ServerControl implements IServerControl{
         userInfos.put(userInfo.getUsername(),userInfo);
         return userInfos;
     }
+
+    @Override
+    public Map<String, Integer> getUserInfo(@CmdRequest String name, @CmdRequest String password) {
+        Map<String,Integer> map=new HashMap<>();
+        map.put(name,1000);
+        return map;
+    }
 }

@@ -1,7 +1,7 @@
 package javassit;
 
 import com.xl.annotation.MsgType;
-import com.xl.codec.DataBuffer;
+import com.xl.codec.PracticalBuffer;
 import com.xl.dispatch.message.MessageProxy;
 import com.xl.dispatch.message.MessageProxyFactory;
 import common.UserInfo;
@@ -27,7 +27,7 @@ public class MessageProxyTest {
         final String username="testname";
         UserInfo encodeUserInfo =new UserInfo();
         encodeUserInfo.setUsername(username);
-        DataBuffer buffer=proxy.encode(encodeUserInfo);
+        PracticalBuffer buffer=proxy.encode(encodeUserInfo);
         UserInfo decodeUserInfo =(UserInfo)proxy.decode(buffer);
         Assert.assertEquals(encodeUserInfo.getUsername(), decodeUserInfo.getUsername());
     }

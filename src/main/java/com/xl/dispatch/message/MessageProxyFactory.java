@@ -1,8 +1,8 @@
 package com.xl.dispatch.message;
 
 import com.xl.annotation.MsgType;
-import com.xl.codec.ByteDataBuffer;
-import com.xl.codec.DataBuffer;
+import com.xl.codec.DefaultPracticalBuffer;
+import com.xl.codec.PracticalBuffer;
 import com.xl.codec.JSONMessageProxy;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -89,7 +89,7 @@ public class MessageProxyFactory {
                             String encodeMethodBody="{"+
                                     ByteBuf.class.getName()+" buffer = "+
                                     Unpooled.class.getName()+".buffer();"+
-                                    DataBuffer.class.getName()+" data=new "+ByteDataBuffer.class.getName()+"(buffer);"+
+                                    PracticalBuffer.class.getName()+" data=new "+DefaultPracticalBuffer.class.getName()+"(buffer);"+
                                     "data.writeJSON($1);return data;}";
                             encodeMethod.setBody(encodeMethodBody.toString());
                             ctClass.writeFile("javassit/");

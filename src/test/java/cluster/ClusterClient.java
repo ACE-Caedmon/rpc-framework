@@ -43,8 +43,10 @@ public class ClusterClient {
                     try{
 //                        IServerControl serverControl=api.getRemoteCallProxy(IServerControl.class);
 //                        serverControl.login("username","password");
-                        Map<String,UserInfo> list=api.syncRpcCall("logic", 1,Map.class, "username", "password");
-                        System.out.println(list.get("name"));
+                        Map<String,UserInfo> map1=api.syncRpcCall("logic", 1,Map.class, "username", "password");
+                        System.out.println(map1.get("name").getUsername());
+                        Map<String,Integer> map2=api.syncRpcCall("logic", 2,Map.class, "username", "password");
+                        System.out.println(map2.get("username"));
                     }catch (Exception e){
                         e.printStackTrace();
                     }

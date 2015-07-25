@@ -2,7 +2,6 @@ package interceptor;
 
 import com.xl.codec.RpcPacket;
 import common.client.Command;
-import com.xl.codec.DataBuffer;
 import com.xl.dispatch.MethodInterceptor;
 import com.xl.session.ISession;
 import common.AttributeName;

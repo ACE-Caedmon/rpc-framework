@@ -2,7 +2,6 @@ package com.xl.codec;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.google.protobuf.AbstractMessage.Builder;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -16,11 +15,11 @@ import java.nio.charset.Charset;
  * @author Chenlong
  * ByteBuf 封装类，提供基本对象读取写入缓冲流的方法
  * */
-public class ByteDataBuffer implements DataBuffer {
+public class DefaultPracticalBuffer implements PracticalBuffer {
 	private ByteBuf buf;
-	private Logger logger=LoggerFactory.getLogger(ByteDataBuffer.class);
+	private Logger logger=LoggerFactory.getLogger(DefaultPracticalBuffer.class);
 	private static final SerializerFeature[] FEATURES=new SerializerFeature[]{SerializerFeature.WriteClassName};
-	public ByteDataBuffer(ByteBuf buf){
+	public DefaultPracticalBuffer(ByteBuf buf){
 		this.buf=buf;
 	}
 	@Override
@@ -157,7 +156,7 @@ public class ByteDataBuffer implements DataBuffer {
 	}
 
 	@Override
-	public void writeBytes(DataBuffer buffer) {
+	public void writeBytes(PracticalBuffer buffer) {
 		buf.writeBytes(buffer.getByteBuf());
 	}
 
@@ -167,9 +166,9 @@ public class ByteDataBuffer implements DataBuffer {
 	}
 
 	@Override
-	public DataBuffer readBinary(int length) {
+	public PracticalBuffer readBinary(int length) {
 		ByteBuf byteBuf=buf.readBytes(length);
-		return new ByteDataBuffer(byteBuf);
+		return new DefaultPracticalBuffer(byteBuf);
 	}
 
 	@Override
@@ -180,11 +179,5 @@ public class ByteDataBuffer implements DataBuffer {
 	@Override
 	public void writeBytes(byte[] src) {
 		buf.writeBytes(src);
-	}
-
-	@Override
-	public <T> T readJSON() {
-		String text=readString();
-		return (T)JSON.parse(text);
 	}
 }
