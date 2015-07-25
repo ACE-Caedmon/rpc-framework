@@ -108,18 +108,18 @@ public class SimpleRpcClientApi implements RpcClientApi {
     @Override
     public void bind() {
         String userDir=System.getProperty("user.dir");
-//        zkServerManager =new ZkServerManager(userDir);
-//        zkServerManager.setListener(new ZkServerManager.ServerConfigListener() {
-//            @Override
-//            public void onConfigChanged(String s) {
-//                System.out.println("configChanged");
-//            }
-//
-//            @Override
-//            public void onServerListChanged(String s) {
-//                SimpleRpcClientApi.this.refreshClusterServers(s);
-//            }
-//        });
+        zkServerManager =new ZkServerManager(userDir);
+        zkServerManager.setListener(new ZkServerManager.ServerConfigListener() {
+            @Override
+            public void onConfigChanged(String s) {
+                System.out.println("集群配置变更:"+s);
+            }
+
+            @Override
+            public void onServerListChanged(String s) {
+                SimpleRpcClientApi.this.refreshClusterServers(s);
+            }
+        });
         serverManager=ClusterServerManager.getInstance();
         List<String> clusterNames=new ArrayList<>();
         for(String s:monitorService){
@@ -127,11 +127,11 @@ public class SimpleRpcClientApi implements RpcClientApi {
             serverManager.addClusterGroup(s);
             log.info("监控集群节点:value = {}",s);
         }
-//        zkServerManager.monitorServiceProviders(clusterNames);
-//
-//        for(String clusterName: zkServerManager.getAllServerMap().keySet()){
-//            refreshClusterServers(clusterName);
-//        }
+        zkServerManager.monitorServiceProviders(clusterNames);
+
+        for(String clusterName: zkServerManager.getAllServerMap().keySet()){
+            refreshClusterServers(clusterName);
+        }
     }
 
     @Override

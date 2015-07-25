@@ -15,7 +15,7 @@ public class CglibRpcCallProxyFactory implements RpcCallProxyFactory{
     public <T> T getRpcCallProxy(Class<T> clazz) {
         T proxy=(T)proxyCache.get(clazz);
         if(proxy==null){
-            createRpcCallProxy(clazz);
+            proxy=createRpcCallProxy(clazz);
             proxyCache.put(clazz,proxy);
         }
         return proxy;

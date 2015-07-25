@@ -3,7 +3,6 @@ package com.xl.dispatch.message;
 import com.xl.annotation.MsgType;
 import com.xl.codec.DefaultPracticalBuffer;
 import com.xl.codec.PracticalBuffer;
-import com.xl.codec.JSONMessageProxy;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import javassist.ClassPool;
@@ -24,7 +23,6 @@ public class MessageProxyFactory {
     private static final String PROXY_SUFFIX="Proxy";
     public static MessageProxyFactory ONLY_INSTANCE=new MessageProxyFactory();
     public static final Map<Class,Class> primitiveClassCache=new HashMap<>();
-    private static final MessageProxy JSON_MESSAGE_PROXY_INSTANCE=new JSONMessageProxy();
     private Object lock=new Object();
     static {
         primitiveClassCache.put(Boolean.TYPE, Boolean.class);

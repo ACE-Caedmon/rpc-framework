@@ -37,7 +37,7 @@ public class ZkServerManager {
     private Map<String,PathWatcher> providerWatchers = new HashMap<String, PathWatcher>();
     private static final Logger log= LoggerFactory.getLogger(ZkServerManager.class);
     private static int Session_Timeout = 5*1000;
-    private static String ZK_SERVER = "192.168.1.168:2181";
+    private static String ZK_SERVER = "localhost:2181";
 
     static class CacheData {
         public String config;
@@ -103,10 +103,12 @@ public class ZkServerManager {
             String path = getSvrTreePath() + "/" + address;
             Stat stat = zkc.exists(path,false);
             // 说明程序挂了，立马又被拉起，这时候需要等zk服务器超时了再注册
-            if (stat != null)
+            if (stat != null){
                 Thread.sleep((long) (Session_Timeout*1.5));
-            zkc.create(path, svrName.getBytes(),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+                zkc.create(path, svrName.getBytes(),
+                        ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            }
+            log.debug("注册服务节点成功:clusterName = {}",logicName);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -139,7 +141,7 @@ public class ZkServerManager {
     private void saveCacheConfigToFile() {
         String path = new File(this.cachePath,CacheDataFile).getAbsolutePath();
         String data =JSONObject.toJSONString(cacheData);
-        log.info("save config: data = {},path = {} ",data,path);
+        log.info("save config: data = {},path = {} ", data, path);
         Util.saveFileData(path, data);
     }
 
@@ -173,10 +175,15 @@ public class ZkServerManager {
         createPath(ServerStore);
         createPath(ConfigStore);
         if (!Util.isEmpty(svrName)) {
-            String config = getData(getConfigPath());
-            log.debug("Zookeeper update: data = {}",config);
-            saveConfigData(config);
-            configWatcher.monitor();
+            try{
+                String config = getData(getConfigPath());
+                log.debug("Zookeeper update: data = {}",config);
+                saveConfigData(config);
+                configWatcher.monitor();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+
         }
         // query provider list
         if (monitorList != null) {

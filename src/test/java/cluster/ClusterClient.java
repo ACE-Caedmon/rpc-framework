@@ -26,10 +26,6 @@ public class ClusterClient {
         PropertyConfigurator.configure("conf/log4j.properties");
         final SimpleRpcClientApi api=SimpleRpcClientApi.getInstance().load("conf/rpc-client.properties");
         api.bind();
-        ServerNode node=api.newServerNode("localhost",8002);
-        node.setClusterName("logic");
-        api.getServerManager().addServerNode(node);
-
         final int loop=1;
         final TimeUse timeUse=new TimeUse();
         final AtomicInteger totalUse=new AtomicInteger();
@@ -41,12 +37,8 @@ public class ClusterClient {
                     long start=System.currentTimeMillis();
                     String input="test"+count;
                     try{
-//                        IServerControl serverControl=api.getRemoteCallProxy(IServerControl.class);
-//                        serverControl.login("username","password");
-                        Map<String,UserInfo> map1=api.syncRpcCall("logic", 1,Map.class, "username", "password");
-                        System.out.println(map1.get("name").getUsername());
-                        Map<String,Integer> map2=api.syncRpcCall("logic", 2,Map.class, "username", "password");
-                        System.out.println(map2.get("username"));
+                        IServerControl serverControl=api.getRemoteCallProxy(IServerControl.class);
+                        serverControl.login("username","password");
                     }catch (Exception e){
                         e.printStackTrace();
                     }
