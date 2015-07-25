@@ -10,6 +10,8 @@ import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -41,7 +43,8 @@ public class ClusterClient {
                     try{
 //                        IServerControl serverControl=api.getRemoteCallProxy(IServerControl.class);
 //                        serverControl.login("username","password");
-                        Object userInfo=api.syncRpcCall("logic", 100,Void.class, "username", "password");
+                        Map<String,UserInfo> list=api.syncRpcCall("logic", 1,Map.class, "username", "password");
+                        System.out.println(list.get("name"));
                     }catch (Exception e){
                         e.printStackTrace();
                     }

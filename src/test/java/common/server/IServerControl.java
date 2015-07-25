@@ -7,6 +7,9 @@ import com.xl.annotation.CmdResponse;
 import common.UserInfo;
 import common.client.Command;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Created by Administrator on 2015/7/20.
  */
@@ -14,5 +17,5 @@ import common.client.Command;
 public interface IServerControl {
     @CmdMethod(cmd = Command.ServerControl_login)
     @CmdResponse
-    void login(@CmdRequest String name,@CmdRequest String password);
+    Map<String,UserInfo> login(@CmdRequest String name,@CmdRequest String password);
 }

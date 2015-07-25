@@ -1,6 +1,9 @@
 package com.xl.codec;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.google.protobuf.AbstractMessage.Builder;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.netty.buffer.ByteBuf;
@@ -16,6 +19,7 @@ import java.nio.charset.Charset;
 public class ByteDataBuffer implements DataBuffer {
 	private ByteBuf buf;
 	private Logger logger=LoggerFactory.getLogger(ByteDataBuffer.class);
+	private static final SerializerFeature[] FEATURES=new SerializerFeature[]{SerializerFeature.WriteClassName};
 	public ByteDataBuffer(ByteBuf buf){
 		this.buf=buf;
 	}
@@ -143,12 +147,12 @@ public class ByteDataBuffer implements DataBuffer {
 	@Override
 	public <T> T readJSON(Class<T> clazz) {
 		String json=readString();
-		return JSONObject.parseObject(json,clazz);
+		return JSON.parseObject(json, clazz);
 	}
 
 	@Override
 	public void writeJSON(Object bean) {
-		String json=JSONObject.toJSONString(bean);
+		String json= JSONArray.toJSONString(bean, FEATURES);
 		writeString(json);
 	}
 
@@ -176,5 +180,11 @@ public class ByteDataBuffer implements DataBuffer {
 	@Override
 	public void writeBytes(byte[] src) {
 		buf.writeBytes(src);
+	}
+
+	@Override
+	public <T> T readJSON() {
+		String text=readString();
+		return (T)JSON.parse(text);
 	}
 }

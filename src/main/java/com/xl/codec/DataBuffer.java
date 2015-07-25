@@ -20,6 +20,7 @@ public interface DataBuffer {
 	void readBytes(byte[] dst);
 	Builder readProtoBuf(Builder builder);
 	<T> T readJSON(Class<T> clazz);
+	<T> T readJSON();
 	DataBuffer readBinary(int length);
 	void writeByte(byte b);
 	void writeBoolean(boolean b);
@@ -34,4 +35,5 @@ public interface DataBuffer {
 	void writeBytes(DataBuffer buffer);
 	ByteBuf getByteBuf();
 	void writeBytes(byte[] bytes);
+
 }

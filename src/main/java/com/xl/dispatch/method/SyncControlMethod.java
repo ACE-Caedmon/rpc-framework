@@ -21,7 +21,12 @@ public class SyncControlMethod extends NoOpControlMethod {
                 callBack.processException((Throwable) packet.getParams()[0]);
                 return;
             }
-            callBack.processResult(session,packet.getParams());
+            if(packet.getParams().length==1&&packet.getClassNameArray().length==1){
+                callBack.processResult(session,packet.getParams()[0]);
+            }else{
+                callBack.processResult(session,packet.getParams());
+            }
+
             return;
         }
     }
