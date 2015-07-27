@@ -104,10 +104,10 @@ public class ZkServerManager {
             Stat stat = zkc.exists(path,false);
             // 说明程序挂了，立马又被拉起，这时候需要等zk服务器超时了再注册
             if (stat != null){
-                Thread.sleep((long) (Session_Timeout*1.5));
-                zkc.create(path, svrName.getBytes(),
-                        ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+                Thread.sleep((long) (Session_Timeout * 1.5));
             }
+            zkc.create(path, svrName.getBytes(),
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
             log.debug("注册服务节点成功:clusterName = {}",logicName);
         } catch (Exception e) {
             e.printStackTrace();
@@ -239,8 +239,13 @@ public class ZkServerManager {
     }
 
     private String getData(String path) throws Exception {
-        byte[] data = zkc.getData(path,false,null);
-        return new String(data);
+        try{
+            byte[] data = zkc.getData(path,false,null);
+            return new String(data);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
 
@@ -333,8 +338,8 @@ public class ZkServerManager {
     private void saveConfigData(String config) {
         boolean updated = false;
         lock.lock();
-        if (config == null && cacheData.config != null ||
-                !config.equals(cacheData.config)) {
+        if (config == null && cacheData.config != null ||(config!=null
+                &&!config.equals(cacheData.config))) {
             cacheData.config = config;
             updated = true;
         }
