@@ -68,8 +68,8 @@ public class PropertyKit {
         InputStream in=null;
         Properties properties=new Properties();
         try {
-            in=new FileInputStream(new File(path));
-
+            in=PropertyKit.class.getClassLoader().getResourceAsStream(path);
+            System.out.println(path);
             properties.load(in);
 
             return properties;

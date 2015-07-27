@@ -1,20 +1,11 @@
 package cluster;
 
-import com.xl.cluster.client.ServerNode;
 import com.xl.cluster.client.SimpleRpcClientApi;
-import com.xl.dispatch.method.RpcCallback;
-import com.xl.session.ISession;
-import common.UserInfo;
 import common.server.IServerControl;
 import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -23,8 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ClusterClient {
     private static final Logger log= LoggerFactory.getLogger(ClusterClient.class);
     public static void main(String[] args) throws Exception{
-        PropertyConfigurator.configure("conf/log4j.properties");
-        final SimpleRpcClientApi api=SimpleRpcClientApi.getInstance().load("conf/rpc-client.properties");
+        PropertyConfigurator.configure("log4j.properties");
+        final SimpleRpcClientApi api=SimpleRpcClientApi.getInstance().load("rpc-client.properties");
         api.bind();
         final int loop=1;
         final TimeUse timeUse=new TimeUse();
