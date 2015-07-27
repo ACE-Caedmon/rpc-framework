@@ -190,7 +190,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         List<String> newServers= zkServerManager.getServerList(clusterName);
         ClusterGroup group=serverManager.getGroupByName(clusterName);
         if(group==null){
-            throw new NullPointerException("未配置该集群:clusterName = "+clusterName);
+            return;
         }
         Map<String,ServerNode> oldServers=serverManager.getAllServerNodes();
         //遍历新数据

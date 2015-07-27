@@ -69,7 +69,6 @@ public class PropertyKit {
         Properties properties=new Properties();
         try {
             in=PropertyKit.class.getClassLoader().getResourceAsStream(path);
-            System.out.println(path);
             properties.load(in);
 
             return properties;
