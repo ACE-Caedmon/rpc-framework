@@ -7,5 +7,6 @@ import com.xl.cluster.client.ServerNode;
  */
 public interface RpcServerApi {
     void bind();
-
+    String getHost();
+    int getPort();
 }

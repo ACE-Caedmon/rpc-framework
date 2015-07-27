@@ -18,7 +18,6 @@ public class ServerNode implements Comparable<ServerNode>{
     private String clusterName;
     private String host;
     private int port;
-    private float cpu;
     private int syncCallNumber;
     private int syncCallTimeout;
     private int weight=DEFAULT_WEIGHT;
@@ -112,14 +111,6 @@ public class ServerNode implements Comparable<ServerNode>{
 
     public void setPort(int port) {
         this.port = port;
-    }
-
-    public float getCpu() {
-        return cpu;
-    }
-
-    public void setCpu(float cpu) {
-        this.cpu = cpu;
     }
 
     public void reconnect(){

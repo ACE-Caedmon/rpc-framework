@@ -59,4 +59,14 @@ public class SimpleRpcServerApi implements RpcServerApi {
         zkServerManager =new ZkServerManager(userDir);
         zkServerManager.registerService(this.clusterName,host+":"+port);
     }
+
+    @Override
+    public String getHost() {
+        return this.host;
+    }
+
+    @Override
+    public int getPort() {
+        return this.port;
+    }
 }
