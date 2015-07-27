@@ -37,7 +37,7 @@ public class ZkServerManager {
     private Map<String,PathWatcher> providerWatchers = new HashMap<String, PathWatcher>();
     private static final Logger log= LoggerFactory.getLogger(ZkServerManager.class);
     private static int Session_Timeout = 5*1000;
-    private static String ZK_SERVER = "localhost:2181";
+    private static String ZK_SERVER = "192.168.1.10:2181";
 
     static class CacheData {
         public String config;
@@ -85,6 +85,11 @@ public class ZkServerManager {
     public void monitorServiceProviders(List<String> monitorServerList) {
         this.monitorList = monitorServerList;
         initNameServiceWatchers();
+        try {
+            update();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /*
@@ -109,6 +114,11 @@ public class ZkServerManager {
             zkc.create(path, svrName.getBytes(),
                     ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
             log.debug("注册服务节点成功:clusterName = {}",logicName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            update();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -218,6 +228,11 @@ public class ZkServerManager {
     }
 
     public Map<String,List<String>> getAllServerMap(){
+        try {
+            update();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return cacheData.providerMap;
     }
 
