@@ -125,9 +125,15 @@ public class SimpleRpcClientApi implements RpcClientApi {
         for(String s:monitorService){
             clusterNames.add(s);
             serverManager.addClusterGroup(s);
-            log.info("监控集群节点:value = {}",s);
+            log.info("监控节点:value = {}",s);
         }
-        zkServerManager.monitorServiceProviders(clusterNames);
+        try{
+            zkServerManager.monitorServiceProviders(clusterNames);
+        }catch (Exception e){
+            e.printStackTrace();
+            log.error("Zookeeper 异常",e);
+        }
+
 
         for(String clusterName: zkServerManager.getAllServerMap().keySet()){
             refreshClusterServers(clusterName);

@@ -1,6 +1,7 @@
 package com.xl.cluster;
 
 import com.alibaba.fastjson.JSONObject;
+import com.xl.exception.ClusterException;
 import com.xl.utils.Util;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
@@ -38,7 +39,7 @@ public class ZkServerManager {
     private static final Logger log= LoggerFactory.getLogger(ZkServerManager.class);
     private static int Session_Timeout = 5*1000;
     private static String ZK_SERVER = "192.168.1.10:2181";
-
+    private static final Logger LOG=LoggerFactory.getLogger(ZkServerManager.class);
     static class CacheData {
         public String config;
         public Map<String,List<String>> providerMap = new HashMap<String, List<String>>(); // 需要lock保护
@@ -58,11 +59,7 @@ public class ZkServerManager {
         // 监控所有被触发的事件
         public void process(WatchedEvent event) {
             if (event.getState() == Event.KeeperState.SyncConnected) {
-                try {
-                    update();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                update();
             }
         }
     };
@@ -82,46 +79,34 @@ public class ZkServerManager {
     /*
     * monitorServerGroups: 监听其他服务器的实例状态
     */
-    public void monitorServiceProviders(List<String> monitorServerList) {
+    public void monitorServiceProviders(List<String> monitorServerList) throws Exception{
         this.monitorList = monitorServerList;
         initNameServiceWatchers();
-        try {
-            update();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        update();
     }
 
     /*
     * logicName:logicName
     * address:ip:port
     */
-    public void registerService(String logicName,String address) {
+    public void registerService(String logicName,String address) throws Exception{
         if (Util.isEmpty(address) || Util.isEmpty(logicName)) {
             throw new RuntimeException("param null");
         }
         this.address = address;
         this.svrName = logicName;
         configWatcher = new DataWatcher(getConfigPath());
-        try {
-            createPath(getSvrTreePath());
-            String path = getSvrTreePath() + "/" + address;
-            Stat stat = zkc.exists(path,false);
-            // 说明程序挂了，立马又被拉起，这时候需要等zk服务器超时了再注册
-            if (stat != null){
-                Thread.sleep((long) (Session_Timeout * 1.5));
-            }
-            zkc.create(path, svrName.getBytes(),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-            log.debug("注册服务节点成功:clusterName = {}",logicName);
-        } catch (Exception e) {
-            e.printStackTrace();
+        createPath(getSvrTreePath());
+        String path = getSvrTreePath() + "/" + address;
+        Stat stat = zkc.exists(path,false);
+        // 说明程序挂了，立马又被拉起，这时候需要等zk服务器超时了再注册
+        if (stat != null){
+            Thread.sleep((long) (Session_Timeout * 1.5));
         }
-        try {
-            update();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        zkc.create(path, svrName.getBytes(),
+                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        log.debug("注册服务节点成功:clusterName = {}",logicName);
+        update();
     }
 
     public void setListener(ServerConfigListener listener) {
@@ -159,7 +144,7 @@ public class ZkServerManager {
 
 
 
-    private void initNameServiceWatchers() {
+    private void initNameServiceWatchers() throws KeeperException,InterruptedException{
         if (monitorList != null) {
             for (String svrName : monitorList) {
                 String path = ServerStore + "/" + svrName;
@@ -167,59 +152,55 @@ public class ZkServerManager {
                     PathWatcher pathWatcher = new PathWatcher(path);
                     providerWatchers.put(svrName,pathWatcher);
                 }
-                try {
-                    PathWatcher pathWatcher = providerWatchers.get(svrName);
-                    pathWatcher.monitor();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                PathWatcher pathWatcher = providerWatchers.get(svrName);
+                pathWatcher.monitor();
 
             }
         }
     }
 
 
-    synchronized void update() throws Exception {
+    synchronized void update() throws ClusterException{
         if (zkc == null)
             return;
-        createPath(ServerStore);
-        createPath(ConfigStore);
-        if (!Util.isEmpty(svrName)) {
-            try{
+        try{
+            createPath(ServerStore);
+            createPath(ConfigStore);
+            if (!Util.isEmpty(svrName)) {
                 String config = getData(getConfigPath());
                 log.debug("Zookeeper update: data = {}",config);
                 saveConfigData(config);
                 configWatcher.monitor();
-            }catch (Exception e){
-                e.printStackTrace();
+
+            }
+            // query provider list
+            if (monitorList != null) {
+                for (String svrName : monitorList) {
+                    List<String> nodes = null;
+                    nodes = getServerListByPath(ServerStore+"/"+svrName);
+                    cacheData.providerMap.put(svrName,nodes);
+                }
             }
 
-        }
-        // query provider list
-        if (monitorList != null) {
-            for (String svrName : monitorList) {
-                List<String> nodes = null;
-                nodes = getServerListByPath(ServerStore+"/"+svrName);
-                cacheData.providerMap.put(svrName,nodes);
+            //  monitor provider server list
+            if (monitorList != null) {
+                for (String svrName : monitorList) {
+                    PathWatcher pathWatcher = providerWatchers.get(svrName);
+                    if(pathWatcher!=null){
+                        pathWatcher.monitor();
+                    }
+
+                }
             }
+        }catch (Exception e){
+            throw new ClusterException("拉取集群节点信息异常",e);
         }
 
-        //  monitor provider server list
-        if (monitorList != null) {
-            for (String svrName : monitorList) {
-                PathWatcher pathWatcher = providerWatchers.get(svrName);
-                pathWatcher.monitor();
-            }
-        }
     }
 
 
-    public void close() {
-        try {
-            zkc.close();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    public void close() throws InterruptedException{
+        zkc.close();
     }
 
 
@@ -228,11 +209,7 @@ public class ZkServerManager {
     }
 
     public Map<String,List<String>> getAllServerMap(){
-        try {
-            update();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        update();
         return cacheData.providerMap;
     }
 
@@ -240,11 +217,7 @@ public class ZkServerManager {
         if (cacheData.providerMap.containsKey(svrName)) {
             return cacheData.providerMap.get(svrName);
         }
-        try {
-            update();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        update();
         return cacheData.providerMap.get(svrName);
     }
 
@@ -254,13 +227,8 @@ public class ZkServerManager {
     }
 
     private String getData(String path) throws Exception {
-        try{
-            byte[] data = zkc.getData(path,false,null);
-            return new String(data);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        return null;
+        byte[] data = zkc.getData(path,false,null);
+        return new String(data);
     }
 
 
@@ -308,7 +276,9 @@ public class ZkServerManager {
                 saveProviders(service, providers);
             }catch (Exception e){
                 e.printStackTrace();
+                log.error("处理节点事件异常:server = {}",path,e);
             }
+
 
         }
     }

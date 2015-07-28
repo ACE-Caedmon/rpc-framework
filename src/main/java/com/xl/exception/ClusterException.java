@@ -11,4 +11,8 @@ public class ClusterException extends BaseException{
     public ClusterException(String s) {
         super(s);
     }
+
+    public ClusterException(String s, Exception e) {
+        super(s, e);
+    }
 }

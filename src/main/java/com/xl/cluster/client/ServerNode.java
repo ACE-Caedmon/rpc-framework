@@ -40,7 +40,7 @@ public class ServerNode implements Comparable<ServerNode>{
         RpcPacket packet=new RpcPacket(cmd,params);
         packet.setSync(false);
         session.asyncRpcSend(packet, callback);
-        log.info("异步远程调用:server = {},cmd ={}",getKey(),cmd);
+        log.info("异步远程调用:clusterName ={},server = {},cmd ={}",clusterName,getKey(),cmd);
     }
     public String getKey(){
         return host+":"+port;
@@ -57,7 +57,7 @@ public class ServerNode implements Comparable<ServerNode>{
         long after=CommonUtils.now();
         syncCallNumber++;
         this.averageResponseTime=(totalResponseTime+(after-before))/syncCallNumber;
-        log.info("同步远程调用:server = {},cmd ={},responseTime = {}",getKey(),cmd,this.averageResponseTime);
+        log.info("同步远程调用:clusterName = {},server = {},cmd ={},responseTime = {}",clusterName,getKey(),cmd,this.averageResponseTime);
         return result;
     }
     public boolean isActive(){
