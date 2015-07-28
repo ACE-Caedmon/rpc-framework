@@ -41,6 +41,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private EventLoopGroup loopGroup;
     private int workerThreadSize;
     private int cmdThreadSize;
+    private String zkServer;
     public static final String JAVASSIT_PROXY="javassit",CGLIB_PROXY="cglib";
     private SimpleRpcClientApi(){
 
@@ -57,6 +58,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         this.monitorService=properties.getProperty("rpc.client.monitorService").split(",");
         this.retryCount=Integer.parseInt(properties.getProperty("rpc.client.retryCount"));
         this.rpcCallProxy=properties.getProperty("rpc.client.rpcCallProxy");
+        this.zkServer=properties.getProperty("rpc.client.zkServer");
         if(this.rpcCallProxy.equals(JAVASSIT_PROXY)){
             this.rpcCallProxyFactory=new JavassitRpcCallProxyFactory();
         }else{
@@ -108,7 +110,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     @Override
     public void bind() {
         String userDir=System.getProperty("user.dir");
-        zkServerManager =new ZkServerManager(userDir);
+        zkServerManager =new ZkServerManager(zkServer,userDir);
         zkServerManager.setListener(new ZkServerManager.ServerConfigListener() {
             @Override
             public void onConfigChanged(String s) {

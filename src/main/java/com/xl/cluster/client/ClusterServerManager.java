@@ -15,7 +15,6 @@ public class ClusterServerManager implements IClusterServerManager {
     private Map<String,ClusterGroup> clusterGroupMap =new ConcurrentHashMap<>();
     private Map<String,ServerNode> nodesByServerKey =new ConcurrentHashMap<>();
     private static ClusterServerManager instance=new ClusterServerManager();
-    private int refreshInterval;
     private int callCount;
     private ClusterServerManager(){
 

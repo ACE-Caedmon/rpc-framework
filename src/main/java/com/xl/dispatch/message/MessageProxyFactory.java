@@ -90,7 +90,7 @@ public class MessageProxyFactory {
                                     PracticalBuffer.class.getName()+" data=new "+DefaultPracticalBuffer.class.getName()+"(buffer);"+
                                     "data.writeJSON($1);return data;}";
                             encodeMethod.setBody(encodeMethodBody.toString());
-                            ctClass.writeFile("javassit/");
+                            //ctClass.writeFile("javassit/");
                         }
                     }
                     proxy=(MessageProxy)ctClass.toClass().newInstance();

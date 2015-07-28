@@ -26,6 +26,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
     private String clusterName;
     private String[] scanPackage;
     private String beanAccessClass;
+    private String zkServer;
     private ServerSocketEngine socketEngine;
     public SimpleRpcServerApi(String configPath){
         Properties properties= PropertyKit.loadProperties(configPath);
@@ -37,6 +38,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
         this.clusterName=properties.getProperty("rpc.server.clusterName");
         this.scanPackage=properties.getProperty("rpc.server.scanPackage").split(",");
         this.beanAccessClass=properties.getProperty("rpc.server.beanAccessClass");
+        this.zkServer=properties.getProperty("rpc.server.zkServer");
     }
     @Override
     public void bind() {
@@ -57,7 +59,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
         socketEngine=new ServerSocketEngine(settings,dispatcher);
         socketEngine.start();
         String userDir=System.getProperty("user.dir");
-        zkServerManager =new ZkServerManager(userDir);
+        zkServerManager =new ZkServerManager(this.zkServer,userDir);
         try{
             zkServerManager.registerService(this.clusterName,host+":"+port);
         }catch (Exception e){

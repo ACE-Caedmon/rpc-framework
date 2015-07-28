@@ -129,7 +129,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     }
                     System.out.println(methodBody.toString());
                     ctMethod.insertAfter(methodBody.toString());
-                    ctProxyClass.writeFile("javassit/");
+                    //ctProxyClass.writeFile("javassit/");
                     Class resultClass=ctProxyClass.toClass();
                     ControlMethodProxyCreator creator=buildMethodProxyCreator(resultClass);
                     proxyCreatorMap.put(cmd, creator);

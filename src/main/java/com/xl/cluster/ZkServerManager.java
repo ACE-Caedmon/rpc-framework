@@ -38,7 +38,6 @@ public class ZkServerManager {
     private Map<String,PathWatcher> providerWatchers = new HashMap<String, PathWatcher>();
     private static final Logger log= LoggerFactory.getLogger(ZkServerManager.class);
     private static int Session_Timeout = 5*1000;
-    private static String ZK_SERVER = "192.168.1.10:2181";
     private static final Logger LOG=LoggerFactory.getLogger(ZkServerManager.class);
     static class CacheData {
         public String config;
@@ -64,11 +63,11 @@ public class ZkServerManager {
         }
     };
 
-    public ZkServerManager(String cachePath) {
+    public ZkServerManager(String zkServer,String cachePath) {
         this.cachePath = cachePath;
         loadFromFile();
         try {
-            zkc = new ZooKeeper(ZK_SERVER, Session_Timeout, watcher);
+            zkc = new ZooKeeper(zkServer, Session_Timeout, watcher);
         } catch (IOException e) {
             e.printStackTrace();
         }
