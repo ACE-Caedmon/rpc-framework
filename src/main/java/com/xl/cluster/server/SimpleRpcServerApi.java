@@ -7,6 +7,7 @@ import com.xl.cluster.ZkServerManager;
 import com.xl.dispatch.method.BeanAccess;
 import com.xl.dispatch.method.RpcMethodDispatcher;
 import com.xl.dispatch.method.JavassitRpcMethodDispatcher;
+import com.xl.exception.ClusterException;
 import com.xl.exception.EngineException;
 import com.xl.utils.PropertyKit;
 
@@ -57,7 +58,12 @@ public class SimpleRpcServerApi implements RpcServerApi {
         socketEngine.start();
         String userDir=System.getProperty("user.dir");
         zkServerManager =new ZkServerManager(userDir);
-        zkServerManager.registerService(this.clusterName,host+":"+port);
+        try{
+            zkServerManager.registerService(this.clusterName,host+":"+port);
+        }catch (Exception e){
+            throw new ClusterException("注册服务节点异常",e);
+        }
+
     }
 
     @Override
