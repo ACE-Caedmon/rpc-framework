@@ -5,6 +5,7 @@ import com.xl.codec.RpcPacket;
 import com.xl.dispatch.MethodInterceptor;
 import com.xl.dispatch.message.MessageProxyFactory;
 import com.xl.exception.ControlMethodCreateException;
+import com.xl.exception.RemoteException;
 import com.xl.session.ISession;
 import com.xl.utils.ClassUtils;
 import javassist.ClassPool;
@@ -72,6 +73,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                 proxy=new AsyncCallBackMethod(rpcPacket);
             }
         }
+        log.debug("创建ControlMethod:{}",proxy.getClass().getName());
         return proxy;
     }
 
@@ -79,7 +81,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
     public void loadClasses(Class... classes) throws Exception{
         for(Class controlClass:classes){
             loadControlClass(controlClass);
-            log.info("load control: "+controlClass.getName());
+            log.info("加载Control: "+controlClass.getName());
         }
     }
     private void loadControlClass(Class controlClass) throws Exception {
@@ -127,7 +129,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                             methodBody.append(" packet.setParams(null);$1.writeAndFlush(packet);");
                         }
                     }
-                    System.out.println(methodBody.toString());
+                    log.debug("Javassit 生成代码:{}",methodBody.toString());
                     ctMethod.insertAfter(methodBody.toString());
                     //ctProxyClass.writeFile("javassit/");
                     Class resultClass=ctProxyClass.toClass();
@@ -159,6 +161,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
         }catch (Exception e){
             throw new  ControlMethodCreateException(e);
         }
+        log.info("创建ControlMethodProxyCreator:{}",creatorClassName);
         return creator;
     }
     private String getMethodInvokeSrc(Method method) throws Exception{
@@ -280,7 +283,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     }
                     //把异常发回给调用方
                     packet.setException(true);
-                    packet.setParams(e);
+                    packet.setParams(new RemoteException(e));
                     try{
                         session.writeAndFlush(packet);
                     }catch (Exception e1){

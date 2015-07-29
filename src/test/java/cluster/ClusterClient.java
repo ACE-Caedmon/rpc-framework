@@ -17,38 +17,41 @@ public class ClusterClient {
         PropertyConfigurator.configure("log4j.properties");
         final SimpleRpcClientApi api=SimpleRpcClientApi.getInstance().load("rpc-client.properties");
         api.bind();
-        Thread.sleep(1000000);
-//        final int loop=1;
-//        final TimeUse timeUse=new TimeUse();
-//        final AtomicInteger totalUse=new AtomicInteger();
-//        for(int i=0;i<loop;i++){
-//            final int count=i;
-//            Thread t=new Thread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    long start=System.currentTimeMillis();
-//                    String input="test"+count;
-//                    try{
-//                        IServerControl serverControl=api.getRemoteCallProxy(IServerControl.class);
-//                        serverControl.login("username","password");
-//                    }catch (Exception e){
-//                        e.printStackTrace();
-//                    }
-//                    long end=System.currentTimeMillis();
-//                    int use=(int)(end-start);
-//                    if(use>timeUse.max&&use<3000){
-//                        timeUse.max=use;
-//                    }
-//                    if(use<timeUse.min){
-//                        timeUse.min=use;
-//                    }
-//                    totalUse.getAndAdd(use);
-//                }
-//            });
-//            t.start();
-//        }
-//        Thread.sleep(10000);
-//        System.out.println("并发量:"+loop+",最大耗时:"+timeUse.max+",最小耗时:"+timeUse.min+",平均耗时:"+totalUse.get()/loop);
+        final int loop=1;
+        final TimeUse timeUse=new TimeUse();
+        final AtomicInteger totalUse=new AtomicInteger();
+        for(int i=0;i<loop;i++){
+            final int count=i;
+            Thread t=new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    long start=System.currentTimeMillis();
+                    String input="test"+count;
+                    try{
+                        IServerControl serverControl=api.getRemoteCallProxy(IServerControl.class);
+                        serverControl.login("username","password");
+                        System.out.println("第一次调用成功");
+                        Thread.sleep(30000);
+                        serverControl.login("username", "password");
+                        System.out.println("第二次调用成功");
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                    long end=System.currentTimeMillis();
+                    int use=(int)(end-start);
+                    if(use>timeUse.max&&use<3000){
+                        timeUse.max=use;
+                    }
+                    if(use<timeUse.min){
+                        timeUse.min=use;
+                    }
+                    totalUse.getAndAdd(use);
+                }
+            });
+            t.start();
+        }
+        Thread.sleep(10000);
+        System.out.println("并发量:"+loop+",最大耗时:"+timeUse.max+",最小耗时:"+timeUse.min+",平均耗时:"+totalUse.get()/loop);
     }
     public static class TimeUse{
         public int max;

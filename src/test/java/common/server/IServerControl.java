@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * Created by Administrator on 2015/7/20.
  */
-@CmdControl("account")
+@CmdControl("test")
 public interface IServerControl {
     @CmdMethod(cmd = Command.ServerControl_login)
     @CmdResponse

@@ -67,6 +67,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         //扫描接口，预加载生成接口代理
         try{
             List<Class> allClasses=ClassUtils.getClasssFromPackage(scanPackage);
+            log.info("已扫描{}个Class",allClasses.size());
             for(Class clazz:allClasses){
                 if(ClassUtils.hasAnnotation(clazz,CmdControl.class)&&clazz.isInterface()){
                     rpcCallProxyFactory.createRpcCallProxy(clazz);
@@ -172,7 +173,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
             if(e instanceof TimeoutException){
                 throw (TimeoutException)e;
             }
-            log.error("syncRpcCall 异常:value = {},server = {},cmd = {},params = {}",clusterName,node.getKey(),cmd,content[0],e);
+            log.error("Sync rpc call error:clusterName = {},server = {},cmd = {},params = {}",clusterName,node.getKey(),cmd,content[0],e);
             //重新选择节点重传,重试次数
             List<ServerNode> nodes=serverManager.getGroupByName(clusterName).getNodeList();
             final int retry=nodes.size()>=retryCount?retryCount:nodes.size();
@@ -181,7 +182,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
                     ServerNode activeNode=nodes.get(i);
                     return activeNode.syncCall(cmd, resultType, content);
                 }catch (Exception e1){
-                    log.error("syncRpcCall 重发异常:value = {},server = {},cmd = {},params = {}",clusterName,node.getKey(),cmd,content[0],e1);
+                    log.error("Sync rpc retry call error:clusterName = {},server = {},cmd = {},params = {}",clusterName,node.getKey(),cmd,content[0],e1);
                     continue;
                 }
             }
@@ -212,10 +213,10 @@ public class SimpleRpcClientApi implements RpcClientApi {
                     ServerNode serverNode=newServerNode(remoteHost, remotePort);
                     serverNode.setClusterName(clusterName);
                     serverManager.addServerNode(serverNode);
-                    log.info("更新集群节点:clusterName = {},server = {} ",clusterName,serverNode.getKey());
+                    log.info("Update server node:clusterName = {},server = {} ",clusterName,serverNode.getKey());
                 }catch (Exception e){
                     e.printStackTrace();
-                    log.error("更新集群节点异常:clusterName = {},server = {}",clusterName,serverKey,e);
+                    log.error("Update server node error:clusterName = {},server = {}",clusterName,serverKey,e);
                 }
                 continue;
             }

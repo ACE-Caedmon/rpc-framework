@@ -55,12 +55,9 @@ public class TCPServerInboundHandler extends SimpleChannelInboundHandler<Control
      * */
 	@Override
 	public void channelActive(final ChannelHandlerContext ctx) throws Exception {
-		final ISession session=new Session(ctx.channel());
-		ctx.channel().attr(Session.SESSION_KEY).set(session);
-		session.setAttribute(Session.SYNC_CALLBACK_MAP, new HashMap<String, SyncRpcCallBack<?>>());
-		session.setAttribute(Session.ASYNC_CALLBACK_MAP,new HashMap<String, RpcCallback>());
+		ISession session=ctx.channel().attr(Session.SESSION_KEY).get();
 		SessionFire.getInstance().fireEvent(SessionFire.SessionEvent.SESSION_CONNECT, session);
-
+		log.info("Channel active");
 
 
 	}
@@ -73,5 +70,13 @@ public class TCPServerInboundHandler extends SimpleChannelInboundHandler<Control
 		cause.printStackTrace();
 	}
 
-
+	@Override
+	public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+		super.channelRegistered(ctx);
+		final ISession session=new Session(ctx.channel());
+		ctx.channel().attr(Session.SESSION_KEY).set(session);
+		session.setAttribute(Session.SYNC_CALLBACK_MAP, new HashMap<String, SyncRpcCallBack<?>>());
+		session.setAttribute(Session.ASYNC_CALLBACK_MAP, new HashMap<String, RpcCallback>());
+		log.info("Channel register");
+	}
 }

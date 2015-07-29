@@ -269,15 +269,15 @@ public class ZkServerManager {
                 return;
             String path = watchedEvent.getPath();
             List<String> providers = null;
-            int index = path.lastIndexOf("/");
             if(path==null){
                 log.warn("zkServer return path.null");
                 return;
             }
+            int index = path.lastIndexOf("/");
             String service = path.substring(index + 1);
             try{
                 monitor();
-                providers = getServerListByPath(watchedEvent.getPath());
+                providers = getServerListByPath(path);
                 saveProviders(service, providers);
             }catch (Exception e){
                 e.printStackTrace();

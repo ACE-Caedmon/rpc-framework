@@ -64,5 +64,6 @@ public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
         buf.writeBytes(binaryPacket.content);//写入dst
         BinaryPacket packet=new BinaryPacket(buf);
         out.add(packet);
+        log.debug("消息编码:packet = {}",output.toString());
 	}
 }

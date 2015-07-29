@@ -9,6 +9,8 @@ import com.xl.dispatch.method.ControlMethod;
 import com.xl.dispatch.method.RpcMethodDispatcher;
 import com.xl.dispatch.message.MessageProxy;
 import com.xl.dispatch.message.MessageProxyFactory;
+import com.xl.exception.RemoteException;
+import com.xl.session.Session;
 import com.xl.utils.CommonUtils;
 import com.xl.utils.NGSocketParams;
 import io.netty.channel.ChannelHandlerContext;
@@ -100,7 +102,6 @@ import java.util.List;
             }else{
                 MessageProxy messageProxy= MessageProxyFactory.ONLY_INSTANCE.getMessageProxy(msgType, clazz);
                 int mark=buffer.getByteBuf().readerIndex();
-                log.info("接受到的JSON数据:params = {}",buffer.readString());
                 buffer.getByteBuf().readerIndex(mark);
                 if(messageProxy!=null){
                     param=messageProxy.decode(buffer);
@@ -115,13 +116,18 @@ import java.util.List;
         rpcPacket.setUuid(uuid);
         rpcPacket.setException(isException);
         rpcPacket.setClassNameArray(classNameArray);
-        ControlMethod methodProxy= rpcMethodDispatcher.newControlMethodProxy(rpcPacket);
-        if(methodProxy!=null){
-            out.add(methodProxy);
-        }else{
-            if(NGSocketParams.isWarnUnKownCmd()){
-                log.warn("未注册指令:cmd = {}",cmd);
+        log.debug("消息解码:packet = {}",rpcPacket.toString());
+        try {
+            ControlMethod methodProxy= rpcMethodDispatcher.newControlMethodProxy(rpcPacket);
+            if(methodProxy!=null){
+                out.add(methodProxy);
             }
+        }catch (Exception e){
+            e.printStackTrace();
+            rpcPacket.setException(true);
+            rpcPacket.setParams(new RemoteException(e));
+            ctx.channel().attr(Session.SESSION_KEY).get().writeAndFlush(rpcPacket);
         }
+
     }
 }

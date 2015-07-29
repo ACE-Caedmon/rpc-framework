@@ -26,6 +26,9 @@ public class ServerNode implements Comparable<ServerNode>{
     public long totalResponseTime;
     private static final Logger log= LoggerFactory.getLogger(ServerNode.class);
     public ServerNode(ISession session) {
+        if(session==null){
+            throw new NullPointerException("Session can not be null");
+        }
         this.session = session;
     }
 
@@ -40,14 +43,14 @@ public class ServerNode implements Comparable<ServerNode>{
         RpcPacket packet=new RpcPacket(cmd,params);
         packet.setSync(false);
         session.asyncRpcSend(packet, callback);
-        log.info("异步远程调用:clusterName ={},server = {},cmd ={}",clusterName,getKey(),cmd);
+        log.info("Async rpc call:clusterName ={},server = {},cmd ={}",clusterName,getKey(),cmd);
     }
     public String getKey(){
         return host+":"+port;
     }
     public <T> T syncCall(int cmd, Class<T> resultType, Object... content) throws Exception{
         if(!isActive()){
-            throw new ClusterNodeException("节点状态异常,无法接受信息( value = "+clusterName+",server = "+host+":"+port);
+            throw new ClusterNodeException("Server node is not active:clusterName = "+clusterName+",server = "+host+":"+port);
         }
 
         RpcPacket packet=new RpcPacket(cmd,content);
@@ -57,7 +60,7 @@ public class ServerNode implements Comparable<ServerNode>{
         long after=CommonUtils.now();
         syncCallNumber++;
         this.averageResponseTime=(totalResponseTime+(after-before))/syncCallNumber;
-        log.info("同步远程调用:clusterName = {},server = {},cmd ={},responseTime = {}",clusterName,getKey(),cmd,this.averageResponseTime);
+        log.info("Sync rpc call:clusterName = {},server = {},cmd ={},responseTime = {}",clusterName,getKey(),cmd,this.averageResponseTime);
         return result;
     }
     public boolean isActive(){

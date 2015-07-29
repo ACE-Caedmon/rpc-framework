@@ -1,5 +1,6 @@
 package com.xl.codec;
 
+import com.alibaba.fastjson.JSON;
 import com.xl.dispatch.SocketPacket;
 
 /**
@@ -54,6 +55,11 @@ public class RpcPacket extends SocketPacket {
 
     public void setFromCall(boolean fromCall) {
         this.fromCall = fromCall;
+    }
+
+    @Override
+    public String toString() {
+        return JSON.toJSONString(this);
     }
 }
 

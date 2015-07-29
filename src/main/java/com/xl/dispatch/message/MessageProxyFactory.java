@@ -8,6 +8,8 @@ import io.netty.buffer.Unpooled;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +25,7 @@ public class MessageProxyFactory {
     private static final String PROXY_SUFFIX="Proxy";
     public static MessageProxyFactory ONLY_INSTANCE=new MessageProxyFactory();
     public static final Map<Class,Class> primitiveClassCache=new HashMap<>();
+    private static final Logger log= LoggerFactory.getLogger(MessageProxyFactory.class);
     private Object lock=new Object();
     static {
         primitiveClassCache.put(Boolean.TYPE, Boolean.class);
@@ -103,6 +106,7 @@ public class MessageProxyFactory {
             default:
                 break;
         }
+        log.debug("Create MessageProxy instance :{}",proxy.getClass().getName());
         return proxy;
     }
 

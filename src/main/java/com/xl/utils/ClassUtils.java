@@ -30,7 +30,7 @@ public class ClassUtils {
         List<File> allFiles=new ArrayList<>();
         String osName=System.getProperty("os.name");
         String split=":";
-        if(osName.toLowerCase().equals("windows")){
+        if(osName.toLowerCase().startsWith("windows")){
             split=";";
         }
         String[] classPaths=System.getProperty("java.class.path").split(split);
@@ -41,7 +41,6 @@ public class ClassUtils {
         for(File f:allFiles){
             String name=f.getName();
             if(name.endsWith(".jar")){
-                log.info("Jar = {}",name);
                 findClasssFromJarFile(f, classes, packageNames);
             }
             if(name.endsWith(".class")){
@@ -79,7 +78,6 @@ public class ClassUtils {
 
             }
         }
-        log.info("所有的class = {}",classes.size());
 
         return classes;
     }
@@ -129,7 +127,6 @@ public class ClassUtils {
         while (ee.hasMoreElements()) {
             JarEntry entry = (JarEntry) ee.nextElement();
             // 过滤我们出满足我们需求的东西
-            log.info("JarEntry ={}",entry.getName());
             for(String packageName:packageNames){
                 packageName=packageName.replace('.','/');
                 if (entry.getName().startsWith(packageName) && entry.getName().endsWith(".class")) {
