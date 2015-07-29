@@ -28,15 +28,21 @@ public class ClassUtils {
     public static List<Class> getClasssFromPackage(String...packageNames) throws Exception{
         List<Class> classes = new ArrayList<>();
         List<File> allFiles=new ArrayList<>();
-        String[] classPaths=System.getProperty("java.class.path").split(";");
+        String osName=System.getProperty("os.name");
+        String split=":";
+        if(osName.toLowerCase().equals("windows")){
+            split=";";
+        }
+        String[] classPaths=System.getProperty("java.class.path").split(split);
         for(String classpath:classPaths){
             File cpf=new File(classpath);
-            listDirectory(cpf,allFiles);
+            listDirectory(cpf, allFiles);
         }
         for(File f:allFiles){
             String name=f.getName();
             if(name.endsWith(".jar")){
-                findClasssFromJarFile(f,classes,packageNames);
+                log.info("Jar = {}",name);
+                findClasssFromJarFile(f, classes, packageNames);
             }
             if(name.endsWith(".class")){
                 boolean find=false;
@@ -62,7 +68,7 @@ public class ClassUtils {
                 }
                 if(!find){
                     String className = f.getAbsolutePath().substring(0, f.getName().length() - 6);
-                    System.out.println(className);
+                    log.info(className);
                     Class c=Thread.currentThread().getContextClassLoader().loadClass(className);
                     for(String pkg:packageNames){
                         if(c.getPackage().getName().startsWith(pkg)){
@@ -73,7 +79,7 @@ public class ClassUtils {
 
             }
         }
-
+        log.info("所有的class = {}",classes.size());
 
         return classes;
     }
@@ -106,10 +112,8 @@ public class ClassUtils {
         }
     }
     public static void main(String[] args) throws Exception{
-        File[] files=getClassPathJars();
-        for(File f:files){
-            System.out.println(f);
-        }
+        List<Class> classes=new ArrayList<>();
+        findClasssFromJarFile(new File("lib/common-1.0-SNAPSHOT.jar"),classes,"com.xl");
     }
     public static List<Class> findClasssFromJarFile(File jarPath,List<Class> classes,String... packageNames) {
         JarFile jarFile = null;
@@ -125,15 +129,19 @@ public class ClassUtils {
         while (ee.hasMoreElements()) {
             JarEntry entry = (JarEntry) ee.nextElement();
             // 过滤我们出满足我们需求的东西
+            log.info("JarEntry ={}",entry.getName());
             for(String packageName:packageNames){
+                packageName=packageName.replace('.','/');
                 if (entry.getName().startsWith(packageName) && entry.getName().endsWith(".class")) {
                     jarEntryList.add(entry);
                 }
             }
         }
+
         for (JarEntry entry : jarEntryList) {
             String className = entry.getName().replace('/', '.');
             className = className.substring(0, className.length() - 6);
+            log.info("添加class={}", className);
             try {
                 classes.add(Thread.currentThread().getContextClassLoader().loadClass(className));
             } catch (ClassNotFoundException e) {

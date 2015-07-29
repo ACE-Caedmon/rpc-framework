@@ -95,6 +95,7 @@ public class ZkServerManager {
         this.address = address;
         this.svrName = logicName;
         configWatcher = new DataWatcher(getConfigPath());
+        configWatcher.monitor();
         createPath(getSvrTreePath());
         String path = getSvrTreePath() + "/" + address;
         Stat stat = zkc.exists(path,false);
@@ -213,10 +214,11 @@ public class ZkServerManager {
     }
 
     public List<String> getServerList(String svrName) {
+        update();
         if (cacheData.providerMap.containsKey(svrName)) {
             return cacheData.providerMap.get(svrName);
         }
-        update();
+
         return cacheData.providerMap.get(svrName);
     }
 
@@ -268,6 +270,10 @@ public class ZkServerManager {
             String path = watchedEvent.getPath();
             List<String> providers = null;
             int index = path.lastIndexOf("/");
+            if(path==null){
+                log.warn("zkServer return path.null");
+                return;
+            }
             String service = path.substring(index + 1);
             try{
                 monitor();
@@ -320,14 +326,21 @@ public class ZkServerManager {
     }
 
     private void saveConfigData(String config) {
-        boolean updated = false;
-        lock.lock();
-        if (config == null && cacheData.config != null ||(config!=null
-                &&!config.equals(cacheData.config))) {
-            cacheData.config = config;
-            updated = true;
-        }
-        lock.unlock();
+        boolean updated = true;
+//        lock.lock();
+//        if(config!=null){
+//            if(cacheData.config==null||(!config.equals(cacheData.config))){
+//                cacheData.config = config;
+//                updated = true;
+//            }
+//        }else{
+//            if(cacheData.config!=config){
+//                cacheData.config=config;
+//                updated=true;
+//            }
+//        }
+//        lock.unlock();
+        cacheData.config=config;
         saveCacheConfigToFile();
         if (updated)
             notifyConfigChange();

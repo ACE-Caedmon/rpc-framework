@@ -99,6 +99,9 @@ import java.util.List;
                 param=CommonUtils.derialize(bytes,Throwable.class);
             }else{
                 MessageProxy messageProxy= MessageProxyFactory.ONLY_INSTANCE.getMessageProxy(msgType, clazz);
+                int mark=buffer.getByteBuf().readerIndex();
+                log.info("接受到的JSON数据:params = {}",buffer.readString());
+                buffer.getByteBuf().readerIndex(mark);
                 if(messageProxy!=null){
                     param=messageProxy.decode(buffer);
                 }
