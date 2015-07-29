@@ -90,7 +90,7 @@ public class ZkServerManager {
     */
     public void registerService(String logicName,String address) throws Exception{
         if (Util.isEmpty(address) || Util.isEmpty(logicName)) {
-            throw new RuntimeException("param null");
+            throw new RuntimeException("ClusterName or server address is null");
         }
         this.address = address;
         this.svrName = logicName;
@@ -105,7 +105,7 @@ public class ZkServerManager {
         }
         zkc.create(path, svrName.getBytes(),
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-        log.debug("注册服务节点成功:clusterName = {}",logicName);
+        log.debug("Register cluster success:clusterName = {}",logicName);
         update();
     }
 
@@ -125,7 +125,7 @@ public class ZkServerManager {
         }
         String path = f.getAbsolutePath();
         String data = Util.getFileData(path);
-        log.debug("load zookeeper cache: data = {},path = {} ", data, path);
+        log.debug("Zookeeper load cache: data = {},path = {} ", data, path);
         if (!Util.isEmpty(data)) {
             cacheData= JSONObject.parseObject(data,CacheData.class);
         } else {
@@ -136,7 +136,7 @@ public class ZkServerManager {
     private void saveCacheConfigToFile() {
         String path = new File(this.cachePath,CacheDataFile).getAbsolutePath();
         String data =JSONObject.toJSONString(cacheData);
-        log.info("save config: data = {},path = {} ", data, path);
+        log.info("Zookeeper save config: data = {},path = {} ", data, path);
         Util.saveFileData(path, data);
     }
 
@@ -193,7 +193,7 @@ public class ZkServerManager {
                 }
             }
         }catch (Exception e){
-            throw new ClusterException("拉取集群节点信息异常",e);
+            throw new ClusterException("Update zookeeper nodes error",e);
         }
 
     }
@@ -270,7 +270,7 @@ public class ZkServerManager {
             String path = watchedEvent.getPath();
             List<String> providers = null;
             if(path==null){
-                log.warn("zkServer return path.null");
+                log.warn("Zookeeper WatchEvent path null");
                 return;
             }
             int index = path.lastIndexOf("/");
@@ -281,7 +281,7 @@ public class ZkServerManager {
                 saveProviders(service, providers);
             }catch (Exception e){
                 e.printStackTrace();
-                log.error("处理节点事件异常:server = {}",path,e);
+                log.error("Zookeeper process WatchEvent error:server = {}",path,e);
             }
 
 

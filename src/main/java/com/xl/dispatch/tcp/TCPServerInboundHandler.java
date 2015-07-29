@@ -14,6 +14,7 @@ import com.xl.session.Session;
 import com.xl.session.SessionFire;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.DefaultChannelProgressivePromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +25,13 @@ import java.util.HashMap;
 public class TCPServerInboundHandler extends SimpleChannelInboundHandler<ControlMethod>{
 	private static final Logger log = LoggerFactory.getLogger(TCPServerInboundHandler.class);
 	private RpcMethodDispatcher rpcMethodDispatcher;
+	private DefaultChannelProgressivePromise activePromise;
 	public TCPServerInboundHandler(RpcMethodDispatcher rpcMethodDispatcher){
-		this.rpcMethodDispatcher = rpcMethodDispatcher;
+		this(rpcMethodDispatcher,null);
+	}
+	public TCPServerInboundHandler(RpcMethodDispatcher rpcMethodDispatcher,DefaultChannelProgressivePromise activePromise){
+		this.rpcMethodDispatcher=rpcMethodDispatcher;
+		this.activePromise=activePromise;
 	}
     /**
      * 连接断开是会调用此方法，方法会将Session相关信息移除，并且从Channel删除保存的Session对象

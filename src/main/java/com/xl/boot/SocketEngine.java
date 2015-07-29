@@ -37,18 +37,6 @@ public abstract class SocketEngine {
         }
         extensions.clear();
     }
-    /**
-     * 注册功能模块
-     * @param  extension 功能模块
-     * */
-    public void registerExtension(ModuleExtension extension){
-        for(ModuleExtension e:extensions){
-            if(e.getClass().getName().equals(extension.getClass().getName())){
-                throw new IllegalArgumentException("重复加载Extension( extension = "+extension.getClass().getName()+")");
-            }
-        }
-        extensions.add(extension);
-    }
     public void start(){
         load();
         startSocket();
@@ -63,6 +51,7 @@ public abstract class SocketEngine {
             for(Class clazz:allClasses){
                 if(ClassUtils.hasAnnotation(clazz,Extension.class)){
                     ModuleExtension extension=(ModuleExtension)clazz.newInstance();
+                    extensions.add(extension);
                     log.info("Load extension:{}", StringUtil.simpleClassName(extension));
                     extension.init();
                 }

@@ -8,13 +8,11 @@ import com.xl.session.Session;
 import com.xl.session.SessionFire;
 import com.xl.utils.NGSocketParams;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.concurrent.DefaultProgressivePromise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +33,7 @@ public class TCPClientSocketEngine extends SocketEngine{
     }
     @Override
     public void startSocket() {
-        log.info("NG-Socket TCP Client 初始化!");
+        log.info("ClientSocketEngine Init !");
         EventLoopGroup workerGroup=null;
         if(this.eventExecutors==null){
             workerGroup= new NioEventLoopGroup(settings.workerThreadSize);
@@ -43,7 +41,7 @@ public class TCPClientSocketEngine extends SocketEngine{
             workerGroup=this.eventExecutors;
         }
         try {
-            ChannelInitializer<SocketChannel> initializer=new TCPClientInitializer(this.rpcMethodDispatcher,(TCPClientSettings)settings);;
+            ChannelInitializer<SocketChannel> initializer=new TCPClientInitializer(this.rpcMethodDispatcher,(TCPClientSettings)settings);
             Bootstrap b = new Bootstrap();
             b.group(workerGroup)
                     .channel(NioSocketChannel.class)
@@ -62,7 +60,7 @@ public class TCPClientSocketEngine extends SocketEngine{
         } catch (Exception e) {
             e.printStackTrace();
             if(log.isErrorEnabled()){
-                log.error("<<<<<<<网络服务启动异常>>>>>>", e);
+                log.error("<<<<<<<SocketEngine Start Error!>>>>>>", e);
             }
             workerGroup.shutdownGracefully();
             return;
@@ -72,7 +70,7 @@ public class TCPClientSocketEngine extends SocketEngine{
             //用来给客户端发送密码表
             SessionFire.getInstance().registerEvent(SessionFire.SessionEvent.SESSION_LOGIN, new ValidateOKHandler());
         }
-        log.info("NG-Socket TCP Client 启动完毕!");
+        log.info("ClientSocketEngine Start OK!");
     }
     public Channel getChannel(){
         return this.channel;

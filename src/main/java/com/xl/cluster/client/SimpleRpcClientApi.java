@@ -47,6 +47,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
     }
     public SimpleRpcClientApi load(String config){
+
         Properties properties=PropertyKit.loadProperties(config);
         this.workerThreadSize=Integer.parseInt(properties.getProperty("rpc.client.workerThreadSize"));
         this.cmdThreadSize=Integer.parseInt(properties.getProperty("rpc.client.cmdThreadSize"));
@@ -67,16 +68,18 @@ public class SimpleRpcClientApi implements RpcClientApi {
         //扫描接口，预加载生成接口代理
         try{
             List<Class> allClasses=ClassUtils.getClasssFromPackage(scanPackage);
-            log.info("已扫描{}个Class",allClasses.size());
+            log.info("Scan all classes {}",allClasses.size());
             for(Class clazz:allClasses){
                 if(ClassUtils.hasAnnotation(clazz,CmdControl.class)&&clazz.isInterface()){
                     rpcCallProxyFactory.createRpcCallProxy(clazz);
-                    log.info("Create RpcCallProxy : class = {}", StringUtil.simpleClassName(clazz));
+                    log.info("Create rpcCallProxy : class = {}", StringUtil.simpleClassName(clazz));
                 }
             }
         }catch (Exception e){
             e.printStackTrace();
+            log.error("Scan classes error:",e);
         }
+
         return this;
     }
     public ServerNode newServerNode(String remoteHost,int remotePort) throws Exception{
@@ -93,7 +96,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         try{
             beanAccess=(BeanAccess)(Class.forName(beanAccessClass).newInstance());
         }catch (Exception e){
-            throw new EngineException("初始化BeanAccess异常",e);
+            throw new EngineException("BeanAccess init error",e);
         }
         RpcMethodDispatcher dispatcher=new JavassitRpcMethodDispatcher(beanAccess,settings.cmdThreadSize);
         clientSocketEngine=new TCPClientSocketEngine(settings,dispatcher,loopGroup);
@@ -103,6 +106,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         serverNode.setHost(remoteHost);
         serverNode.setPort(remotePort);
         serverNode.setSyncCallTimeout(settings.syncTimeout);
+        log.info("Create new server node:{}",serverNode.getKey());
         return serverNode;
     }
     public static SimpleRpcClientApi getInstance(){
@@ -110,12 +114,13 @@ public class SimpleRpcClientApi implements RpcClientApi {
     }
     @Override
     public void bind() {
+        log.info("SimpleRpcClient bind ");
         String userDir=System.getProperty("user.dir");
-        zkServerManager =new ZkServerManager(zkServer,userDir);
+        zkServerManager =new ZkServerManager(zkServer,userDir+"/work");
         zkServerManager.setListener(new ZkServerManager.ServerConfigListener() {
             @Override
             public void onConfigChanged(String s) {
-                System.out.println("集群配置变更:"+s);
+                log.debug("Zookeeper server config changed:",s);
             }
 
             @Override
@@ -128,19 +133,23 @@ public class SimpleRpcClientApi implements RpcClientApi {
         for(String s:monitorService){
             clusterNames.add(s);
             serverManager.addClusterGroup(s);
-            log.info("监控节点:value = {}",s);
+            log.info("Zookeeper add monitor service :clusterName = {}",s);
         }
         try{
             zkServerManager.monitorServiceProviders(clusterNames);
         }catch (Exception e){
             e.printStackTrace();
-            log.error("Zookeeper 异常",e);
+            log.error("Zookeeper monitor service error",e);
         }
-
 
         for(String clusterName: zkServerManager.getAllServerMap().keySet()){
             refreshClusterServers(clusterName);
+            if(!clusterNames.contains(clusterName)){
+                log.warn("No active server nodes in cluster:{}",clusterName);
+            }
         }
+
+        log.info("SimpleRpcClient bind OK !");
     }
 
     @Override
@@ -149,14 +158,14 @@ public class SimpleRpcClientApi implements RpcClientApi {
         try{
             node.asyncCall(cmd, null,content);
         }catch (Exception e){
-            log.error("asyncRpcCall 异常:value = {},server = {},cmd = {}",clusterName,node.getKey(),cmd,e);
+            log.error("AsyncRpcCall error:clusterName = {},server = {},cmd = {}",clusterName,node.getKey(),cmd,e);
             //重新选择节点重传
             List<ServerNode> nodes=serverManager.getGroupByName(clusterName).getNodeList();
             for(ServerNode activeNode:nodes){
                 try{
                     activeNode.asyncCall(cmd,null, content);
                 }catch (Exception e1){
-                    log.error("asyncRpcCall 重发异常:value = {},server = {},cmd = {}",clusterName,node.getKey(),cmd,e1);
+                    log.error("AsyncRpcCall retry call error:clusterName = {},server = {},cmd = {}",clusterName,node.getKey(),cmd,e1);
                     continue;
                 }
             }
@@ -238,7 +247,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
                 if(needRemove){
                     it.remove();
                     serverManager.removeServerNode(oldNode.getKey());
-                    log.info("移除集群节点:clusterName = {},server = {}",clusterName,oldNode.getKey());
+                    log.info("Remove server node :clusterName = {},server = {}",clusterName,oldNode.getKey());
                 }
             }
         }
@@ -254,7 +263,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     public <T> T syncRpcCall(String clusterName, String serverKey, int cmd, Class<T> resultType, Object... params) throws Exception{
         ServerNode node=serverManager.getServerNode(serverKey);
         if(node==null){
-            throw new NullPointerException("找不到集群节点:server = "+serverKey);
+            throw new NullPointerException("No server node exists:server = "+serverKey);
         }
         return node.syncCall(cmd, resultType, params);
     }
@@ -263,7 +272,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     public void asyncRpcCall(String clusterName, String serverKey, int cmd, Object... params) throws Exception{
         ServerNode node=serverManager.getServerNode(serverKey);
         if(node==null){
-            throw new NullPointerException("找不到集群节点:server = "+serverKey);
+            throw new NullPointerException("No server node exists:server = "+serverKey);
         }
         node.asyncCall(cmd,null, params);
     }

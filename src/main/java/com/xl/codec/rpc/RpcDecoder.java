@@ -116,7 +116,7 @@ import java.util.List;
         rpcPacket.setUuid(uuid);
         rpcPacket.setException(isException);
         rpcPacket.setClassNameArray(classNameArray);
-        log.debug("消息解码:packet = {}",rpcPacket.toString());
+        log.debug("Rpc decode :packet = {}",rpcPacket.toString());
         try {
             ControlMethod methodProxy= rpcMethodDispatcher.newControlMethodProxy(rpcPacket);
             if(methodProxy!=null){
@@ -125,7 +125,7 @@ import java.util.List;
         }catch (Exception e){
             e.printStackTrace();
             rpcPacket.setException(true);
-            rpcPacket.setParams(new RemoteException(e));
+            rpcPacket.setParams(e);
             ctx.channel().attr(Session.SESSION_KEY).get().writeAndFlush(rpcPacket);
         }
 

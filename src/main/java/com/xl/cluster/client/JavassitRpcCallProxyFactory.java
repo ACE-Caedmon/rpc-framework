@@ -5,6 +5,8 @@ import com.xl.annotation.CmdMethod;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -17,6 +19,7 @@ public class JavassitRpcCallProxyFactory implements RpcCallProxyFactory{
     private Map<Class,Object> callProxyCache=new HashMap<>();
     private ClassPool classPool=ClassPool.getDefault();
     private static final String PROXY_SUFFIX="RpcCallProxy";
+    private static final Logger log= LoggerFactory.getLogger(JavassitRpcCallProxyFactory.class);
     public <T> T getRpcCallProxy(Class<T> callInterface){
         T proxy=(T)callProxyCache.get(callInterface);
         if(proxy==null){
@@ -35,11 +38,11 @@ public class JavassitRpcCallProxyFactory implements RpcCallProxyFactory{
         //判断注解
         CmdControl rpcControlAnnotation=clazz.getAnnotation(CmdControl.class);
         if(rpcControlAnnotation==null){
-            throw new IllegalArgumentException("未配置注解@CmdControl:class = "+className);
+            throw new IllegalArgumentException("Has no annotation @CmdControl:class = "+className);
         }
         String clusterName=rpcControlAnnotation.value();
         if(clusterName==null||clusterName.trim().equals("")){
-            throw new IllegalArgumentException("未指定集群组名: class = "+className);
+            throw new IllegalArgumentException("Cluster name not specified: class = "+className);
         }
         T proxy=null;
         String proxyClassName=clazz.getSimpleName()+PROXY_SUFFIX;

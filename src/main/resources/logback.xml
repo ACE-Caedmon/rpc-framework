@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender" >
         <encoder>
             <pattern>%date{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
@@ -17,7 +17,7 @@
     </appender>
     <!--log4jdbc -->
     <logger name="jdbc.sqltiming" level="INFO"/>
-
+    <logger name="org.apache.zookeeper.ClientCnxn" level="INFO"/>
     <root level="DEBUG">
         <appender-ref ref="console" />
         <appender-ref ref="rollingFile" />

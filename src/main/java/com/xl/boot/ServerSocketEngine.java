@@ -28,13 +28,13 @@ public class ServerSocketEngine extends SocketEngine{
         this.settings=settings;
     }
     public ServerSocketEngine(ServerSettings settings){
-        this(settings,new JavassitRpcMethodDispatcher(new PrototypeBeanAccess(),10));
+        this(settings,new JavassitRpcMethodDispatcher(new PrototypeBeanAccess(),Runtime.getRuntime().availableProcessors()));
     }
     /**
      * 启动网络服务
      * */
     public void startSocket(){
-        log.info("NG-Socket 初始化!");
+        log.info("ServerSocketEngine Init!");
         final EventLoopGroup bossGroup = new NioEventLoopGroup(settings.bossThreadSize);
         final EventLoopGroup workerGroup = new NioEventLoopGroup(settings.workerThreadSize);
         try {
@@ -47,7 +47,7 @@ public class ServerSocketEngine extends SocketEngine{
 //                    initializer=new WsServerInitalizer(rpcMethodDispatcher);
 //                    break;
                 default:
-                    throw new IllegalArgumentException("不支持的协议类型:protocol = "+settings.protocol);
+                    throw new IllegalArgumentException("Unsupport protocol:protocol = "+settings.protocol);
             }
 
             ServerBootstrap b = new ServerBootstrap();
@@ -67,7 +67,7 @@ public class ServerSocketEngine extends SocketEngine{
         } catch (Exception e) {
             e.printStackTrace();
             if(log.isErrorEnabled()){
-                log.error("<<<<<<<网络服务启动异常>>>>>>", e);
+                log.error("<<<<<<<ServerSocketEngine Start Error!>>>>>>", e);
             }
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
@@ -78,6 +78,6 @@ public class ServerSocketEngine extends SocketEngine{
             //用来给客户端发送密码表
             SessionFire.getInstance().registerEvent(SessionFire.SessionEvent.SESSION_LOGIN, new ValidateOKHandler());
         }
-        log.info("NG-Socket 启动完毕!");
+        log.info("ServerSocketEngine Start OK!");
     }
 }

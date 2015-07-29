@@ -64,7 +64,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
             proxy=creator.create(rpcPacket);
         }else{
             if(rpcPacket.isFromCall()){
-                throw new IllegalArgumentException("未找到指令处理器:cmd = "+rpcPacket.getCmd());
+                throw new IllegalArgumentException("No method exists:cmd = "+rpcPacket.getCmd());
             }
             boolean sync=rpcPacket.getSync();
             if(sync){
@@ -73,7 +73,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                 proxy=new AsyncCallBackMethod(rpcPacket);
             }
         }
-        log.debug("创建ControlMethod:{}",proxy.getClass().getName());
+        log.debug("Create controlMethod:{}",proxy.getClass().getName());
         return proxy;
     }
 
@@ -81,7 +81,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
     public void loadClasses(Class... classes) throws Exception{
         for(Class controlClass:classes){
             loadControlClass(controlClass);
-            log.info("加载Control: "+controlClass.getName());
+            log.info("Load cmdControl: "+controlClass.getName());
         }
     }
     private void loadControlClass(Class controlClass) throws Exception {
@@ -99,7 +99,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
             //$1 session
             int cmd=ma.cmd();
             if(proxyCreatorMap.containsKey(cmd)){
-                log.warn("重复创建方法代理: controlClass = " + controlClass.getName() + ",cmd = " + cmd + "");
+                log.warn("Repeated load control: controlClass = " + controlClass.getName() + ",cmd = " + cmd + "");
             }else{
                 //要去重
                 CtClass ctProxyClass=classPool.getOrNull(proxyClassName + cmd);
@@ -129,7 +129,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                             methodBody.append(" packet.setParams(null);$1.writeAndFlush(packet);");
                         }
                     }
-                    log.debug("Javassit 生成代码:{}",methodBody.toString());
+                    log.debug("Javassit generate code:{}",methodBody.toString());
                     ctMethod.insertAfter(methodBody.toString());
                     //ctProxyClass.writeFile("javassit/");
                     Class resultClass=ctProxyClass.toClass();
@@ -138,7 +138,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
 
                 }else{
                     //已经加载过
-                    throw new ControlMethodCreateException("类名重复: controlClass = "+controlClass.getName()+",cmd = "+cmd+"");
+                    throw new ControlMethodCreateException("Class name has exists: controlClass = "+controlClass.getName()+",cmd = "+cmd+"");
                 }
 
             }
@@ -155,13 +155,13 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
             createMethod.setBody("{" +
                     proxy.getName()+" proxy=new "+proxy.getName()+"($1);return proxy;"+
                     "}");
-            creatorClass.writeFile("javassit/");
+            //creatorClass.writeFile("javassit/");
             creator=(ControlMethodProxyCreator)creatorClass.toClass().newInstance();
 
         }catch (Exception e){
             throw new  ControlMethodCreateException(e);
         }
-        log.info("创建ControlMethodProxyCreator:{}",creatorClassName);
+        log.info("Create ControlMethodProxyCreator:{}",creatorClassName);
         return creator;
     }
     private String getMethodInvokeSrc(Method method) throws Exception{
@@ -263,7 +263,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     for (MethodInterceptor interceptor : interceptors) {
                         allowed = interceptor.beforeDoCmd(session, packet);
                         if (!allowed) {
-                            log.warn("拦截请求:cmd = {},interceptor = {}", cmd, interceptor.getClass().getName());
+                            log.warn("Cmd interceptor false:cmd = {},interceptor = {}", cmd, interceptor.getClass().getName());
                             return;
                         }
                     }
@@ -276,18 +276,19 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                         }
                     }
                 } catch (Throwable e) {
-                    e.printStackTrace();
+                    log.error("ControlMethod doCmd error:cmd = {}",cmd,e);
                     for (MethodInterceptor interceptor : interceptors) {
                         interceptor.exceptionCaught(session, packet, e);
                         break;
                     }
                     //把异常发回给调用方
                     packet.setException(true);
-                    packet.setParams(new RemoteException(e));
+                    packet.setParams(e);
                     try{
                         session.writeAndFlush(packet);
                     }catch (Exception e1){
                         e1.printStackTrace();
+                        log.error("ControlMethod write exception error:cmd = {}",cmd,e);
                     }
                 }
             }

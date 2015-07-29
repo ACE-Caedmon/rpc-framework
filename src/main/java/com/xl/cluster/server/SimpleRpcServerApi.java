@@ -10,6 +10,8 @@ import com.xl.dispatch.method.JavassitRpcMethodDispatcher;
 import com.xl.exception.ClusterException;
 import com.xl.exception.EngineException;
 import com.xl.utils.PropertyKit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
@@ -28,6 +30,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
     private String beanAccessClass;
     private String zkServer;
     private ServerSocketEngine socketEngine;
+    private static final Logger log= LoggerFactory.getLogger(SimpleRpcServerApi.class);
     public SimpleRpcServerApi(String configPath){
         Properties properties= PropertyKit.loadProperties(configPath);
         this.host=properties.getProperty("rpc.server.host");
@@ -42,6 +45,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
     }
     @Override
     public void bind() {
+        log.info("SimpleRpcServer init");
         ServerSettings settings=new ServerSettings();
         settings.port=this.port;
         settings.protocol= SocketEngine.TCP_PROTOCOL;
@@ -53,7 +57,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
         try{
             beanAccess=(BeanAccess)(Class.forName(beanAccessClass).newInstance());
         }catch (Exception e){
-            throw new EngineException("初始化BeanAccess异常",e);
+            throw new EngineException("BeanAccess init error",e);
         }
         RpcMethodDispatcher dispatcher=new JavassitRpcMethodDispatcher(beanAccess,cmdThreadSize);
         socketEngine=new ServerSocketEngine(settings,dispatcher);
@@ -63,7 +67,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
         try{
             zkServerManager.registerService(this.clusterName,host+":"+port);
         }catch (Exception e){
-            throw new ClusterException("注册服务节点异常",e);
+            throw new ClusterException("Register cluster service error: clusterName = "+clusterName,e);
         }
 
     }
