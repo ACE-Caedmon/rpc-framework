@@ -4,13 +4,10 @@ import com.xl.boot.TCPClientSettings;
 import com.xl.codec.rpc.RpcClientMarkEncoder;
 import com.xl.codec.rpc.RpcDecoder;
 import com.xl.codec.rpc.RpcEncoder;
-import com.xl.codec.rpc.RpcServerMarkEncoder;
 import com.xl.dispatch.method.RpcMethodDispatcher;
 import com.xl.session.Session;
-import com.xl.utils.NGSocketParams;
+import com.xl.utils.EngineParams;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.DefaultChannelProgressivePromise;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
@@ -27,7 +24,7 @@ public class TCPClientInitializer extends ChannelInitializer<SocketChannel>{
     }
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
-        if(NGSocketParams.isNettyLogging()){
+        if(EngineParams.isNettyLogging()){
             ch.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
         }
         ch.pipeline().addLast(new TCPHeadDecoder());
@@ -35,7 +32,7 @@ public class TCPClientInitializer extends ChannelInitializer<SocketChannel>{
         ch.pipeline().addLast(new TCPHeadEncoder());
         ch.pipeline().addLast(new RpcEncoder());
         ch.pipeline().addLast(new RpcClientMarkEncoder());
-        ch.pipeline().addLast(new TCPServerInboundHandler(rpcMethodDispatcher));
+        ch.pipeline().addLast(new TCPInboundHandler(rpcMethodDispatcher));
         ch.attr(Session.SECRRET_KEY).set(settings.secretKey);
 
 

@@ -27,16 +27,15 @@ public class ClusterClient {
                 public void run() {
                     long start=System.currentTimeMillis();
                     String input="test"+count;
+                    IServerControl serverControl=api.getRemoteCallProxy(IServerControl.class);
+                    serverControl.login("username", "password");
                     try{
-                        IServerControl serverControl=api.getRemoteCallProxy(IServerControl.class);
-                        serverControl.login("username","password");
-                        System.out.println("第一次调用成功");
-                        Thread.sleep(30000);
-                        serverControl.login("username", "password");
-                        System.out.println("第二次调用成功");
+                        Thread.sleep(10000);
                     }catch (Exception e){
-                        e.printStackTrace();
+
                     }
+
+                    serverControl.login("username2","password2");
                     long end=System.currentTimeMillis();
                     int use=(int)(end-start);
                     if(use>timeUse.max&&use<3000){

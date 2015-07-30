@@ -66,14 +66,14 @@ public class DefaultPracticalBuffer implements PracticalBuffer {
 
 	@Override
 	public String readString() {
-		short length=buf.readShort();
+		int length=buf.readInt();
 		byte[] content=buf.readBytes(length).array();
 		return new String(content,Charset.forName("UTF-8"));
 	}
 
 	@Override
 	public Builder readProtoBuf(Builder message) {
-		short length=buf.readShort();
+		int length=buf.readInt();
 		byte[] dst=new byte[length];
 		buf.readBytes(dst);
 		try {
@@ -132,14 +132,14 @@ public class DefaultPracticalBuffer implements PracticalBuffer {
 		// TODO Auto-generated method stub
 		byte[] arr=s.getBytes(Charset.forName("UTF-8"));
 		int length=arr.length;
-		buf.writeShort(length);
+		buf.writeInt(length);
 		buf.writeBytes(arr);
 	}
 
 	@Override
 	public void writeProtoBuf(Builder<?> builder) {
 		byte[] dst=builder.build().toByteArray();
-		buf.writeShort(dst.length);
+		buf.writeInt(dst.length);
 		buf.writeBytes(dst);
 	}
 

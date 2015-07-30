@@ -29,18 +29,13 @@ public class ZkServerManager {
     private String cachePath;
 
     private static String ServerStore = "/server";
-    private static String ConfigStore = "/config";
     private static String CacheDataFile = "cache.txt";
-
-    private DataWatcher configWatcher;
     private String address;
 
     private Map<String,PathWatcher> providerWatchers = new HashMap<String, PathWatcher>();
     private static final Logger log= LoggerFactory.getLogger(ZkServerManager.class);
     private static int Session_Timeout = 5*1000;
-    private static final Logger LOG=LoggerFactory.getLogger(ZkServerManager.class);
     static class CacheData {
-        public String config;
         public Map<String,List<String>> providerMap = new HashMap<String, List<String>>(); // 需要lock保护
     }
 
@@ -49,8 +44,6 @@ public class ZkServerManager {
     private CacheData cacheData = new CacheData();
 
     public interface ServerConfigListener {
-        // 该服务器的配置发生变化
-        void onConfigChanged(String config);
         void onServerListChanged(String server);
     }
 
@@ -94,8 +87,6 @@ public class ZkServerManager {
         }
         this.address = address;
         this.svrName = logicName;
-        configWatcher = new DataWatcher(getConfigPath());
-        configWatcher.monitor();
         createPath(getSvrTreePath());
         String path = getSvrTreePath() + "/" + address;
         Stat stat = zkc.exists(path,false);
@@ -133,13 +124,6 @@ public class ZkServerManager {
         }
     }
 
-    private void saveCacheConfigToFile() {
-        String path = new File(this.cachePath,CacheDataFile).getAbsolutePath();
-        String data =JSONObject.toJSONString(cacheData);
-        log.info("Zookeeper save config: data = {},path = {} ", data, path);
-        Util.saveFileData(path, data);
-    }
-
 
 
 
@@ -165,19 +149,10 @@ public class ZkServerManager {
             return;
         try{
             createPath(ServerStore);
-            createPath(ConfigStore);
-            if (!Util.isEmpty(svrName)) {
-                String config = getData(getConfigPath());
-                log.debug("Zookeeper update: data = {}",config);
-                saveConfigData(config);
-                configWatcher.monitor();
-
-            }
             // query provider list
             if (monitorList != null) {
                 for (String svrName : monitorList) {
-                    List<String> nodes = null;
-                    nodes = getServerListByPath(ServerStore+"/"+svrName);
+                    List<String> nodes = getServerListByPath(ServerStore+"/"+svrName);
                     cacheData.providerMap.put(svrName,nodes);
                 }
             }
@@ -204,9 +179,6 @@ public class ZkServerManager {
     }
 
 
-    public String getConfig(){
-        return cacheData.config;
-    }
 
     public Map<String,List<String>> getAllServerMap(){
         update();
@@ -230,12 +202,6 @@ public class ZkServerManager {
     private String getData(String path) throws Exception {
         byte[] data = zkc.getData(path,false,null);
         return new String(data);
-    }
-
-
-    private String getConfigPath() {
-        String path = ConfigStore + "/" + svrName;
-        return path;
     }
 
     private String getSvrTreePath() {
@@ -288,63 +254,12 @@ public class ZkServerManager {
         }
     }
 
-    // data monitor
-    class DataWatcher implements Watcher {
-        String path;
-        public DataWatcher(String path) {
-            this.path = path;
-        }
-        public void monitor() throws KeeperException, InterruptedException {
-            createPath(path);
-            zkc.exists(path, this);
-        }
-
-        public void process(WatchedEvent watchedEvent) {
-            if  (watchedEvent.getType() == Event.EventType.None && watchedEvent.getState() == Event.KeeperState.Disconnected)
-                return;
-            String data = null;
-            try {
-                monitor();
-                data = getData(watchedEvent.getPath());
-                saveConfigData(data);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void notifyConfigChange() {
-        if (listener != null) {
-            listener.onConfigChanged(cacheData.config);
-        }
-    }
-
     private void notifyServerListChange(String svrName) {
         if (listener != null) {
             listener.onServerListChanged(svrName);
         }
     }
 
-    private void saveConfigData(String config) {
-        boolean updated = true;
-//        lock.lock();
-//        if(config!=null){
-//            if(cacheData.config==null||(!config.equals(cacheData.config))){
-//                cacheData.config = config;
-//                updated = true;
-//            }
-//        }else{
-//            if(cacheData.config!=config){
-//                cacheData.config=config;
-//                updated=true;
-//            }
-//        }
-//        lock.unlock();
-        cacheData.config=config;
-        saveCacheConfigToFile();
-        if (updated)
-            notifyConfigChange();
-    }
 
     private void saveProviders(String svr,List<String> providers) {
         boolean updated = false;
@@ -355,7 +270,6 @@ public class ZkServerManager {
             updated = true;
         }
         lock.unlock();
-        saveCacheConfigToFile();
         if (updated) {
             notifyServerListChange(svr);
         }

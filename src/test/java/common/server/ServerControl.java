@@ -1,18 +1,14 @@
 package common.server;
 
 import com.xl.annotation.*;
-import com.xl.session.ISession;
 import common.UserInfo;
-import common.client.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import common.UserService;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,7 +22,7 @@ public class ServerControl implements IServerControl{
     private UserService userService;
 
     @Override
-    public Map<String,UserInfo> login(@CmdRequest String name, @CmdRequest String password) {
+    public Map<String,UserInfo> login(@RpcRequest String name, @RpcRequest String password) {
         log.info("接受:" + name + "," + password);
         UserInfo userInfo=new UserInfo();
         userInfo.setUserId(1);
@@ -39,7 +35,7 @@ public class ServerControl implements IServerControl{
     }
 
     @Override
-    public Map<String, Integer> getUserInfo(@CmdRequest String name, @CmdRequest String password) {
+    public Map<String, Integer> getUserInfo(@RpcRequest String name, @RpcRequest String password) {
         Map<String,Integer> map=new HashMap<>();
         map.put(name,1000);
         return map;

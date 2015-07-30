@@ -1,8 +1,7 @@
 package com.xl.cluster.client;
 
-import com.xl.annotation.CmdControl;
-import com.xl.annotation.CmdMethod;
-import com.xl.annotation.CmdResponse;
+import com.xl.annotation.RpcControl;
+import com.xl.annotation.RpcMethod;
 import com.xl.utils.ClassUtils;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -19,7 +18,7 @@ public class CglibRpcCallBack implements MethodInterceptor {
         Class[] interfaces=o.getClass().getInterfaces();
         Class controlInterface=null;
         for(Class i:interfaces){
-            if(ClassUtils.hasAnnotation(i,CmdControl.class)){
+            if(ClassUtils.hasAnnotation(i,RpcControl.class)){
                 controlInterface=i;
                 break;
             }
@@ -27,13 +26,13 @@ public class CglibRpcCallBack implements MethodInterceptor {
         if(controlInterface==null){
             throw new IllegalArgumentException("接口未标记注解:class = "+o.getClass());
         }
-        CmdControl cmdControl= (CmdControl) controlInterface.getAnnotation(CmdControl.class);
-        String clusterName=cmdControl.value();
-        CmdMethod cmdMethod=method.getAnnotation(CmdMethod.class);
+        RpcControl rpcControl = (RpcControl) controlInterface.getAnnotation(RpcControl.class);
+        String clusterName= rpcControl.value();
+        RpcMethod cmdMethod=method.getAnnotation(RpcMethod.class);
         if(cmdMethod==null){
             return  null;
         }
-        int cmd=method.getAnnotation(CmdMethod.class).cmd();
+        int cmd=method.getAnnotation(RpcMethod.class).cmd();
         Class returnType=method.getReturnType();
         return rpcClientApi.syncRpcCall(clusterName,cmd,returnType,params);
     }

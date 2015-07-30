@@ -1,18 +1,16 @@
 package com.xl.codec.rpc;
 
 import com.xl.annotation.MsgType;
-import com.xl.codec.BinaryCodecApi;
+import com.xl.codec.DefaultPracticalBuffer;
 import com.xl.codec.PracticalBuffer;
 import com.xl.codec.RpcPacket;
-import com.xl.codec.binary.BinaryPacket;
+import com.xl.codec.BinaryPacket;
 import com.xl.dispatch.method.ControlMethod;
 import com.xl.dispatch.method.RpcMethodDispatcher;
 import com.xl.dispatch.message.MessageProxy;
 import com.xl.dispatch.message.MessageProxyFactory;
-import com.xl.exception.RemoteException;
 import com.xl.session.Session;
 import com.xl.utils.CommonUtils;
-import com.xl.utils.NGSocketParams;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import org.slf4j.Logger;
@@ -71,7 +69,7 @@ import java.util.List;
 	@Override
 	protected void decode(ChannelHandlerContext ctx, BinaryPacket packet,
 			List<Object> out) throws Exception {
-        PracticalBuffer buffer= BinaryCodecApi.decodeBody(packet, ctx);
+        PracticalBuffer buffer=new DefaultPracticalBuffer(packet.getContent());
         boolean fromCall=buffer.readBoolean();
         //是否为同步消息
         boolean sync=buffer.readBoolean();
@@ -101,8 +99,6 @@ import java.util.List;
                 param=CommonUtils.derialize(bytes,Throwable.class);
             }else{
                 MessageProxy messageProxy= MessageProxyFactory.ONLY_INSTANCE.getMessageProxy(msgType, clazz);
-                int mark=buffer.getByteBuf().readerIndex();
-                buffer.getByteBuf().readerIndex(mark);
                 if(messageProxy!=null){
                     param=messageProxy.decode(buffer);
                 }

@@ -1,6 +1,6 @@
 package com.xl.boot;
 
-import com.xl.annotation.CmdControl;
+import com.xl.annotation.RpcControl;
 import com.xl.annotation.Extension;
 import com.xl.dispatch.MethodInterceptor;
 import com.xl.dispatch.method.RpcMethodDispatcher;
@@ -58,7 +58,7 @@ public abstract class SocketEngine {
                 Class[] controlInterfaceList=clazz.getInterfaces();
                 if(!clazz.isInterface()){
                     for(Class controlInterface:controlInterfaceList){
-                        if(ClassUtils.hasAnnotation(controlInterface,CmdControl.class)){
+                        if(ClassUtils.hasAnnotation(controlInterface,RpcControl.class)){
                             rpcMethodDispatcher.loadClasses(clazz);
                             log.info("Load control "+clazz.getName());
                             break;

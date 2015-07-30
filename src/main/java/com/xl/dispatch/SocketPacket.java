@@ -1,14 +1,14 @@
 package com.xl.dispatch;
 
 import com.xl.annotation.MsgType;
-import com.xl.utils.NGSocketParams;
+import com.xl.utils.EngineParams;
 
 /**
  * Created by Administrator on 2015/7/16.
  */
 public class SocketPacket {
     protected int cmd;
-    protected MsgType msgType= NGSocketParams.getSystemMsgType();
+    protected MsgType msgType= EngineParams.getSystemMsgType();
     protected Object[] params;
     public SocketPacket(int cmd,Object...params){
         this.cmd=cmd;

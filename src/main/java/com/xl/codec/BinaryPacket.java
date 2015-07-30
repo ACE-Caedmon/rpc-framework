@@ -1,4 +1,4 @@
-package com.xl.codec.binary;
+package com.xl.codec;
 
 import io.netty.buffer.ByteBuf;
 

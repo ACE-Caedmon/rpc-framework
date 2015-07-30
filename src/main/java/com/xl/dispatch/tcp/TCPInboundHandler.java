@@ -22,14 +22,14 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 
 @Sharable
-public class TCPServerInboundHandler extends SimpleChannelInboundHandler<ControlMethod>{
-	private static final Logger log = LoggerFactory.getLogger(TCPServerInboundHandler.class);
+public class TCPInboundHandler extends SimpleChannelInboundHandler<ControlMethod>{
+	private static final Logger log = LoggerFactory.getLogger(TCPInboundHandler.class);
 	private RpcMethodDispatcher rpcMethodDispatcher;
 	private DefaultChannelProgressivePromise activePromise;
-	public TCPServerInboundHandler(RpcMethodDispatcher rpcMethodDispatcher){
+	public TCPInboundHandler(RpcMethodDispatcher rpcMethodDispatcher){
 		this(rpcMethodDispatcher,null);
 	}
-	public TCPServerInboundHandler(RpcMethodDispatcher rpcMethodDispatcher,DefaultChannelProgressivePromise activePromise){
+	public TCPInboundHandler(RpcMethodDispatcher rpcMethodDispatcher, DefaultChannelProgressivePromise activePromise){
 		this.rpcMethodDispatcher=rpcMethodDispatcher;
 		this.activePromise=activePromise;
 	}

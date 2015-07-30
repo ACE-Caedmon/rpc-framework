@@ -1,9 +1,7 @@
 package com.xl.cluster.client;
 
-import com.xl.annotation.CmdControl;
-import com.xl.annotation.Extension;
+import com.xl.annotation.RpcControl;
 import com.xl.annotation.MsgType;
-import com.xl.boot.ModuleExtension;
 import com.xl.boot.SocketEngine;
 import com.xl.boot.TCPClientSettings;
 import com.xl.boot.TCPClientSocketEngine;
@@ -70,7 +68,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
             List<Class> allClasses=ClassUtils.getClasssFromPackage(scanPackage);
             log.info("Scan all classes {}",allClasses.size());
             for(Class clazz:allClasses){
-                if(ClassUtils.hasAnnotation(clazz,CmdControl.class)&&clazz.isInterface()){
+                if(ClassUtils.hasAnnotation(clazz,RpcControl.class)&&clazz.isInterface()){
                     rpcCallProxyFactory.createRpcCallProxy(clazz);
                     log.info("Create rpcCallProxy : class = {}", StringUtil.simpleClassName(clazz));
                 }
@@ -118,11 +116,6 @@ public class SimpleRpcClientApi implements RpcClientApi {
         String userDir=System.getProperty("user.dir");
         zkServerManager =new ZkServerManager(zkServer,userDir+"/work");
         zkServerManager.setListener(new ZkServerManager.ServerConfigListener() {
-            @Override
-            public void onConfigChanged(String s) {
-                log.debug("Zookeeper server config changed:",s);
-            }
-
             @Override
             public void onServerListChanged(String s) {
                 SimpleRpcClientApi.this.refreshClusterServers(s);

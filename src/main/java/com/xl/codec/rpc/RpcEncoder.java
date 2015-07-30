@@ -1,9 +1,12 @@
 package com.xl.codec.rpc;
 
 
-import com.xl.codec.BinaryCodecApi;
+import com.xl.codec.DefaultPracticalBuffer;
 import com.xl.codec.RpcPacket;
-import com.xl.codec.binary.BinaryPacket;
+import com.xl.codec.BinaryPacket;
+import com.xl.dispatch.message.MessageProxy;
+import com.xl.dispatch.message.MessageProxyFactory;
+import com.xl.utils.CommonUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -14,56 +17,54 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-/**
- * 网络数据报文编码器
- * @author Chenlong
- * 协议格式<br>
- *     <table  border frame="box">
- *         <tr>
- *             <th style="text-align:center"></th>
- *             <th style="text-align:center">包长</th>
- *             <th style="text-align:center">是否加密</th>
- *             <th style="text-align:center">密码表索引</th>
- *             <th style="text-align:center">指令ID(cmd)</th>
- *             <th style="text-align:center">消息体(OutMessage中自定义内容)</th>
- *         </tr>
- *         <tr>
- *             <td>数据类型</td>
- *             <td style="text-align:center">short</td>
- *             <td style="text-align:center">byte</td>
- *             <td style="text-align:center">byte</td>
- *             <td style="text-align:center">short</td>
- *             <td style="text-align:center">byte[]</td>
- *         </tr>
- *         <tr>
- *             <td>每部分字节数</td>
- *             <td style="text-align:center">2</td>
- *             <td style="text-align:center">1</td>
- *             <td style="text-align:center">1</td>
- *             <td style="text-align:center">2</td>
- *             <td style="text-align:center">根据消息体内容计算</td>
- *         </tr>
- *         <tr>
- *             <td style="text-align:center">是否加密</td>
- *             <td colspan="3" style="text-align:center">未加密部分</td>
- *             <td colspan="2" style="text-align:center">加密部分</td>
- *         </tr>
- *     </table>
- *
- * */
 @Sharable
 public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
     private static Logger log=LoggerFactory.getLogger(RpcEncoder.class);
     @Override
-	protected void encode(ChannelHandlerContext ctx, RpcPacket output, List<Object> out)
+	protected void encode(ChannelHandlerContext ctx, RpcPacket packet, List<Object> out)
 			throws Exception {
-        BinaryCodecApi.EncryptBinaryPacket binaryPacket= BinaryCodecApi.encodeBody(output, ctx.channel());
-        ByteBuf buf= PooledByteBufAllocator.DEFAULT.buffer(binaryPacket.content.length + 4);//开辟新Buff
-        buf.writeBoolean(binaryPacket.isEncrypt);//写入加密标识
-        buf.writeByte(binaryPacket.passwordIndex);//写入密码索引
-        buf.writeBytes(binaryPacket.content);//写入dst
-        BinaryPacket packet=new BinaryPacket(buf);
-        out.add(packet);
-        log.debug("Rpc encode :packet = {}",output.toString());
+        ByteBuf buf=PooledByteBufAllocator.DEFAULT.buffer();
+        DefaultPracticalBuffer data=new DefaultPracticalBuffer(buf);
+        data.writeBoolean(packet.isFromCall());
+        data.writeBoolean(packet.getSync());
+        data.writeInt(packet.getCmd());
+        data.writeString(packet.getUuid());
+        data.writeBoolean(packet.isException());
+        data.writeInt(packet.getMsgType().value);
+        Object[] params=packet.getParams();
+        StringBuilder classNameArray=new StringBuilder();
+        String classNameResult;
+        if(params!=null){
+            for(Object e:params){
+                if(e!=null){
+                    classNameArray.append(",").append(e.getClass().getName());;
+                }else{
+                    classNameArray.append(",null");
+                }
+            }
+            classNameResult=classNameArray.substring(1);
+        }else{
+            classNameResult="null";
+        }
+        data.writeString(classNameResult);
+        if(params!=null){
+            for(Object e:params){
+                if(e!=null){
+                    //如果是异常，则采用Java序列化方式
+                    if(packet.isException()&&e instanceof Throwable){
+                        byte[] bytes= CommonUtils.serialize(e);
+                        data.writeInt(bytes.length);
+                        data.writeBytes(bytes);
+                    }else{
+                        MessageProxy proxy= MessageProxyFactory.ONLY_INSTANCE.getMessageProxy(packet.getMsgType(), e.getClass());
+                        data.writeBytes(proxy.encode(e));
+                    }
+
+                }
+            }
+        }
+        BinaryPacket nextPacket=new BinaryPacket(buf);
+        out.add(nextPacket);
+        log.debug("Rpc encode :packet = {}",packet.toString());
 	}
 }

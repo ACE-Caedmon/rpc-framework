@@ -6,13 +6,12 @@ import com.xl.dispatch.method.RpcMethodDispatcher;
 import com.xl.session.ISession;
 import com.xl.session.Session;
 import com.xl.session.SessionFire;
-import com.xl.utils.NGSocketParams;
+import com.xl.utils.EngineParams;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.util.concurrent.DefaultProgressivePromise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +52,7 @@ public class TCPClientSocketEngine extends SocketEngine{
             log.info("Protocol type: {}",TCP_PROTOCOL);
             log.info("Worker thread : {}",settings.workerThreadSize);
             log.info("Logic thread:{}",settings.cmdThreadSize);
-            log.info("Socket package encrypt : {}", NGSocketParams.isSocketPacketEncrypt());
+            log.info("Socket package encrypt : {}", EngineParams.isSocketPacketEncrypt());
             log.info("Cmd Dispatcher : {}", rpcMethodDispatcher.getClass().getCanonicalName());
             log.info("Socket port :{}",settings.port);
 
@@ -66,7 +65,7 @@ public class TCPClientSocketEngine extends SocketEngine{
             return;
         }
         //如果系统配置不加密则不发送密码表
-        if(NGSocketParams.isSocketPacketEncrypt()){
+        if(EngineParams.isSocketPacketEncrypt()){
             //用来给客户端发送密码表
             SessionFire.getInstance().registerEvent(SessionFire.SessionEvent.SESSION_LOGIN, new ValidateOKHandler());
         }

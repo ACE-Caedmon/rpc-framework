@@ -5,7 +5,6 @@ import com.xl.codec.RpcPacket;
 import com.xl.dispatch.MethodInterceptor;
 import com.xl.dispatch.message.MessageProxyFactory;
 import com.xl.exception.ControlMethodCreateException;
-import com.xl.exception.RemoteException;
 import com.xl.session.ISession;
 import com.xl.utils.ClassUtils;
 import javassist.ClassPool;
@@ -87,15 +86,15 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
     private void loadControlClass(Class controlClass) throws Exception {
         Class controlInterface=null;
         for(Class c:controlClass.getInterfaces()){
-            if(ClassUtils.hasAnnotation(c,CmdControl.class)){
+            if(ClassUtils.hasAnnotation(c,RpcControl.class)){
                 controlInterface=c;
                 break;
             }
         }
-        List<Method> cmdMethods= ClassUtils.findMethodsByAnnotation(controlInterface, CmdMethod.class);
+        List<Method> cmdMethods= ClassUtils.findMethodsByAnnotation(controlInterface, RpcMethod.class);
         String proxyClassName=controlClass.getSimpleName()+"Proxy";
         for(Method method:cmdMethods){
-            CmdMethod ma=method.getAnnotation(CmdMethod.class);
+            RpcMethod ma=method.getAnnotation(RpcMethod.class);
             //$1 session
             int cmd=ma.cmd();
             if(proxyCreatorMap.containsKey(cmd)){
@@ -112,12 +111,12 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     CtMethod ctMethod=ctProxyClass.getDeclaredMethod("doCmd");
                     StringBuilder methodBody=new StringBuilder();
                     methodBody.append(getMethodInvokeSrc(method));
-                    CmdResponse cmdResponse=method.getAnnotation(CmdResponse.class);
+                    RpcResponse rpcResponse =method.getAnnotation(RpcResponse.class);
                     Class responseType=method.getReturnType();
                     //将response构造成数组作为参数，否则会编译出错
 
                     //带有CmdResponse 一定要响应
-                    if(cmdResponse!=null){
+                    if(rpcResponse !=null){
                         if(!ClassUtils.isVoidReturn(responseType)){
                             //判断接受的消息是否为同步消息
                             if(responseType==Object[].class){
@@ -129,7 +128,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                             methodBody.append(" packet.setParams(null);$1.writeAndFlush(packet);");
                         }
                     }
-                    log.debug("Javassit generate code:{}",methodBody.toString());
+                    log.debug("Javassit generate code:{}", methodBody.toString());
                     ctMethod.insertAfter(methodBody.toString());
                     //ctProxyClass.writeFile("javassit/");
                     Class resultClass=ctProxyClass.toClass();
@@ -153,7 +152,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
             creatorClass.setSuperclass(classPool.getCtClass(ControlMethodProxyCreator.class.getName()));
             CtMethod createMethod=creatorClass.getDeclaredMethod("create");
             createMethod.setBody("{" +
-                    proxy.getName()+" proxy=new "+proxy.getName()+"($1);return proxy;"+
+                    proxy.getName() + " proxy=new " + proxy.getName() + "($1);return proxy;" +
                     "}");
             //creatorClass.writeFile("javassit/");
             creator=(ControlMethodProxyCreator)creatorClass.toClass().newInstance();
@@ -175,28 +174,28 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
             //参数类型
             Class parameterType=parameterTypes[i];
             Annotation[] annotations=parametersAnnotations[i];
-            CmdRequest cmdRequest=null;
-            CmdUser cmdUser=null;
+            RpcRequest rpcRequest =null;
+            RpcSession rpcSession =null;
             for(Annotation annotation:annotations){
                 Class annotationClass=annotation.annotationType();
-                if(annotationClass==CmdRequest.class){
-                    cmdRequest=(CmdRequest)annotation;
+                if(annotationClass==RpcRequest.class){
+                    rpcRequest =(RpcRequest)annotation;
                     break;
                 }
-                if(annotationClass==CmdUser.class){
-                    cmdUser=(CmdUser)annotation;
+                if(annotationClass==RpcSession.class){
+                    rpcSession =(RpcSession)annotation;
                     break;
                 }
             }
-            if(cmdRequest!=null){
+            if(rpcRequest !=null){
                 //注册MessageProxy
-                MsgType requestType = cmdRequest.type();
+                MsgType requestType = rpcRequest.type();
                 MessageProxyFactory.ONLY_INSTANCE.getMessageProxy(requestType, parameterType);
                 String paramClassName=parameterType.getName();
                 invokeParams[i] = "(" +paramClassName+ ")"+"(this.packet.getParams()["+paramsCount+"])";
                 paramsCount++;
             }
-            if(cmdUser!=null){
+            if(rpcSession !=null){
                 if (parameterType.isAssignableFrom(ISession.class)) {
                     invokeParams[i] = "$1";
                 } else {
@@ -210,7 +209,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
         String methodName=method.getName();
 
         //是否自动将返回值发送给客户端
-        Annotation cmdResponse=ClassUtils.getAnnotation(method, CmdResponse.class);
+        Annotation cmdResponse=ClassUtils.getAnnotation(method, RpcResponse.class);
         boolean isCmdResponse=(cmdResponse!=null);
         //判断返回值类型
         Class returnType=method.getReturnType();

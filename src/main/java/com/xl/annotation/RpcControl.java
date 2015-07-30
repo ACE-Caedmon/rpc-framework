@@ -9,7 +9,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented
-public @interface CmdControl {
+public @interface RpcControl {
     //集群名
     String value() default "";
 }

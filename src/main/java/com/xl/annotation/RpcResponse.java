@@ -6,7 +6,7 @@ import java.lang.annotation.*;
  * Created by Administrator on 2015/7/10.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.PARAMETER)
+@Target(ElementType.METHOD)
 @Documented
-public @interface CmdUser {
+public @interface RpcResponse {
 }

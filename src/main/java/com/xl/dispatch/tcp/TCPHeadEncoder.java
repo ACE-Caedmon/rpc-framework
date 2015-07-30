@@ -1,6 +1,6 @@
 package com.xl.dispatch.tcp;
 
-import com.xl.codec.binary.BinaryPacket;
+import com.xl.codec.BinaryPacket;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;

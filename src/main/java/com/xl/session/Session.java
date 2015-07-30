@@ -46,7 +46,6 @@ public class Session implements ISession{
 	private volatile boolean active=true;
 	//Netty已经触发过inActive
 	private AtomicBoolean nettyInActive=new AtomicBoolean(false);
-	private MsgType msgType=MsgType.JSON;
     private static Logger logger= LoggerFactory.getLogger(Session.class);
 	public Session(Channel channel){
 		this.channel=channel;
@@ -85,7 +84,7 @@ public class Session implements ISession{
 			}
 		}catch (Exception e){
 			e.printStackTrace();
-			logger.error("断线异常",e);
+			logger.error("Disconnect error",e);
 		}
 
 		return future;

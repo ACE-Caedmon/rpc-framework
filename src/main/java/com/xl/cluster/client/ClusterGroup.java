@@ -67,7 +67,7 @@ public class ClusterGroup{
         callCount++;
         List<ServerNode> nodes= new ArrayList<>(resources.values());
         if(resources.isEmpty()){
-            throw new ClusterException("集群无可用节点:value = "+clusterName);
+            throw new ClusterException("Group has active node:clusterName = "+clusterName);
         }
         return (ServerNode)nodes.toArray()[callCount%nodes.size()];
     }

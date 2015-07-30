@@ -1,8 +1,8 @@
 package common.client;
 
-import com.xl.annotation.CmdMethod;
-import com.xl.annotation.CmdRequest;
-import com.xl.annotation.CmdUser;
+import com.xl.annotation.RpcMethod;
+import com.xl.annotation.RpcRequest;
+import com.xl.annotation.RpcSession;
 import com.xl.session.ISession;
 import common.UserInfo;
 
@@ -11,8 +11,8 @@ import common.UserInfo;
  */
 public class ClientControl {
 
-    @CmdMethod(cmd =Command.ServerControl_login)
-    public void loginSuccess(@CmdUser ISession session, @CmdRequest UserInfo userInfo){
+    @RpcMethod(cmd =Command.ServerControl_login)
+    public void loginSuccess(@RpcSession ISession session, @RpcRequest UserInfo userInfo){
 
     }
 

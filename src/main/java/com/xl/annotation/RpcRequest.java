@@ -8,6 +8,6 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 @Documented
-public @interface CmdRequest {
+public @interface RpcRequest {
     MsgType type() default MsgType.JSON;
 }

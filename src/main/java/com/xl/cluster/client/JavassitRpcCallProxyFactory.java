@@ -1,7 +1,7 @@
 package com.xl.cluster.client;
 
-import com.xl.annotation.CmdControl;
-import com.xl.annotation.CmdMethod;
+import com.xl.annotation.RpcControl;
+import com.xl.annotation.RpcMethod;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
@@ -36,9 +36,9 @@ public class JavassitRpcCallProxyFactory implements RpcCallProxyFactory{
     private <T> T createCallProxy(Class<T> clazz) throws Exception{
         String className=clazz.getName();
         //判断注解
-        CmdControl rpcControlAnnotation=clazz.getAnnotation(CmdControl.class);
+        RpcControl rpcControlAnnotation=clazz.getAnnotation(RpcControl.class);
         if(rpcControlAnnotation==null){
-            throw new IllegalArgumentException("Has no annotation @CmdControl:class = "+className);
+            throw new IllegalArgumentException("Has no annotation @RpcControl:class = "+className);
         }
         String clusterName=rpcControlAnnotation.value();
         if(clusterName==null||clusterName.trim().equals("")){
@@ -54,7 +54,7 @@ public class JavassitRpcCallProxyFactory implements RpcCallProxyFactory{
             int i=0;
             //查看带注解的方法
             for(Method method:methods){
-                CmdMethod cmdMethod=method.getAnnotation(CmdMethod.class);
+                RpcMethod cmdMethod=method.getAnnotation(RpcMethod.class);
                 int cmd=cmdMethod.cmd();
                 Class returnType=method.getReturnType();
                 StringBuilder body=new StringBuilder();
