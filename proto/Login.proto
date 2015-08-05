@@ -1,0 +1,8 @@
+
+option java_package = "com.xl.message";
+
+option java_outer_classname = "LoginProtoBuffer";
+message Login {
+    optional string username=1;
+    optional string password=2;
+}

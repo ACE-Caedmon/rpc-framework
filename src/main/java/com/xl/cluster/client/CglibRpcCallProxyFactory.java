@@ -4,6 +4,7 @@ import net.sf.cglib.proxy.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class CglibRpcCallProxyFactory implements RpcCallProxyFactory{
     private static final MethodInterceptor COMMON_CGLIB_CALLBACK=new CglibRpcCallBack();
-    private Map<Class,Object> proxyCache=new ConcurrentHashMap<>();
+    private Map<Class,Object> proxyCache=new HashMap<>();
     private static final Logger log= LoggerFactory.getLogger(CglibRpcCallProxyFactory.class);
     @Override
     public <T> T getRpcCallProxy(Class<T> clazz) {

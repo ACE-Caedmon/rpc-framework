@@ -24,7 +24,7 @@ public class SyncControlMethod extends NoOpControlMethod {
         if(callBack!=null){
             if(packet.isException()){
                 callBack.processException(new RemoteException((Throwable) packet.getParams()[0]));
-                log.debug("SyncCallBackMethod process exception:cmd = {}", packet.getCmd());
+                log.error("SyncCallBackMethod process exception:cmd = {}", packet.getCmd());
                 return;
             }
             if(packet.getParams().length==1&&packet.getClassNameArray().length==1){

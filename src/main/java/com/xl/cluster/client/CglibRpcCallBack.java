@@ -32,7 +32,7 @@ public class CglibRpcCallBack implements MethodInterceptor {
         if(cmdMethod==null){
             return  null;
         }
-        int cmd=method.getAnnotation(RpcMethod.class).cmd();
+        String cmd=method.getAnnotation(RpcMethod.class).value();
         Class returnType=method.getReturnType();
         return rpcClientApi.syncRpcCall(clusterName,cmd,returnType,params);
     }

@@ -9,5 +9,5 @@ import java.lang.annotation.*;
 @Target(ElementType.METHOD)
 @Documented
 public @interface RpcMethod {
-    int cmd();
+    String value();
 }

@@ -13,9 +13,13 @@ import com.xl.dispatch.method.RpcCallback;
 import com.xl.dispatch.method.SyncRpcCallBack;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelPromise;
+import io.netty.channel.DefaultChannelPromise;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.DefaultProgressivePromise;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericProgressiveFutureListener;
+import io.netty.util.concurrent.ProgressiveFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,6 +109,7 @@ public class Session implements ISession{
 			setLastActiveTime(System.currentTimeMillis());
 			return future;
 		}else{
+			logger.error("Session is not active:packet = {}",packet.toString());
 			return channel.newSucceededFuture();
 		}
 	}

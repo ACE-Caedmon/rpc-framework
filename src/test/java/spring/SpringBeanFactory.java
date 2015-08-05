@@ -10,7 +10,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class SpringBeanFactory {
     @Test
     public void getAutoWireBean() throws Exception{
-        ClassPathXmlApplicationContext context=new ClassPathXmlApplicationContext("spring/beans.xml");
+        ClassPathXmlApplicationContext context=new ClassPathXmlApplicationContext("spring/server-beans.xml");
         ClientControl control=context.getBean(ClientControl.class);
     }
 }

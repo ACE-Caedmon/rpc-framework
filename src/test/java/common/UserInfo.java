@@ -1,9 +1,11 @@
 package common;
 
+import java.io.Serializable;
+
 /**
  * Created by Administrator on 2015/7/10.
  */
-public class UserInfo {
+public class UserInfo implements Serializable{
     private int userId;
     private String username;
     private String password;

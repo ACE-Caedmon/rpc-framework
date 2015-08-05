@@ -23,48 +23,54 @@ public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
     @Override
 	protected void encode(ChannelHandlerContext ctx, RpcPacket packet, List<Object> out)
 			throws Exception {
-        ByteBuf buf=PooledByteBufAllocator.DEFAULT.buffer();
-        DefaultPracticalBuffer data=new DefaultPracticalBuffer(buf);
-        data.writeBoolean(packet.isFromCall());
-        data.writeBoolean(packet.getSync());
-        data.writeInt(packet.getCmd());
-        data.writeString(packet.getUuid());
-        data.writeBoolean(packet.isException());
-        data.writeInt(packet.getMsgType().value);
-        Object[] params=packet.getParams();
-        StringBuilder classNameArray=new StringBuilder();
-        String classNameResult;
-        if(params!=null){
-            for(Object e:params){
-                if(e!=null){
-                    classNameArray.append(",").append(e.getClass().getName());;
-                }else{
-                    classNameArray.append(",null");
-                }
-            }
-            classNameResult=classNameArray.substring(1);
-        }else{
-            classNameResult="null";
-        }
-        data.writeString(classNameResult);
-        if(params!=null){
-            for(Object e:params){
-                if(e!=null){
-                    //如果是异常，则采用Java序列化方式
-                    if(packet.isException()&&e instanceof Throwable){
-                        byte[] bytes= CommonUtils.serialize(e);
-                        data.writeInt(bytes.length);
-                        data.writeBytes(bytes);
+        try{
+            ByteBuf buf=PooledByteBufAllocator.DEFAULT.buffer();
+            DefaultPracticalBuffer data=new DefaultPracticalBuffer(buf);
+            data.writeString(packet.getCmd());
+            data.writeBoolean(packet.isFromCall());
+            data.writeBoolean(packet.getSync());
+            data.writeString(packet.getUuid());
+            data.writeBoolean(packet.isException());
+            data.writeInt(packet.getMsgType().value);
+            Object[] params=packet.getParams();
+            StringBuilder classNameArray=new StringBuilder();
+            String classNameResult;
+            if(params!=null){
+                for(Object e:params){
+                    if(e!=null){
+                        classNameArray.append(",").append(e.getClass().getName());;
                     }else{
-                        MessageProxy proxy= MessageProxyFactory.ONLY_INSTANCE.getMessageProxy(packet.getMsgType(), e.getClass());
-                        data.writeBytes(proxy.encode(e));
+                        classNameArray.append(",null");
                     }
+                }
+                classNameResult=classNameArray.substring(1);
+            }else{
+                classNameResult="null";
+            }
+            data.writeString(classNameResult);
+            if(params!=null){
+                for(Object e:params){
+                    if(e!=null){
+                        //如果是异常，则采用Java序列化方式
+                        if(packet.isException()&&e instanceof Throwable){
+                            byte[] bytes= CommonUtils.serialize(e);
+                            data.writeInt(bytes.length);
+                            data.writeBytes(bytes);
+                        }else{
+                            MessageProxy proxy= MessageProxyFactory.ONLY_INSTANCE.getMessageProxy(packet.getMsgType(), e.getClass());
+                            data.writeBytes(proxy.encode(e));
 
+                        }
+
+                    }
                 }
             }
+            BinaryPacket nextPacket=new BinaryPacket(buf);
+            out.add(nextPacket);
+            log.debug("Rpc encode :packet = {},time = {}",packet.toString(),System.currentTimeMillis());
+        }catch (Exception e){
+            e.printStackTrace();
+            log.error("Rpc encode error ",e);
         }
-        BinaryPacket nextPacket=new BinaryPacket(buf);
-        out.add(nextPacket);
-        log.debug("Rpc encode :packet = {}",packet.toString());
 	}
 }

@@ -59,7 +59,6 @@ public class ServerSocketEngine extends SocketEngine{
             log.info("Boss thread : {}",settings.bossThreadSize);
             log.info("Worker thread : {}",settings.workerThreadSize);
             log.info("Logic thread:{}",settings.cmdThreadSize);
-            log.info("Socket package encrypt : {}", EngineParams.isSocketPacketEncrypt());
             log.info("Cmd Dispatcher : {}", rpcMethodDispatcher.getClass().getCanonicalName());
             log.info("Socket port :{}",settings.port);
 
@@ -72,11 +71,6 @@ public class ServerSocketEngine extends SocketEngine{
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
             return;
-        }
-        //如果系统配置不加密则不发送密码表
-        if(EngineParams.isSocketPacketEncrypt()){
-            //用来给客户端发送密码表
-            SessionFire.getInstance().registerEvent(SessionFire.SessionEvent.SESSION_LOGIN, new ValidateOKHandler());
         }
         log.info("ServerSocketEngine Start OK!");
     }

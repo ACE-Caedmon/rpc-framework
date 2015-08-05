@@ -7,18 +7,19 @@ import com.xl.utils.EngineParams;
  * Created by Administrator on 2015/7/16.
  */
 public class SocketPacket {
-    protected int cmd;
+    protected String cmd;
     protected MsgType msgType= EngineParams.getSystemMsgType();
     protected Object[] params;
-    public SocketPacket(int cmd,Object...params){
+    public SocketPacket(String cmd,Object...params){
         this.cmd=cmd;
         this.params=params;
     }
-    public int getCmd() {
+
+    public String getCmd() {
         return cmd;
     }
 
-    public void setCmd(int cmd) {
+    public void setCmd(String cmd) {
         this.cmd = cmd;
     }
 

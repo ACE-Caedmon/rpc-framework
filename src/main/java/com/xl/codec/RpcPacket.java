@@ -3,6 +3,8 @@ package com.xl.codec;
 import com.alibaba.fastjson.JSON;
 import com.xl.dispatch.SocketPacket;
 
+import java.util.Arrays;
+
 /**
  * @author Caedmon
  * 输出对象
@@ -13,7 +15,7 @@ public class RpcPacket extends SocketPacket {
     private String uuid;
     private boolean exception;
     private String[] classNameArray;
-    public RpcPacket(int cmd,Object...content){
+    public RpcPacket(String cmd,Object...content){
         super(cmd,content);
     }
 
@@ -57,9 +59,19 @@ public class RpcPacket extends SocketPacket {
         this.fromCall = fromCall;
     }
 
+    public String getClassNames(){
+        return Arrays.toString(classNameArray);
+    }
+
     @Override
     public String toString() {
-        return JSON.toJSONString(this);
+        return "RpcPacket{" +
+                "classNameArray=" + Arrays.toString(classNameArray) +
+                ", exception=" + exception +
+                ", uuid='" + uuid + '\'' +
+                ", sync=" + sync +
+                ", fromCall=" + fromCall +
+                '}';
     }
 }
 

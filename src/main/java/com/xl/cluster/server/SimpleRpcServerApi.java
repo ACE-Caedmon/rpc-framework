@@ -62,8 +62,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
         RpcMethodDispatcher dispatcher=new JavassitRpcMethodDispatcher(beanAccess,cmdThreadSize);
         socketEngine=new ServerSocketEngine(settings,dispatcher);
         socketEngine.start();
-        String userDir=System.getProperty("user.dir");
-        zkServerManager =new ZkServerManager(this.zkServer,userDir);
+        zkServerManager =new ZkServerManager(this.zkServer);
         try{
             zkServerManager.registerService(this.clusterName,host+":"+port);
         }catch (Exception e){

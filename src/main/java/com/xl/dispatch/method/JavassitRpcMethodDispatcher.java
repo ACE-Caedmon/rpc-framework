@@ -1,8 +1,10 @@
 package com.xl.dispatch.method;
 
+import com.google.protobuf.MessageOrBuilder;
 import com.xl.annotation.*;
 import com.xl.codec.RpcPacket;
 import com.xl.dispatch.MethodInterceptor;
+import com.xl.dispatch.SocketPacket;
 import com.xl.dispatch.message.MessageProxyFactory;
 import com.xl.exception.ControlMethodCreateException;
 import com.xl.session.ISession;
@@ -16,10 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -31,12 +30,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
     private ClassPool classPool=new ClassPool();
     private BeanAccess beanAccess;
-    private Map<Integer,ControlMethodProxyCreator> proxyCreatorMap =new HashMap<>();
+    private Map<String,ControlMethodProxyCreator> proxyCreatorMap =new HashMap<>();
     private List<MethodInterceptor> methodInterceptors=new ArrayList<>();
     private static final Logger log= LoggerFactory.getLogger(JavassitRpcMethodDispatcher.class);
     private ExecutorService threadPool;
     public JavassitRpcMethodDispatcher(int threadSize){
         this(new PrototypeBeanAccess(), threadSize);
+    }
+
+    public static void main(String[] args) {
+        for(Method method:JavassitRpcMethodDispatcher.class.getDeclaredMethods()){
+            System.out.println(method.getName()+":"+method.hashCode());
+        }
     }
     public JavassitRpcMethodDispatcher(BeanAccess beanAccess, int threadSize){
         this.beanAccess=beanAccess;
@@ -57,7 +62,8 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
     }
     @Override
     public ControlMethod newControlMethodProxy(RpcPacket rpcPacket) {
-        ControlMethodProxyCreator creator= proxyCreatorMap.get(rpcPacket.getCmd());
+        String classNames=rpcPacket.getClassNames();
+        ControlMethodProxyCreator creator= proxyCreatorMap.get(rpcPacket.getCmd()+"-"+classNames);
         ControlMethod proxy=null;
         if(creator!=null){
             proxy=creator.create(rpcPacket);
@@ -72,7 +78,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                 proxy=new AsyncCallBackMethod(rpcPacket);
             }
         }
-        log.debug("Create controlMethod:{}",proxy.getClass().getName());
+        log.debug("Create controlMethod:{}", proxy.getClass().getName());
         return proxy;
     }
 
@@ -82,6 +88,42 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
             loadControlClass(controlClass);
             log.info("Load cmdControl: "+controlClass.getName());
         }
+    }
+    private MsgType getMethodMsgType(Method method){
+        Annotation[][] parametersAnnotations=method.getParameterAnnotations();
+        Class[] parameterTypes=method.getParameterTypes();
+        MsgType result=null;
+        for(int i=0;i<parameterTypes.length;i++){
+            //参数类型
+            Class parameterType=parameterTypes[i];
+            Annotation[] annotations=parametersAnnotations[i];
+            RpcRequest rpcRequest =null;
+            RpcSession rpcSession =null;
+            for(Annotation annotation:annotations){
+                Class annotationClass=annotation.annotationType();
+                if(annotationClass==RpcRequest.class){
+                    rpcRequest =(RpcRequest)annotation;
+                    break;
+                }
+            }
+            if(rpcRequest!=null){
+                //检测到Protobuf结构作为参数，则将该方法协议结构类型定义为Protobuf
+                if(MessageOrBuilder.class.isAssignableFrom(parameterType)){
+                    MsgType paramterMsgType=MsgType.ProtoBuf;
+                    if(result==null){
+                        result=paramterMsgType;
+                    }else{
+                        if(result!=paramterMsgType){
+                            throw new IllegalStateException("Except msgType is "+result+",actual msgType is "+paramterMsgType);
+                        }
+                    }
+                }
+            }
+        }
+        if(result==null){
+            result=MsgType.JSON;
+        }
+        return result;
     }
     private void loadControlClass(Class controlClass) throws Exception {
         Class controlInterface=null;
@@ -96,14 +138,16 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
         for(Method method:cmdMethods){
             RpcMethod ma=method.getAnnotation(RpcMethod.class);
             //$1 session
-            int cmd=ma.cmd();
+            String cmd=ma.value();
             if(proxyCreatorMap.containsKey(cmd)){
                 log.warn("Repeated load control: controlClass = " + controlClass.getName() + ",cmd = " + cmd + "");
             }else{
                 //要去重
-                CtClass ctProxyClass=classPool.getOrNull(proxyClassName + cmd);
+                MsgType methodMsgType=getMethodMsgType(method);
+                CtClass ctProxyClass=classPool.getOrNull(proxyClassName + cmd +methodMsgType);
+
                 if(ctProxyClass==null){
-                    ctProxyClass=classPool.getAndRename(NoOpControlMethod.class.getName(),proxyClassName+cmd);
+                    ctProxyClass=classPool.getAndRename(NoOpControlMethod.class.getName(),proxyClassName+cmd+methodMsgType);
                     CtField beanFactoryField=CtField.make("private static final " + beanAccess.getClass().getName() + " beanAccess= new " + beanAccess.getClass().getName() + "();", ctProxyClass);
                     ctProxyClass.addField(beanFactoryField);
                     CtField controlField=CtField.make("private "+controlClass.getName()+" control=("+controlClass.getName()+")this.beanAccess.getBean("+controlClass.getName()+".class);",ctProxyClass);
@@ -115,7 +159,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     Class responseType=method.getReturnType();
                     //将response构造成数组作为参数，否则会编译出错
 
-                    //带有CmdResponse 一定要响应
+                    //带有RpcResponse 一定要响应
                     if(rpcResponse !=null){
                         if(!ClassUtils.isVoidReturn(responseType)){
                             //判断接受的消息是否为同步消息
@@ -133,7 +177,14 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     //ctProxyClass.writeFile("javassit/");
                     Class resultClass=ctProxyClass.toClass();
                     ControlMethodProxyCreator creator=buildMethodProxyCreator(resultClass);
-                    proxyCreatorMap.put(cmd, creator);
+                    Class[] paramTypes=method.getParameterTypes();
+                    String[] classNames=new String[paramTypes.length];
+                    int i=0;
+                    for(Class paramTypeName:paramTypes){
+                        classNames[i]=paramTypeName.getName();
+                        i++;
+                    }
+                    proxyCreatorMap.put(cmd+"-"+ Arrays.toString(classNames), creator);
 
                 }else{
                     //已经加载过
@@ -189,7 +240,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
             }
             if(rpcRequest !=null){
                 //注册MessageProxy
-                MsgType requestType = rpcRequest.type();
+                MsgType requestType = rpcRequest.value();
                 MessageProxyFactory.ONLY_INSTANCE.getMessageProxy(requestType, parameterType);
                 String paramClassName=parameterType.getName();
                 invokeParams[i] = "(" +paramClassName+ ")"+"(this.packet.getParams()["+paramsCount+"])";
@@ -255,7 +306,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
             @Override
             public void run() {
                 RpcPacket packet = methodProxy.packet;
-                int cmd = packet.getCmd();
+                String cmd = packet.getCmd();
                 boolean allowed = true;
                 final List<MethodInterceptor> interceptors = methodInterceptors;
                 try {

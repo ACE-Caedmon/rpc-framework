@@ -13,8 +13,8 @@ public class LoginInterceptor implements MethodInterceptor{
     @Override
     public boolean beforeDoCmd(ISession session,RpcPacket packet) {
         System.out.println("拦截器:before");
-        int cmd=packet.getCmd();
-        if(cmd== Command.ServerControl_login||cmd==Command.SystemControl_default){
+        String cmd=packet.getCmd();
+        if(cmd.equals(Command.ServerControl_login)||cmd.equals(Command.ServerControl_login)){
             return true;
         }else{
             if(session.containsAttribute(AttributeName.USER_NAME)){

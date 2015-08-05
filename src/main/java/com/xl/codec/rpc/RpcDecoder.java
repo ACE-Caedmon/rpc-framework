@@ -18,42 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-
-/**
- * 网络数据报文解码处理器
- * @author Chenlong
- * 协议格式<br>
- *     <table  border frame="box">
- *         <tr>
- *             <th style="text-align:center"></th>
- *             <th style="text-align:center">包长</th>
- *             <th style="text-align:center">是否加密</th>
- *             <th style="text-align:center">密码表索引</th>
- *             <th style="text-align:center">指令ID(cmd)</th>
- *             <th style="text-align:center">消息体(MessageHandler中自定义内容)</th>
- *         </tr>
- *         <tr>
- *             <td>数据类型</td>
- *             <td style="text-align:center">int</td>
- *             <td style="text-align:center">byte</td>
- *             <td style="text-align:center">byte</td>
- *             <td style="text-align:center">int</td>
- *             <td style="text-align:center">byte[]</td>
- *         </tr>
- *             <td>每部分字节数</td>
- *             <td style="text-align:center">4</td>
- *             <td style="text-align:center">1</td>
- *             <td style="text-align:center">1</td>
- *             <td style="text-align:center">4</td>
- *             <td style="text-align:center">根据消息体内容计算</td>
- *         </tr>
- *         <tr>
- *             <td style="text-align:center">是否加密</td>
- *             <td colspan="2" style="text-align:center">未加密部分</td>
- *             <td colspan="3" style="text-align:center">加密部分</td>
- *         </tr>
- *     </table>
- * */
  public class RpcDecoder extends MessageToMessageDecoder<BinaryPacket> {
 	private static final Logger log =LoggerFactory.getLogger(RpcDecoder.class);
     private RpcMethodDispatcher rpcMethodDispatcher;
@@ -70,11 +34,12 @@ import java.util.List;
 	protected void decode(ChannelHandlerContext ctx, BinaryPacket packet,
 			List<Object> out) throws Exception {
         PracticalBuffer buffer=new DefaultPracticalBuffer(packet.getContent());
+        //命令ID
+        String cmd=buffer.readString();
+        //是否来自客户端
         boolean fromCall=buffer.readBoolean();
         //是否为同步消息
         boolean sync=buffer.readBoolean();
-        //命令ID
-        int cmd=buffer.readInt();
         //获取消息中的UUID
         String uuid=buffer.readString();
         //是否为异常消息
@@ -112,7 +77,7 @@ import java.util.List;
         rpcPacket.setUuid(uuid);
         rpcPacket.setException(isException);
         rpcPacket.setClassNameArray(classNameArray);
-        log.debug("Rpc decode :packet = {}",rpcPacket.toString());
+        log.debug("Rpc decode :packet = {},time = {}",rpcPacket.toString(),System.currentTimeMillis());
         try {
             ControlMethod methodProxy= rpcMethodDispatcher.newControlMethodProxy(rpcPacket);
             if(methodProxy!=null){

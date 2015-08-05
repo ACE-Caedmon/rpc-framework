@@ -39,7 +39,7 @@ public class ServerNode implements Comparable<ServerNode>{
     public int compareTo(ServerNode o) {
         return this.computeLoad()-o.computeLoad();
     }
-    public void asyncCall(int cmd, RpcCallback callback, Object... params){
+    public void asyncCall(String cmd, RpcCallback callback, Object... params){
         RpcPacket packet=new RpcPacket(cmd,params);
         packet.setSync(false);
         session.asyncRpcSend(packet, callback);
@@ -48,11 +48,10 @@ public class ServerNode implements Comparable<ServerNode>{
     public String getKey(){
         return host+":"+port;
     }
-    public <T> T syncCall(int cmd, Class<T> resultType, Object... content) throws Exception{
+    public <T> T syncCall(String cmd, Class<T> resultType, Object... content) throws Exception{
         if(!isActive()){
             throw new ClusterNodeException("Server node is not active:clusterName = "+clusterName+",server = "+host+":"+port);
         }
-
         RpcPacket packet=new RpcPacket(cmd,content);
         packet.setSync(true);
         long before= CommonUtils.now();

@@ -9,7 +9,6 @@ import com.xl.codec.rpc.RpcDecoder;
 import com.xl.codec.rpc.RpcEncoder;
 import com.xl.codec.rpc.RpcServerMarkEncoder;
 import com.xl.dispatch.method.RpcMethodDispatcher;
-import com.xl.session.Session;
 import com.xl.utils.EngineParams;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelInitializer;
@@ -32,10 +31,10 @@ public class TCPServerInitializer extends ChannelInitializer<SocketChannel>{
 		ch.pipeline().addLast(new TCPHeadDecoder());
 		ch.pipeline().addLast(new RpcDecoder(controlProxyDispatcher));
 		ch.pipeline().addLast(new TCPHeadEncoder());
+
 		ch.pipeline().addLast(new RpcEncoder());
 		ch.pipeline().addLast(new RpcServerMarkEncoder());
 		ch.pipeline().addLast(new TCPInboundHandler(controlProxyDispatcher));
-		ch.attr(Session.SECRRET_KEY).set(EngineParams.getSocketSecretKey());
 
 
 	}

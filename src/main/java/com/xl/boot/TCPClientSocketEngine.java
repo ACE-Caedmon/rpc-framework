@@ -52,7 +52,6 @@ public class TCPClientSocketEngine extends SocketEngine{
             log.info("Protocol type: {}",TCP_PROTOCOL);
             log.info("Worker thread : {}",settings.workerThreadSize);
             log.info("Logic thread:{}",settings.cmdThreadSize);
-            log.info("Socket package encrypt : {}", EngineParams.isSocketPacketEncrypt());
             log.info("Cmd Dispatcher : {}", rpcMethodDispatcher.getClass().getCanonicalName());
             log.info("Socket port :{}",settings.port);
 
@@ -63,11 +62,6 @@ public class TCPClientSocketEngine extends SocketEngine{
             }
             workerGroup.shutdownGracefully();
             return;
-        }
-        //如果系统配置不加密则不发送密码表
-        if(EngineParams.isSocketPacketEncrypt()){
-            //用来给客户端发送密码表
-            SessionFire.getInstance().registerEvent(SessionFire.SessionEvent.SESSION_LOGIN, new ValidateOKHandler());
         }
         log.info("ClientSocketEngine Start OK!");
     }

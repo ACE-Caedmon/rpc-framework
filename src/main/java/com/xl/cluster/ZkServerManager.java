@@ -1,6 +1,5 @@
 package com.xl.cluster;
 
-import com.alibaba.fastjson.JSONObject;
 import com.xl.exception.ClusterException;
 import com.xl.utils.Util;
 import org.apache.zookeeper.*;
@@ -8,7 +7,6 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -24,14 +22,9 @@ public class ZkServerManager {
     private ZooKeeper zkc;
     ServerConfigListener listener;
 
-    private String svrName;
+    private String clusterName;
     private List<String> monitorList;
-    private String cachePath;
-
     private static String ServerStore = "/server";
-    private static String CacheDataFile = "cache.txt";
-    private String address;
-
     private Map<String,PathWatcher> providerWatchers = new HashMap<String, PathWatcher>();
     private static final Logger log= LoggerFactory.getLogger(ZkServerManager.class);
     private static int Session_Timeout = 5*1000;
@@ -56,9 +49,7 @@ public class ZkServerManager {
         }
     };
 
-    public ZkServerManager(String zkServer,String cachePath) {
-        this.cachePath = cachePath;
-        loadFromFile();
+    public ZkServerManager(String zkServer) {
         try {
             zkc = new ZooKeeper(zkServer, Session_Timeout, watcher);
         } catch (IOException e) {
@@ -85,8 +76,7 @@ public class ZkServerManager {
         if (Util.isEmpty(address) || Util.isEmpty(logicName)) {
             throw new RuntimeException("ClusterName or server address is null");
         }
-        this.address = address;
-        this.svrName = logicName;
+        this.clusterName = logicName;
         createPath(getSvrTreePath());
         String path = getSvrTreePath() + "/" + address;
         Stat stat = zkc.exists(path,false);
@@ -94,7 +84,7 @@ public class ZkServerManager {
         if (stat != null){
             Thread.sleep((long) (Session_Timeout * 1.5));
         }
-        zkc.create(path, svrName.getBytes(),
+        zkc.create(path, clusterName.getBytes(),
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         log.debug("Register cluster success:clusterName = {}",logicName);
         update();
@@ -102,26 +92,6 @@ public class ZkServerManager {
 
     public void setListener(ServerConfigListener listener) {
         this.listener = listener;
-    }
-
-
-    private void loadFromFile() {
-        File f=new File(this.cachePath,CacheDataFile);
-        if(!f.exists()){
-            try{
-                f.createNewFile();
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-        }
-        String path = f.getAbsolutePath();
-        String data = Util.getFileData(path);
-        log.debug("Zookeeper load cache: data = {},path = {} ", data, path);
-        if (!Util.isEmpty(data)) {
-            cacheData= JSONObject.parseObject(data,CacheData.class);
-        } else {
-            cacheData = new CacheData();
-        }
     }
 
 
@@ -199,13 +169,9 @@ public class ZkServerManager {
         return children;
     }
 
-    private String getData(String path) throws Exception {
-        byte[] data = zkc.getData(path,false,null);
-        return new String(data);
-    }
 
     private String getSvrTreePath() {
-        String path = ServerStore + "/" + svrName;
+        String path = ServerStore + "/" + clusterName;
         return path;
     }
 
@@ -247,7 +213,7 @@ public class ZkServerManager {
                 saveProviders(service, providers);
             }catch (Exception e){
                 e.printStackTrace();
-                log.error("Zookeeper process WatchEvent error:server = {}",path,e);
+                log.error("Zookeeper process WatchEvent error:server = {}", path, e);
             }
 
 

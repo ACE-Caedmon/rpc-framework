@@ -11,7 +11,7 @@ import common.UserInfo;
  */
 public class ClientControl {
 
-    @RpcMethod(cmd =Command.ServerControl_login)
+    @RpcMethod(Command.ServerControl_login)
     public void loginSuccess(@RpcSession ISession session, @RpcRequest UserInfo userInfo){
 
     }

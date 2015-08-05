@@ -55,7 +55,7 @@ public class JavassitRpcCallProxyFactory implements RpcCallProxyFactory{
             //查看带注解的方法
             for(Method method:methods){
                 RpcMethod cmdMethod=method.getAnnotation(RpcMethod.class);
-                int cmd=cmdMethod.cmd();
+                String cmd=cmdMethod.value();
                 Class returnType=method.getReturnType();
                 StringBuilder body=new StringBuilder();
                 //void 方法
