@@ -1,15 +1,12 @@
 package cluster;
 
 import com.xl.cluster.client.SimpleRpcClientApi;
-import com.xl.message.LoginProtoBuffer;
-import common.client.Command;
 import common.server.IServerControl;
 import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by Administrator on 2015/7/17.
@@ -20,14 +17,14 @@ public class ClusterClient {
         PropertyConfigurator.configure("log4j.properties");
         final SimpleRpcClientApi api=SimpleRpcClientApi.getInstance().load("rpc-client.properties");
         api.bind();
-        final int loop=100;
+        final int loop=1;
         final TimeUse timeUse=new TimeUse();
         int totalUse=0;
         for(int i=0;i<loop;i++){
             final int count=i;
             long start=System.currentTimeMillis();
             String input="test"+count;
-            IServerControl serverControl=api.getRemoteCallProxy(IServerControl.class);
+            IServerControl serverControl=api.getAsyncRemoteCallProxy(IServerControl.class);
             Map map=serverControl.login("json","json");
             long end=System.currentTimeMillis();
             int use=(int)(end-start);

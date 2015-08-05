@@ -3,8 +3,7 @@ package com.xl.dispatch.method;
 import com.google.protobuf.MessageOrBuilder;
 import com.xl.annotation.*;
 import com.xl.codec.RpcPacket;
-import com.xl.dispatch.MethodInterceptor;
-import com.xl.dispatch.SocketPacket;
+import com.xl.dispatch.CmdInterceptor;
 import com.xl.dispatch.message.MessageProxyFactory;
 import com.xl.exception.ControlMethodCreateException;
 import com.xl.session.ISession;
@@ -31,7 +30,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
     private ClassPool classPool=new ClassPool();
     private BeanAccess beanAccess;
     private Map<String,ControlMethodProxyCreator> proxyCreatorMap =new HashMap<>();
-    private List<MethodInterceptor> methodInterceptors=new ArrayList<>();
+    private List<CmdInterceptor> cmdInterceptors =new ArrayList<>();
     private static final Logger log= LoggerFactory.getLogger(JavassitRpcMethodDispatcher.class);
     private ExecutorService threadPool;
     public JavassitRpcMethodDispatcher(int threadSize){
@@ -291,13 +290,13 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
     }
 
     @Override
-    public void addMethodInterceptor(MethodInterceptor interceptor) {
-        methodInterceptors.add(interceptor);
+    public void addMethodInterceptor(CmdInterceptor interceptor) {
+        cmdInterceptors.add(interceptor);
     }
 
     @Override
-    public List<MethodInterceptor> getCmdInterceptors() {
-        return methodInterceptors;
+    public List<CmdInterceptor> getCmdInterceptors() {
+        return cmdInterceptors;
     }
 
     @Override
@@ -308,9 +307,9 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                 RpcPacket packet = methodProxy.packet;
                 String cmd = packet.getCmd();
                 boolean allowed = true;
-                final List<MethodInterceptor> interceptors = methodInterceptors;
+                final List<CmdInterceptor> interceptors = cmdInterceptors;
                 try {
-                    for (MethodInterceptor interceptor : interceptors) {
+                    for (CmdInterceptor interceptor : interceptors) {
                         allowed = interceptor.beforeDoCmd(session, packet);
                         if (!allowed) {
                             log.warn("Cmd interceptor false:cmd = {},interceptor = {}", cmd, interceptor.getClass().getName());
@@ -320,14 +319,14 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
 
                     if (allowed) {
                         methodProxy.doCmd(session);
-                        for (MethodInterceptor interceptor : interceptors) {
+                        for (CmdInterceptor interceptor : interceptors) {
                             interceptor.afterDoCmd(session, packet);
                             break;
                         }
                     }
                 } catch (Throwable e) {
                     log.error("ControlMethod doCmd error:cmd = {}",cmd,e);
-                    for (MethodInterceptor interceptor : interceptors) {
+                    for (CmdInterceptor interceptor : interceptors) {
                         interceptor.exceptionCaught(session, packet, e);
                         break;
                     }

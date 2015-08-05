@@ -20,7 +20,7 @@ public class JavassitRpcCallProxyFactory implements RpcCallProxyFactory{
     private ClassPool classPool=ClassPool.getDefault();
     private static final String PROXY_SUFFIX="RpcCallProxy";
     private static final Logger log= LoggerFactory.getLogger(JavassitRpcCallProxyFactory.class);
-    public <T> T getRpcCallProxy(Class<T> callInterface){
+    public <T> T getSyncRpcCallProxy(Class<T> callInterface){
         T proxy=(T)callProxyCache.get(callInterface);
         if(proxy==null){
             try{
@@ -101,7 +101,6 @@ public class JavassitRpcCallProxyFactory implements RpcCallProxyFactory{
                     body.insert(1,returnType.getName()+" result =("+returnType.getName()+")");
                     body.append("return result;");
                 }
-                System.out.println(body.toString());
                 CtMethod ctMethod=CtMethod.make(body.toString(),ctClass);
                 i++;
                 ctClass.addMethod(ctMethod);
@@ -113,7 +112,12 @@ public class JavassitRpcCallProxyFactory implements RpcCallProxyFactory{
     }
 
     @Override
-    public <T> T createRpcCallProxy(Class<T> clazz) {
+    public <T> T getRpcCallProxy(boolean sync, Class<T> clazz) {
+        return null;
+    }
+
+    @Override
+    public <T> CallProxyEntry<T> createCallProxyEntry(Class<T> clazz) {
         return null;
     }
 }

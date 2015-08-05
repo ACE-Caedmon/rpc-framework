@@ -13,6 +13,10 @@ import java.lang.reflect.Method;
  */
 public class CglibRpcCallBack implements MethodInterceptor {
     private RpcClientApi rpcClientApi=SimpleRpcClientApi.getInstance();
+    private boolean sync=true;
+    public CglibRpcCallBack(boolean sync){
+        this.sync=sync;
+    }
     @Override
     public Object intercept(Object o, Method method, Object[] params, MethodProxy methodProxy) throws Throwable {
         Class[] interfaces=o.getClass().getInterfaces();
@@ -24,7 +28,7 @@ public class CglibRpcCallBack implements MethodInterceptor {
             }
         }
         if(controlInterface==null){
-            throw new IllegalArgumentException("接口未标记注解:class = "+o.getClass());
+            throw new IllegalArgumentException("Interface has no @RpcControl annotation:class = "+o.getClass());
         }
         RpcControl rpcControl = (RpcControl) controlInterface.getAnnotation(RpcControl.class);
         String clusterName= rpcControl.value();
@@ -34,6 +38,11 @@ public class CglibRpcCallBack implements MethodInterceptor {
         }
         String cmd=method.getAnnotation(RpcMethod.class).value();
         Class returnType=method.getReturnType();
-        return rpcClientApi.syncRpcCall(clusterName,cmd,returnType,params);
+        if(sync){
+            return rpcClientApi.syncRpcCall(clusterName,cmd,returnType,params);
+        }else{
+            SimpleRpcClientApi.getInstance().asyncRpcCall(clusterName,cmd,params);
+            return null;
+        }
     }
 }

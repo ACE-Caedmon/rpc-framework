@@ -32,7 +32,9 @@ public interface RpcClientApi {
     /**
      * 远程调用,此方式一定是同步调用的
      * */
-    <T> T getRemoteCallProxy(Class<T> clazz);
+    <T> T getSyncRemoteCallProxy(Class<T> clazz);
+
+    <T> T getAsyncRemoteCallProxy(Class<T> clazz);
     /**
      * 根据组名获取到对应集群所有服务器列表
      * */

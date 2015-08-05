@@ -47,6 +47,7 @@ public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
             }else{
                 classNameResult="null";
             }
+            packet.setClassNameArray(classNameResult.split(","));
             data.writeString(classNameResult);
             if(params!=null){
                 for(Object e:params){

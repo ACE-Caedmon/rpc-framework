@@ -2,14 +2,14 @@ package interceptor;
 
 import com.xl.codec.RpcPacket;
 import common.client.Command;
-import com.xl.dispatch.MethodInterceptor;
+import com.xl.dispatch.CmdInterceptor;
 import com.xl.session.ISession;
 import common.AttributeName;
 
 /**
  * Created by Administrator on 2015/7/13.
  */
-public class LoginInterceptor implements MethodInterceptor{
+public class LoginInterceptor implements CmdInterceptor {
     @Override
     public boolean beforeDoCmd(ISession session,RpcPacket packet) {
         System.out.println("拦截器:before");

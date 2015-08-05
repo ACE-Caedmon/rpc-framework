@@ -69,7 +69,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
             log.info("Scan all classes {}",allClasses.size());
             for(Class clazz:allClasses){
                 if(ClassUtils.hasAnnotation(clazz,RpcControl.class)&&clazz.isInterface()){
-                    rpcCallProxyFactory.createRpcCallProxy(clazz);
+                    rpcCallProxyFactory.createCallProxyEntry(clazz);
                     log.info("Create rpcCallProxy : class = {}", StringUtil.simpleClassName(clazz));
                 }
             }
@@ -194,9 +194,15 @@ public class SimpleRpcClientApi implements RpcClientApi {
     }
 
     @Override
-    public <T> T getRemoteCallProxy(Class<T> clazz) {
-        return rpcCallProxyFactory.getRpcCallProxy(clazz);
+    public <T> T getSyncRemoteCallProxy(Class<T> clazz) {
+        return rpcCallProxyFactory.getRpcCallProxy(true,clazz);
     }
+
+    @Override
+    public <T> T getAsyncRemoteCallProxy(Class<T> clazz) {
+        return rpcCallProxyFactory.getRpcCallProxy(false,clazz);
+    }
+
     public void refreshClusterServers(String clusterName){
         List<String> newServers= zkServerManager.getServerList(clusterName);
         ClusterGroup group=serverManager.getGroupByName(clusterName);

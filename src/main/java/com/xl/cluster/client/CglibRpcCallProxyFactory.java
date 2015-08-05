@@ -12,26 +12,37 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by Administrator on 2015/7/20.
  */
 public class CglibRpcCallProxyFactory implements RpcCallProxyFactory{
-    private static final MethodInterceptor COMMON_CGLIB_CALLBACK=new CglibRpcCallBack();
-    private Map<Class,Object> proxyCache=new HashMap<>();
+    private Map<Class,CallProxyEntry> proxyCache=new HashMap<>();
+    private static final CglibRpcCallBack SYNC_CALL_CGLIB_INTERCEPTOR=new CglibRpcCallBack(true);
+    private static final CglibRpcCallBack ASYNC_CALL_CGLIB_INTERCEPTOR=new CglibRpcCallBack(false);
     private static final Logger log= LoggerFactory.getLogger(CglibRpcCallProxyFactory.class);
     @Override
-    public <T> T getRpcCallProxy(Class<T> clazz) {
-        T proxy=(T)proxyCache.get(clazz);
-        if(proxy==null){
-            proxy=createRpcCallProxy(clazz);
-            proxyCache.put(clazz,proxy);
+    public <T> T getRpcCallProxy(boolean sync,Class<T> clazz) {
+        CallProxyEntry<T> entry=proxyCache.get(clazz);
+        if(entry==null){
+            entry=createCallProxyEntry(clazz);
+            proxyCache.put(clazz,entry);
         }
-        return proxy;
+        if(sync){
+            return entry.syncProxy;
+        }else{
+            return entry.asyncProxy;
+        }
+    }
+    public <T> CallProxyEntry<T> createCallProxyEntry(Class<T> clazz) {
+        Enhancer syncEnhancer = new Enhancer();//通过类Enhancer创建代理对象
+        syncEnhancer.setSuperclass(clazz);//传入创建代理对象的类
+        syncEnhancer.setCallback(SYNC_CALL_CGLIB_INTERCEPTOR);//设置回调
+        T syncProxy=(T)syncEnhancer.create();//创建代理对象
+        Enhancer asyncEnhancer=new Enhancer();
+        asyncEnhancer.setSuperclass(clazz);
+        asyncEnhancer.setCallback(ASYNC_CALL_CGLIB_INTERCEPTOR);
+        T asyncProxy=(T)asyncEnhancer.create();
+        CallProxyEntry<T> entry=new CallProxyEntry<>();
+        entry.syncProxy=syncProxy;
+        entry.asyncProxy=asyncProxy;
+        log.info("Create RpcCallProxy instance :{}", syncProxy.getClass().getName());
+        return entry;
     }
 
-    @Override
-    public <T> T createRpcCallProxy(Class<T> clazz) {
-        Enhancer enhancer = new Enhancer();//通过类Enhancer创建代理对象
-        enhancer.setSuperclass(clazz);//传入创建代理对象的类
-        enhancer.setCallback(COMMON_CGLIB_CALLBACK);//设置回调
-        T proxy=(T)enhancer.create();//创建代理对象
-        log.info("Create RpcCallProxy instance :{}",proxy.getClass().getName());
-        return proxy;
-    }
 }
