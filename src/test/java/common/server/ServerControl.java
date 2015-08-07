@@ -1,7 +1,7 @@
 package common.server;
 
-import com.xl.annotation.RpcRequest;
-import com.xl.message.LoginProtoBuffer;
+import com.xl.rpc.annotation.RpcRequest;
+import com.xl.rpc.message.LoginProtoBuffer;
 import common.UserInfo;
 import common.UserService;
 import org.slf4j.Logger;

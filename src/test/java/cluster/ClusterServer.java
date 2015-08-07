@@ -1,6 +1,6 @@
 package cluster;
 
-import com.xl.cluster.server.SimpleRpcServerApi;
+import com.xl.rpc.cluster.server.SimpleRpcServerApi;
 import org.apache.log4j.PropertyConfigurator;
 
 /**

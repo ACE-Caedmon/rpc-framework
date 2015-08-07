@@ -1,7 +1,7 @@
 package com.xl.utils;
 
-import com.xl.exception.CodecException;
-import com.xl.exception.RpcException;
+import com.xl.rpc.exception.CodecException;
+import com.xl.rpc.exception.RpcException;
 
 import java.io.*;
 

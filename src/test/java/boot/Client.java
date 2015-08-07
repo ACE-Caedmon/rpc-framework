@@ -1,10 +1,10 @@
 package boot;
 
-import com.xl.boot.TCPClientSettings;
-import com.xl.boot.TCPClientSocketEngine;
-import com.xl.dispatch.method.RpcMethodDispatcher;
-import com.xl.dispatch.method.JavassitRpcMethodDispatcher;
-import com.xl.dispatch.method.PrototypeBeanAccess;
+import com.xl.rpc.boot.TCPClientSettings;
+import com.xl.rpc.boot.TCPClientSocketEngine;
+import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
+import com.xl.rpc.dispatch.method.JavassitRpcMethodDispatcher;
+import com.xl.rpc.internal.PrototypeBeanAccess;
 import org.apache.log4j.PropertyConfigurator;
 
 /**

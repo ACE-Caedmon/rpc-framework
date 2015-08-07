@@ -138,7 +138,7 @@ public class ClassUtils {
         for (JarEntry entry : jarEntryList) {
             String className = entry.getName().replace('/', '.');
             className = className.substring(0, className.length() - 6);
-            log.info("添加class={}", className);
+            log.info("Add class={}", className);
             try {
                 classes.add(Thread.currentThread().getContextClassLoader().loadClass(className));
             } catch (ClassNotFoundException e) {

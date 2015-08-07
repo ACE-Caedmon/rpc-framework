@@ -1,6 +1,7 @@
 package cluster;
 
-import com.xl.cluster.client.SimpleRpcClientApi;
+import com.xl.rpc.cluster.client.SimpleRpcClientApi;
+import common.server.ISameControl;
 import common.server.IServerControl;
 import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.Logger;
@@ -25,7 +26,9 @@ public class ClusterClient {
             long start=System.currentTimeMillis();
             String input="test"+count;
             IServerControl serverControl=api.getAsyncRemoteCallProxy(IServerControl.class);
-            Map map=serverControl.login("json","json");
+            Map map=serverControl.login("json", "json");
+            ISameControl sameControl=api.getSyncRemoteCallProxy(ISameControl.class);
+            sameControl.sameRequest("same request");
             long end=System.currentTimeMillis();
             int use=(int)(end-start);
 

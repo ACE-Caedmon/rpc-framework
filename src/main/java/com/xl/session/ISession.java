@@ -4,10 +4,10 @@
  * */
 package com.xl.session;
 
-import com.xl.annotation.MsgType;
-import com.xl.codec.RpcPacket;
-import com.xl.dispatch.SocketPacket;
-import com.xl.dispatch.method.RpcCallback;
+import com.xl.rpc.annotation.MsgType;
+import com.xl.rpc.codec.RpcPacket;
+import com.xl.rpc.dispatch.SocketPacket;
+import com.xl.rpc.dispatch.method.RpcCallback;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.Future;

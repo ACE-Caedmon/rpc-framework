@@ -1,9 +1,9 @@
 package javassit;
 
-import com.xl.annotation.MsgType;
-import com.xl.codec.PracticalBuffer;
-import com.xl.dispatch.message.MessageProxy;
-import com.xl.dispatch.message.MessageProxyFactory;
+import com.xl.rpc.annotation.MsgType;
+import com.xl.rpc.codec.PracticalBuffer;
+import com.xl.rpc.dispatch.message.MessageProxy;
+import com.xl.rpc.dispatch.message.MessageProxyFactory;
 import common.UserInfo;
 import org.junit.Assert;
 import org.junit.Before;

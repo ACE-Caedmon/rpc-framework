@@ -6,20 +6,16 @@ package com.xl.session;
  * 客户端连接对应的Session
  * */
 
-import com.xl.annotation.MsgType;
-import com.xl.codec.RpcPacket;
-import com.xl.dispatch.SocketPacket;
-import com.xl.dispatch.method.RpcCallback;
-import com.xl.dispatch.method.SyncRpcCallBack;
+import com.xl.rpc.annotation.MsgType;
+import com.xl.rpc.codec.RpcPacket;
+import com.xl.rpc.dispatch.SocketPacket;
+import com.xl.rpc.dispatch.method.RpcCallback;
+import com.xl.rpc.dispatch.method.SyncRpcCallBack;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.DefaultChannelPromise;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.DefaultProgressivePromise;
 import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericProgressiveFutureListener;
-import io.netty.util.concurrent.ProgressiveFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

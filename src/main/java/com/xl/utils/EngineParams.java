@@ -1,6 +1,6 @@
 package com.xl.utils;
 
-import com.xl.annotation.MsgType;
+import com.xl.rpc.annotation.MsgType;
 import io.netty.util.internal.SystemPropertyUtil;
 
 /**

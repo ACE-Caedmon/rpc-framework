@@ -1,8 +1,8 @@
 package interceptor;
 
-import com.xl.codec.RpcPacket;
+import com.xl.rpc.codec.RpcPacket;
 import common.client.Command;
-import com.xl.dispatch.CmdInterceptor;
+import com.xl.rpc.dispatch.CmdInterceptor;
 import com.xl.session.ISession;
 import common.AttributeName;
 

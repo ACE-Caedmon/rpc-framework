@@ -1,10 +1,10 @@
 package common.server;
 
-import com.xl.annotation.RpcControl;
-import com.xl.annotation.RpcMethod;
-import com.xl.annotation.RpcRequest;
-import com.xl.annotation.RpcResponse;
-import com.xl.message.LoginProtoBuffer;
+import com.xl.rpc.annotation.RpcControl;
+import com.xl.rpc.annotation.RpcMethod;
+import com.xl.rpc.annotation.RpcRequest;
+import com.xl.rpc.annotation.RpcResponse;
+import com.xl.rpc.message.LoginProtoBuffer;
 import common.UserInfo;
 import common.client.Command;
 

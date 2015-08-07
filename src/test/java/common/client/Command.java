@@ -5,4 +5,5 @@ package common.client;
  */
 public class Command {
     public static final String ServerControl_login="testLogin";
+    public static final String SameControl_same="same";
 }

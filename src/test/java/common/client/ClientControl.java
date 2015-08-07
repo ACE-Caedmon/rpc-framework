@@ -1,8 +1,8 @@
 package common.client;
 
-import com.xl.annotation.RpcMethod;
-import com.xl.annotation.RpcRequest;
-import com.xl.annotation.RpcSession;
+import com.xl.rpc.annotation.RpcMethod;
+import com.xl.rpc.annotation.RpcRequest;
+import com.xl.rpc.annotation.RpcSession;
 import com.xl.session.ISession;
 import common.UserInfo;
 

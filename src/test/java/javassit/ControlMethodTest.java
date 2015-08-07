@@ -1,8 +1,8 @@
 package javassit;
 
-import com.xl.dispatch.method.RpcMethodDispatcher;
-import com.xl.dispatch.method.JavassitRpcMethodDispatcher;
-import com.xl.dispatch.method.PrototypeBeanAccess;
+import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
+import com.xl.rpc.dispatch.method.JavassitRpcMethodDispatcher;
+import com.xl.rpc.internal.PrototypeBeanAccess;
 import common.server.ServerControl;
 import org.junit.Before;
 import org.junit.Test;
