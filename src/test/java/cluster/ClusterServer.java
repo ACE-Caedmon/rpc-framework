@@ -9,7 +9,7 @@ import org.apache.log4j.PropertyConfigurator;
 public class ClusterServer {
     public static void main(String[] args) {
         PropertyConfigurator.configure("log4j.properties");
-        SimpleRpcServerApi api=new SimpleRpcServerApi("rpc-server.properties");
+        SimpleRpcServerApi api=new SimpleRpcServerApi("rpc.properties");
         api.bind();
     }
 }

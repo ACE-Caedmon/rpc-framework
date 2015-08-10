@@ -15,8 +15,7 @@ import java.util.Map;
 public class ClusterClient {
     private static final Logger log= LoggerFactory.getLogger(ClusterClient.class);
     public static void main(String[] args) throws Exception{
-        PropertyConfigurator.configure("log4j.properties");
-        final SimpleRpcClientApi api=SimpleRpcClientApi.getInstance().load("rpc-client.properties");
+        final SimpleRpcClientApi api=SimpleRpcClientApi.getInstance().load("rpc.properties");
         api.bind();
         final int loop=1;
         final TimeUse timeUse=new TimeUse();

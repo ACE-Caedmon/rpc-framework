@@ -40,19 +40,19 @@ public interface RpcClientApi {
     List<ServerNode> getServersByClusterName(String clusterName);
     /**
      *@param clusterName 集群服务名
-     *@param serverKey 服务器节点唯一标识 localhost:8080
+     *@param address 服务器节点唯一标识 localhost:8080
      *@param cmd 命令
      *@param resultType 返回的消息的Class
      *@params params 消息参数
      * */
-    <T> T syncRpcCall(String clusterName,String serverKey,String cmd,Class<T> resultType,Object...params) throws Exception;
+    <T> T syncRpcCall(String clusterName,String address,String cmd,Class<T> resultType,Object...params) throws Exception;
     /**
      *@param clusterName 集群服务名
-     *@param serverKey 服务器节点唯一标识 localhost:8080
+     *@param address 服务器节点唯一标识 localhost:8080
      *@param cmd 命令
      *@params params 消息参数
      * */
-    void asyncRpcCall(String clusterName,String serverKey,String cmd,Object...params) throws Exception;
+    void asyncRpcCall(String clusterName,String address,String cmd,Object...params) throws Exception;
 
     /**
      * 一致性hash选择节点发送消息，当节点存活时，同一个key绝对是发送给同一个服务器节点

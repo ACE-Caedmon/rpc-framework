@@ -150,8 +150,9 @@ public class SimpleRpcClientApi implements RpcClientApi {
         log.info("SimpleRpcClient bind OK !");
     }
 
+
     @Override
-    public void asyncRpcCall(String clusterName, String cmd, Object... content) {
+    public void asyncRpcCall(String clusterName,String cmd, Object... content) {
         ServerNode node=serverManager.getOptimalServerNode(clusterName);
         try{
             node.asyncCall(cmd, null,content);
@@ -264,7 +265,8 @@ public class SimpleRpcClientApi implements RpcClientApi {
     }
 
     @Override
-    public <T> T syncRpcCall(String clusterName, String serverKey, String cmd, Class<T> resultType, Object... params) throws Exception{
+    public <T> T syncRpcCall(String clusterName, String address, String cmd, Class<T> resultType, Object... params) throws Exception{
+        String serverKey=clusterName+"-"+address;
         ServerNode node=serverManager.getServerNode(serverKey);
         if(node==null){
             throw new NullPointerException("No server node exists:server = "+serverKey);
@@ -273,7 +275,8 @@ public class SimpleRpcClientApi implements RpcClientApi {
     }
 
     @Override
-    public void asyncRpcCall(String clusterName, String serverKey, String cmd, Object... params) throws Exception{
+    public void asyncRpcCall(String clusterName,String address, String cmd, Object... params) throws Exception{
+        String serverKey=clusterName+"-"+address;
         ServerNode node=serverManager.getServerNode(serverKey);
         if(node==null){
             throw new NullPointerException("No server node exists:server = "+serverKey);
