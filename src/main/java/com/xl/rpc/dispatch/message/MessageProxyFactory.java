@@ -5,6 +5,7 @@ import com.google.protobuf.MessageOrBuilder;
 import com.xl.rpc.annotation.MsgType;
 import com.xl.rpc.codec.DefaultPracticalBuffer;
 import com.xl.rpc.codec.PracticalBuffer;
+import com.xl.utils.EngineParams;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import javassist.ClassPool;
@@ -155,7 +156,9 @@ public class MessageProxyFactory {
         }
         decodeMethod.setBody(decodeMethodBody);
         encodeMethod.setBody(encodeMethodBody);
-        ctClass.writeFile("javassit/");
+        if(EngineParams.isWriteJavassit()){
+            ctClass.writeFile("javassit/");
+        }
         proxy=(MessageProxy)ctClass.toClass().newInstance();
         log.debug("Create MessageProxy instance :{}",proxy.getClass().getName());
         return proxy;

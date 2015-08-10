@@ -41,6 +41,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private EventLoopGroup loopGroup;
     private ZkServerManager zkServerManager;
     private String[] monitorService;
+    private String rpcRunMode="dev";
     private String loadBalancing="responseTime";
     private static SimpleRpcClientApi instance=new SimpleRpcClientApi();
     private static final String WORK_THREAD_SIZE_PROPERTY="rpc.client.workerThreadSize";
@@ -53,6 +54,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private static final String RPC_RETRY_COUNT_PROPERTY="rpc.client.retryCount";
     private static final String ZK_SERVER_ADDRESS_PROPERTY ="rpc.client.zkServer";
     private static final String LOAD_BALANCING_PROPERTY="rpc.client.loadBalancing";
+    private static final String JAVASSIT_WRITE_CLASS="javassit.writeClass";
     private SimpleRpcClientApi(){
 
     }
@@ -61,6 +63,10 @@ public class SimpleRpcClientApi implements RpcClientApi {
         return load(properties);
     }
     public SimpleRpcClientApi load(Properties properties){
+        if(properties.containsKey(JAVASSIT_WRITE_CLASS)){
+            boolean writeClass=Boolean.valueOf(properties.getProperty(JAVASSIT_WRITE_CLASS));
+            System.setProperty(JAVASSIT_WRITE_CLASS,String.valueOf(writeClass));
+        }
         if(properties.containsKey(WORK_THREAD_SIZE_PROPERTY)){
             this.workerThreadSize=Integer.parseInt(properties.getProperty(WORK_THREAD_SIZE_PROPERTY));
         }
@@ -72,7 +78,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         }
         if(properties.containsKey(RPC_MSG_TYPE_PROPERTY)){
             MsgType msgType=MsgType.valueOf(properties.getProperty(RPC_MSG_TYPE_PROPERTY));
-            System.setProperty("ng.socket.msg.type",msgType.name());
+            System.setProperty(RPC_MSG_TYPE_PROPERTY,msgType.name());
         }
         if(properties.containsKey(SCAN_PACKAGE_PROPERTY)){
             this.scanPackage=properties.getProperty(SCAN_PACKAGE_PROPERTY).split(",");

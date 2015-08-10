@@ -9,6 +9,8 @@ import com.xl.rpc.exception.ControlMethodCreateException;
 import com.xl.rpc.internal.PrototypeBeanAccess;
 import com.xl.session.ISession;
 import com.xl.utils.ClassUtils;
+import com.xl.utils.EngineParams;
+import io.netty.util.internal.SystemPropertyUtil;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtField;
@@ -36,12 +38,6 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
     private ExecutorService threadPool;
     public JavassitRpcMethodDispatcher(int threadSize){
         this(new PrototypeBeanAccess(), threadSize);
-    }
-
-    public static void main(String[] args) {
-        for(Method method:JavassitRpcMethodDispatcher.class.getDeclaredMethods()){
-            System.out.println(method.getName()+":"+method.hashCode());
-        }
     }
     public JavassitRpcMethodDispatcher(BeanAccess beanAccess, int threadSize){
         this.beanAccess=beanAccess;
@@ -174,7 +170,9 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     }
                     log.debug("Javassit generate code:{}", methodBody.toString());
                     ctMethod.insertAfter(methodBody.toString());
-                    ctProxyClass.writeFile("javassit/");
+                    if(EngineParams.isWriteJavassit()){
+                        ctProxyClass.writeFile("javassit/");
+                    }
                     Class resultClass=ctProxyClass.toClass();
                     ControlMethodProxyCreator creator=buildMethodProxyCreator(resultClass);
                     Class[] paramTypes=method.getParameterTypes();
@@ -205,7 +203,9 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
             createMethod.setBody("{" +
                     proxy.getName() + " proxy=new " + proxy.getName() + "($1);return proxy;" +
                     "}");
-            creatorClass.writeFile("javassit/");
+            if(EngineParams.isWriteJavassit()){
+                creatorClass.writeFile("javassit/");
+            }
             creator=(ControlMethodProxyCreator)creatorClass.toClass().newInstance();
 
         }catch (Exception e){
