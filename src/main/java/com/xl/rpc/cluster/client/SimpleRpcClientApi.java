@@ -11,6 +11,7 @@ import com.xl.rpc.dispatch.method.BeanAccess;
 import com.xl.rpc.dispatch.method.JavassitRpcMethodDispatcher;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xl.rpc.exception.EngineException;
+import com.xl.rpc.internal.PrototypeBeanAccess;
 import com.xl.session.ISession;
 import com.xl.utils.ClassUtils;
 import com.xl.utils.PropertyKit;
@@ -24,26 +25,34 @@ import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Created by Administrator on 2015/7/15.
+ * Created by Caedmon on 2015/7/15.
  */
 public class SimpleRpcClientApi implements RpcClientApi {
-    private IClusterServerManager serverManager;
     private static final Logger log= LoggerFactory.getLogger(SimpleRpcClientApi.class);
-    private int callTimeout;
-    private String[] scanPackage;
-    private String beanAccessClass;
-    private TCPClientSocketEngine clientSocketEngine;
+    private int callTimeout=3;
+    private String beanAccessClass= PrototypeBeanAccess.class.getName();
+    private int retryCount=3;
+    private RpcCallProxyFactory rpcCallProxyFactory;
+    private int workerThreadSize=Runtime.getRuntime().availableProcessors();
+    private int cmdThreadSize= Runtime.getRuntime().availableProcessors();
+    private String[] scanPackage=new String[]{""};
+    private String zkServer;
+    private IClusterServerManager serverManager;
+    private EventLoopGroup loopGroup;
     private ZkServerManager zkServerManager;
     private String[] monitorService;
-    private int retryCount;
-    private String rpcCallProxy;
+    private String loadBalancing="responseTime";
     private static SimpleRpcClientApi instance=new SimpleRpcClientApi();
-    private RpcCallProxyFactory rpcCallProxyFactory;
-    private EventLoopGroup loopGroup;
-    private int workerThreadSize;
-    private int cmdThreadSize;
-    private String zkServer;
-    public static final String JAVASSIT_PROXY="javassit",CGLIB_PROXY="cglib";
+    private static final String WORK_THREAD_SIZE_PROPERTY="rpc.client.workerThreadSize";
+    private static final String CMD_THREAD_SIZE_PROPERTY="rpc.client.cmdThreadSize";
+    private static final String CALL_TIME_OUT_PROPERTY="rpc.client.callTimeout";
+    private static final String RPC_MSG_TYPE_PROPERTY="rpc.client.msgType";
+    private static final String SCAN_PACKAGE_PROPERTY="rpc.client.scanPackage";
+    private static final String BEAN_ACCESS_PROPERTY="rpc.client.beanAccessClass";
+    private static final String MONITOR_SERVICE_PROPERTY="rpc.client.monitorService";
+    private static final String RPC_RETRY_COUNT_PROPERTY="rpc.client.retryCount";
+    private static final String ZK_SERVER_ADDRESS_PROPERTY ="rpc.client.zkServer";
+    private static final String LOAD_BALANCING_PROPERTY="rpc.client.loadBalancing";
     private SimpleRpcClientApi(){
 
     }
@@ -52,22 +61,44 @@ public class SimpleRpcClientApi implements RpcClientApi {
         return load(properties);
     }
     public SimpleRpcClientApi load(Properties properties){
-        this.workerThreadSize=Integer.parseInt(properties.getProperty("rpc.client.workerThreadSize"));
-        this.cmdThreadSize=Integer.parseInt(properties.getProperty("rpc.client.cmdThreadSize"));
-        this.callTimeout =Integer.parseInt(properties.getProperty("rpc.client.callTimeout"));
-        MsgType msgType=MsgType.valueOf(properties.getProperty("rpc.client.msgType"));
-        System.setProperty("ng.socket.msg.type",msgType.name());
-        this.scanPackage=properties.getProperty("rpc.client.scanPackage").split(",");
-        this.beanAccessClass=properties.getProperty("rpc.client.beanAccessClass");
-        this.monitorService=properties.getProperty("rpc.client.monitorService").split(",");
-        this.retryCount=Integer.parseInt(properties.getProperty("rpc.client.retryCount"));
-        this.rpcCallProxy=properties.getProperty("rpc.client.rpcCallProxy");
-        this.zkServer=properties.getProperty("rpc.client.zkServer");
-        if(this.rpcCallProxy.equals(JAVASSIT_PROXY)){
-            this.rpcCallProxyFactory=new JavassitRpcCallProxyFactory();
-        }else{
-            this.rpcCallProxyFactory=new CglibRpcCallProxyFactory();
+        if(properties.containsKey(WORK_THREAD_SIZE_PROPERTY)){
+            this.workerThreadSize=Integer.parseInt(properties.getProperty(WORK_THREAD_SIZE_PROPERTY));
         }
+        if(properties.containsKey(CMD_THREAD_SIZE_PROPERTY)){
+            this.cmdThreadSize=Integer.parseInt(properties.getProperty(CMD_THREAD_SIZE_PROPERTY));
+        }
+        if(properties.containsKey(CALL_TIME_OUT_PROPERTY)){
+            this.callTimeout =Integer.parseInt(properties.getProperty(CALL_TIME_OUT_PROPERTY));
+        }
+        if(properties.containsKey(RPC_MSG_TYPE_PROPERTY)){
+            MsgType msgType=MsgType.valueOf(properties.getProperty(RPC_MSG_TYPE_PROPERTY));
+            System.setProperty("ng.socket.msg.type",msgType.name());
+        }
+        if(properties.containsKey(SCAN_PACKAGE_PROPERTY)){
+            this.scanPackage=properties.getProperty(SCAN_PACKAGE_PROPERTY).split(",");
+        }else{
+            throw new NullPointerException(SCAN_PACKAGE_PROPERTY+" not specified");
+        }
+        if(properties.containsKey(BEAN_ACCESS_PROPERTY)){
+            this.beanAccessClass=properties.getProperty(BEAN_ACCESS_PROPERTY);
+        }
+        if(properties.containsKey(MONITOR_SERVICE_PROPERTY)){
+            this.monitorService=properties.getProperty(MONITOR_SERVICE_PROPERTY).split(",");
+        }else{
+            throw new NullPointerException(MONITOR_SERVICE_PROPERTY+"not specified");
+        }
+        if(properties.containsKey(RPC_RETRY_COUNT_PROPERTY)){
+            this.retryCount=Integer.parseInt(properties.getProperty(RPC_RETRY_COUNT_PROPERTY));
+        }
+        if(properties.containsKey(ZK_SERVER_ADDRESS_PROPERTY)){
+            this.zkServer=properties.getProperty(ZK_SERVER_ADDRESS_PROPERTY);
+        }else{
+            throw new NullPointerException(ZK_SERVER_ADDRESS_PROPERTY +"not specified");
+        }
+        if(properties.containsKey(LOAD_BALANCING_PROPERTY)){
+            this.loadBalancing=properties.getProperty(LOAD_BALANCING_PROPERTY);
+        }
+        this.rpcCallProxyFactory=new CglibRpcCallProxyFactory();
         //扫描接口，预加载生成接口代理
         try{
             List<Class> allClasses=ClassUtils.getClasssFromPackage(scanPackage);
@@ -101,7 +132,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
             throw new EngineException("BeanAccess init error",e);
         }
         RpcMethodDispatcher dispatcher=new JavassitRpcMethodDispatcher(beanAccess,settings.cmdThreadSize);
-        clientSocketEngine=new TCPClientSocketEngine(settings,dispatcher,loopGroup);
+        TCPClientSocketEngine clientSocketEngine=new TCPClientSocketEngine(settings,dispatcher,loopGroup);
         clientSocketEngine.start();
         ISession session=clientSocketEngine.getSession();
         ServerNode serverNode=new ServerNode(session);

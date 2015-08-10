@@ -141,7 +141,7 @@ public class ClassUtils {
             log.info("Add class={}", className);
             try {
                 classes.add(Thread.currentThread().getContextClassLoader().loadClass(className));
-            } catch (ClassNotFoundException e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         }
