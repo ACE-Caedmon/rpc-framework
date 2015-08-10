@@ -1,6 +1,7 @@
 package com.xl.rpc.dispatch.method;
 
 import com.xl.rpc.codec.RpcPacket;
+import com.xl.rpc.exception.RemoteException;
 import com.xl.session.ISession;
 import com.xl.session.Session;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,7 @@ public class AsyncCallBackMethod extends ControlMethod<ISession> {
             try{
                 Object[] params=packet.getParams();
                 if(packet.isException()){
-                    callBack.processException((Throwable) packet.getParams()[0]);
+                    callBack.processException(new RemoteException((Throwable) packet.getParams()[0]));
                     return;
                 }
                 if(params.length==1){
