@@ -1,7 +1,7 @@
 package boot;
 
 import com.xl.rpc.boot.TCPClientSettings;
-import com.xl.rpc.boot.TCPClientSocketEngine;
+import com.xl.rpc.boot.RpcClientSocketEngine;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xl.rpc.dispatch.method.JavassitRpcMethodDispatcher;
 import com.xl.rpc.internal.PrototypeBeanAccess;
@@ -21,7 +21,7 @@ public class Client {
         System.setProperty("ng.socket.netty.loggging", "false");
         RpcMethodDispatcher dispatcher=new JavassitRpcMethodDispatcher(new PrototypeBeanAccess(),10);
         for(int i=0;i<1;i++){
-            final TCPClientSocketEngine engine=new TCPClientSocketEngine(settings,dispatcher);
+            final RpcClientSocketEngine engine=new RpcClientSocketEngine(settings,dispatcher);
             engine.start();
         }
     }

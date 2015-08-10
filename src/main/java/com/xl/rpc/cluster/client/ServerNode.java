@@ -1,5 +1,6 @@
 package com.xl.rpc.cluster.client;
 
+import com.xl.rpc.boot.RpcClientSocketEngine;
 import com.xl.rpc.codec.RpcPacket;
 import com.xl.rpc.dispatch.method.RpcCallback;
 import com.xl.rpc.exception.ClusterNodeException;
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  * Created by Administrator on 2015/7/14.
  */
 public class ServerNode implements Comparable<ServerNode>{
-    private ISession session;
+    private RpcClientSocketEngine socketEngine;
     private String clusterName;
     private String host;
     private int port;
@@ -25,15 +26,19 @@ public class ServerNode implements Comparable<ServerNode>{
     public long averageResponseTime;
     public long totalResponseTime;
     private static final Logger log= LoggerFactory.getLogger(ServerNode.class);
-    public ServerNode(ISession session) {
-        if(session==null){
+    public ServerNode(RpcClientSocketEngine socketEngine) {
+        if(socketEngine==null){
             throw new NullPointerException("Session can not be null");
         }
-        this.session = session;
+        this.socketEngine = socketEngine;
     }
 
     public ISession getSession() {
-        return session;
+        return socketEngine.getSession();
+    }
+
+    public RpcClientSocketEngine getSocketEngine(){
+        return socketEngine;
     }
     @Override
     public int compareTo(ServerNode o) {
@@ -42,7 +47,7 @@ public class ServerNode implements Comparable<ServerNode>{
     public void asyncCall(String cmd, RpcCallback callback, Object... params){
         RpcPacket packet=new RpcPacket(cmd,params);
         packet.setSync(false);
-        session.asyncRpcSend(packet, callback);
+        getSession().asyncRpcSend(packet, callback);
         log.info("Async rpc call:server = {},cmd ={}",getKey(),cmd);
     }
     public String getKey(){
@@ -55,7 +60,7 @@ public class ServerNode implements Comparable<ServerNode>{
         RpcPacket packet=new RpcPacket(cmd,content);
         packet.setSync(true);
         long before= CommonUtils.now();
-        T result=session.syncRpcSend(packet, resultType, (long) syncCallTimeout, TimeUnit.SECONDS);
+        T result=getSession().syncRpcSend(packet, resultType, (long) syncCallTimeout, TimeUnit.SECONDS);
         long after=CommonUtils.now();
         syncCallNumber++;
         this.averageResponseTime=(totalResponseTime+(after-before))/syncCallNumber;
@@ -63,7 +68,7 @@ public class ServerNode implements Comparable<ServerNode>{
         return result;
     }
     public boolean isActive(){
-        return session.isActive();
+        return getSession().isActive();
     }
 
 
@@ -86,10 +91,6 @@ public class ServerNode implements Comparable<ServerNode>{
         result = 31 * result + host.hashCode();
         result = 31 * result + port;
         return result;
-    }
-
-    public void setSession(ISession session) {
-        this.session = session;
     }
 
     public String getClusterName() {
@@ -130,7 +131,7 @@ public class ServerNode implements Comparable<ServerNode>{
         this.syncCallTimeout = syncCallTimeout;
     }
     public void destory(){
-        session.disconnect(true);
+        getSession().disconnect(true);
     }
     public int getWeight() {
         return weight;

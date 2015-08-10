@@ -15,14 +15,14 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by Administrator on 2015/4/25.
  */
-public class TCPClientSocketEngine extends SocketEngine{
-    private static final Logger log= LoggerFactory.getLogger(TCPClientSocketEngine.class);
+public class RpcClientSocketEngine extends SocketEngine{
+    private static final Logger log= LoggerFactory.getLogger(RpcClientSocketEngine.class);
     private EventLoopGroup eventExecutors;
     private Channel channel;
-    public TCPClientSocketEngine(TCPClientSettings settings,RpcMethodDispatcher rpcMethodDispatcher) {
+    public RpcClientSocketEngine(TCPClientSettings settings, RpcMethodDispatcher rpcMethodDispatcher) {
         super(settings, rpcMethodDispatcher);
     }
-    public TCPClientSocketEngine(TCPClientSettings settings,RpcMethodDispatcher rpcMethodDispatcher,EventLoopGroup eventExecutors) {
+    public RpcClientSocketEngine(TCPClientSettings settings, RpcMethodDispatcher rpcMethodDispatcher, EventLoopGroup eventExecutors) {
         super(settings, rpcMethodDispatcher);
         this.settings=settings;
         this.eventExecutors=eventExecutors;

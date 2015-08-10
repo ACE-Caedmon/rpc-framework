@@ -1,10 +1,11 @@
 package com.xl.rpc.cluster.client;
 
+import com.sun.corba.se.spi.activation.Server;
 import com.xl.rpc.annotation.MsgType;
 import com.xl.rpc.annotation.RpcControl;
+import com.xl.rpc.boot.RpcClientSocketEngine;
 import com.xl.rpc.boot.SocketEngine;
 import com.xl.rpc.boot.TCPClientSettings;
-import com.xl.rpc.boot.TCPClientSocketEngine;
 import com.xl.rpc.cluster.ZkServerManager;
 import com.xl.rpc.dispatch.CmdInterceptor;
 import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
@@ -41,7 +42,6 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private IClusterServerManager serverManager;
     private EventLoopGroup loopGroup;
     private ZkServerManager zkServerManager;
-    private RpcMethodDispatcher dispatcher;
     private String[] monitorService;
     private String loadBalancing="responseTime";
     private static SimpleRpcClientApi instance=new SimpleRpcClientApi();
@@ -77,7 +77,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         }catch (Exception e){
             throw new EngineException("BeanAccess init error",e);
         }
-        dispatcher=new JavassitRpcMethodDispatcher(beanAccess,this.cmdThreadSize);
+
         this.rpcCallProxyFactory=new CglibRpcCallProxyFactory();
         //扫描接口，预加载生成接口代理
         try{
@@ -151,10 +151,10 @@ public class SimpleRpcClientApi implements RpcClientApi {
     public ServerNode newServerNode(String clusterName,String remoteHost,int remotePort) throws Exception{
         TCPClientSettings settings= createClientSettings(remoteHost, remotePort);
         this.loopGroup=new NioEventLoopGroup(settings.workerThreadSize);
-        TCPClientSocketEngine clientSocketEngine=new TCPClientSocketEngine(settings,dispatcher,loopGroup);
+        RpcMethodDispatcher dispatcher=new JavassitRpcMethodDispatcher((BeanAccess)Class.forName(this.beanAccessClass).newInstance(),this.cmdThreadSize);
+        RpcClientSocketEngine clientSocketEngine=new RpcClientSocketEngine(settings,dispatcher,loopGroup);
         clientSocketEngine.start();
-        ISession session=clientSocketEngine.getSession();
-        ServerNode serverNode=new ServerNode(session);
+        ServerNode serverNode=new ServerNode(clientSocketEngine);
         serverNode.setHost(remoteHost);
         serverNode.setPort(remotePort);
         serverNode.setSyncCallTimeout(settings.syncTimeout);
@@ -371,6 +371,9 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
     @Override
     public void addRpcMethodInterceptor(CmdInterceptor interceptor) {
-        this.dispatcher.addMethodInterceptor(interceptor);
+        for(Map.Entry<String,ServerNode> entry:serverManager.getAllServerNodes().entrySet()){
+            RpcClientSocketEngine socketEngine=entry.getValue().getSocketEngine();
+            socketEngine.addRpcMethodInterceptor(interceptor);
+        }
     }
 }
