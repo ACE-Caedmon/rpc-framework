@@ -1,5 +1,6 @@
 package com.xl.rpc.cluster.client;
 
+import com.xl.rpc.dispatch.CmdInterceptor;
 import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
 
 import java.util.List;
@@ -82,6 +83,6 @@ public interface RpcClientApi {
 
     void asyncRpcCall(String clusterName,String cmd,AsyncRpcCallBack callback,Object...params);
 
-
+    void addRpcMethodInterceptor(CmdInterceptor interceptor);
 
 }
