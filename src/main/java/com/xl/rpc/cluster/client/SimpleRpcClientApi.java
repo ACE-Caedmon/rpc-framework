@@ -371,6 +371,6 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
     @Override
     public void addRpcMethodInterceptor(CmdInterceptor interceptor) {
-
+        this.dispatcher.addMethodInterceptor(interceptor);
     }
 }

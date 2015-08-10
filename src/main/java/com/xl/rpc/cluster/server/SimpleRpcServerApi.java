@@ -139,7 +139,4 @@ public class SimpleRpcServerApi implements RpcServerApi {
     public String getSelfClusterName() {
         return this.clusterNames[0];
     }
-
-    public static void main(String[] args) {
-    }
 }
