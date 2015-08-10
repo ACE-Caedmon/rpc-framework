@@ -59,13 +59,14 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
     @Override
     public ControlMethod newControlMethodProxy(RpcPacket rpcPacket) {
         String classNames=rpcPacket.getClassNames();
-        ControlMethodProxyCreator creator= proxyCreatorMap.get(rpcPacket.getCmd()+"-"+classNames);
+        String methodKey=rpcPacket.getCmd()+"-"+classNames;
+        ControlMethodProxyCreator creator= proxyCreatorMap.get(methodKey);
         ControlMethod proxy=null;
         if(creator!=null){
             proxy=creator.create(rpcPacket);
         }else{
             if(rpcPacket.isFromCall()){
-                throw new IllegalArgumentException("No method exists:cmd = "+rpcPacket.getCmd());
+                throw new IllegalArgumentException("No method exists:method = "+methodKey);
             }
             boolean sync=rpcPacket.getSync();
             if(sync){
@@ -155,7 +156,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     Class responseType=method.getReturnType();
                     //将response构造成数组作为参数，否则会编译出错
 
-                    //带有RpcResponse 一定要响应
+                    //带有RpcResponse 将返回值响应
                     if(rpcResponse !=null){
                         if(!ClassUtils.isVoidReturn(responseType)){
                             //判断接受的消息是否为同步消息
