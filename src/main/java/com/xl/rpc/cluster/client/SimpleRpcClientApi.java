@@ -5,7 +5,7 @@ import com.xl.rpc.annotation.RpcControl;
 import com.xl.rpc.boot.SocketEngine;
 import com.xl.rpc.boot.TCPClientSettings;
 import com.xl.rpc.boot.TCPClientSocketEngine;
-import com.xl.rpc.cluster.ZkServerManager;
+import com.xl.rpc.cluster.ZkServiceDiscovery;
 import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
 import com.xl.rpc.dispatch.method.BeanAccess;
 import com.xl.rpc.dispatch.method.JavassitRpcMethodDispatcher;
@@ -39,7 +39,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private String zkServer;
     private IClusterServerManager serverManager;
     private EventLoopGroup loopGroup;
-    private ZkServerManager zkServerManager;
+    private ZkServiceDiscovery zkServiceDiscovery;
     private String[] monitorService;
     private String loadBalancing="responseTime";
     private static SimpleRpcClientApi instance=new SimpleRpcClientApi();
@@ -150,8 +150,8 @@ public class SimpleRpcClientApi implements RpcClientApi {
     public void bind() {
         log.info("SimpleRpcClient bind ");
         String userDir=System.getProperty("user.dir");
-        zkServerManager =new ZkServerManager(zkServer);
-        zkServerManager.setListener(new ZkServerManager.ServerConfigListener() {
+        zkServiceDiscovery =new ZkServiceDiscovery(zkServer);
+        zkServiceDiscovery.setListener(new ZkServiceDiscovery.ServerDiscoveryListener() {
             @Override
             public void onServerListChanged(String s) {
                 SimpleRpcClientApi.this.refreshClusterServers(s);
@@ -165,13 +165,13 @@ public class SimpleRpcClientApi implements RpcClientApi {
             log.info("Zookeeper add monitor service :clusterName = {}",s);
         }
         try{
-            zkServerManager.monitorServiceProviders(clusterNames);
+            zkServiceDiscovery.monitorServiceProviders(clusterNames);
         }catch (Exception e){
             e.printStackTrace();
             log.error("Zookeeper monitor service error",e);
         }
 
-        for(String clusterName: zkServerManager.getAllServerMap().keySet()){
+        for(String clusterName: zkServiceDiscovery.getAllServerMap().keySet()){
             refreshClusterServers(clusterName);
             if(!clusterNames.contains(clusterName)){
                 log.warn("No active server nodes in cluster:{}",clusterName);
@@ -241,7 +241,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     }
 
     public void refreshClusterServers(String clusterName){
-        List<String> newServerAddressList= zkServerManager.getServerList(clusterName);
+        List<String> newServerAddressList= zkServiceDiscovery.getServerList(clusterName);
         ClusterGroup group=serverManager.getGroupByName(clusterName);
         if(group==null){
             return;
