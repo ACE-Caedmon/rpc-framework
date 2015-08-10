@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by issac on 15/8/10.
@@ -16,11 +18,10 @@ public class ZKConfigSync {
 
     private ZooKeeper zkc;
     ConfigSyncListener listener;
-    private static int Session_Timeout = 5 * 1000;
 
     private String clusterName;
     private String zkServerAddr;
-
+    private Lock lock = new ReentrantLock();
     public interface ConfigSyncListener {
         void onConfigChanged(String config);
     }
@@ -42,9 +43,23 @@ public class ZKConfigSync {
     }
 
     public String getConfig() {
-        update();
-        monitor();
         return config;
+    }
+
+    public void updateConfig() {
+        String oldConfig = config;
+        lock.lock();
+        update();
+        lock.unlock();
+        monitor();
+        if (config == null && oldConfig == null ||
+                config.equals(oldConfig)) {
+            return;
+        } else {
+            if (listener != null) {
+                listener.onConfigChanged(config);
+            }
+        }
     }
 
     private String getPath() {
@@ -56,7 +71,7 @@ public class ZKConfigSync {
         // 监控所有被触发的事件
         public void process(WatchedEvent event) {
             if (event.getState() == Event.KeeperState.SyncConnected) {
-                getConfig();
+                updateConfig();
             }
         }
     };
@@ -64,7 +79,12 @@ public class ZKConfigSync {
     void update() {
         byte[] data = null;
         try {
-            data = zkc.getData(getPath(), null, null);
+            if (zkc.exists(getPath(),false) != null) {
+                data = zkc.getData(getPath(), null, null);
+            } else {
+                this.config = null;
+                return;
+            }
         } catch (Exception e) {
             e.printStackTrace();
             data = null;
@@ -72,13 +92,7 @@ public class ZKConfigSync {
         if (data != null) {
             try {
                 String config = new String(data, "utf-8");
-                if (this.config == null && config != null ||
-                        !this.config.equals(config)) {
-                    this.config = config;
-                    if (listener != null) {
-                        listener.onConfigChanged(this.config);
-                    }
-                }
+                this.config = config;
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
@@ -100,7 +114,7 @@ public class ZKConfigSync {
                     watchedEvent.getType() == Event.EventType.NodeDeleted) {
                 String path = watchedEvent.getPath();
                 if (getPath().equals(path)) {
-                    getConfig();
+                    updateConfig();
                 }
             }
         }

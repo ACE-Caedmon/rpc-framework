@@ -8,4 +8,5 @@ public interface RpcServerApi {
     String getHost();
     int getPort();
     String getSelfClusterName();
+    String getZKServerAddr();
 }

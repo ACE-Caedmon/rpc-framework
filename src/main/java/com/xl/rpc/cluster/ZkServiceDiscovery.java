@@ -236,6 +236,11 @@ public class ZkServiceDiscovery {
         public void process(WatchedEvent watchedEvent) {
             if (watchedEvent.getType() == Event.EventType.None && watchedEvent.getState() == Event.KeeperState.Disconnected)
                 return;
+            if (watchedEvent.getType() == Event.EventType.NodeCreated ||
+                    watchedEvent.getType() == Event.EventType.NodeDataChanged ||
+                    watchedEvent.getType() == Event.EventType.NodeDeleted) {
+
+            }
             String path = watchedEvent.getPath();
             List<String> providers = null;
             if(path==null){

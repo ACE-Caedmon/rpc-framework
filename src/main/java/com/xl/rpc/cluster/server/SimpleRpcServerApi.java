@@ -146,4 +146,9 @@ public class SimpleRpcServerApi implements RpcServerApi {
     public String getSelfClusterName() {
         return this.clusterNames[0];
     }
+
+    @Override
+    public String getZKServerAddr() {
+        return this.zkServer;
+    }
 }
