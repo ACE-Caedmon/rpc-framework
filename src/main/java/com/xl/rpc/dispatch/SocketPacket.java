@@ -8,7 +8,7 @@ import com.xl.utils.EngineParams;
  */
 public class SocketPacket {
     protected String cmd;
-    protected MsgType msgType= EngineParams.getSystemMsgType();
+    protected MsgType msgType= MsgType.JSON;
     protected Object[] params;
     public SocketPacket(String cmd,Object...params){
         this.cmd=cmd;

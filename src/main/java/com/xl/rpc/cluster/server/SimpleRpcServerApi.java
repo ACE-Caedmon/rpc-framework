@@ -3,6 +3,8 @@ package com.xl.rpc.cluster.server;
 import com.xl.rpc.boot.ServerSettings;
 import com.xl.rpc.boot.ServerSocketEngine;
 import com.xl.rpc.boot.SocketEngine;
+import com.xl.rpc.cluster.ZKConfigSync;
+import com.xl.rpc.cluster.ZKConfigSync.ConfigSyncListener;
 import com.xl.rpc.cluster.ZkServiceDiscovery;
 import com.xl.rpc.dispatch.method.BeanAccess;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
@@ -10,7 +12,9 @@ import com.xl.rpc.dispatch.method.JavassitRpcMethodDispatcher;
 import com.xl.rpc.exception.ClusterException;
 import com.xl.rpc.exception.EngineException;
 import com.xl.rpc.internal.PrototypeBeanAccess;
+import com.xl.utils.EngineParams;
 import com.xl.utils.PropertyKit;
+import io.netty.util.internal.SystemPropertyUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +45,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
     private static final String SCAN_PACKAGE_NAME_PROPERTY="rpc.server.scanPackage";
     private static final String BEAN_ACCESS_PROPERTY="rpc.server.beanAccessClass";
     private static final String ZK_SERVER_ADDRESS="rpc.server.zkServer";
+    private static final String JAVASSIT_WRITE_CLASS="javassit.writeClass";
     public SimpleRpcServerApi(String configPath){
         Properties properties= PropertyKit.loadProperties(configPath);
         init(properties);
@@ -49,6 +54,10 @@ public class SimpleRpcServerApi implements RpcServerApi {
         init(properties);
     }
     public void init(Properties properties){
+        if(properties.containsKey(JAVASSIT_WRITE_CLASS)){
+            boolean writeClass=Boolean.valueOf(properties.getProperty(JAVASSIT_WRITE_CLASS));
+            System.setProperty(JAVASSIT_WRITE_CLASS,String.valueOf(writeClass));
+        }
         if(properties.containsKey(RPC_SERVER_HOST_PROPERTY)){
             this.host=properties.getProperty(RPC_SERVER_HOST_PROPERTY);
         }
@@ -114,6 +123,12 @@ public class SimpleRpcServerApi implements RpcServerApi {
         }catch (Exception e){
             throw new ClusterException("Register cluster service error: clusterNames = "+ clusterNames,e);
         }
+        ZKConfigSync configSync = new ZKConfigSync(zkServer, clusterNames[0], new ConfigSyncListener() {
+            @Override
+            public void onConfigChanged(String config) {
+                log.info("onConfigChanged {}",config);
+            }
+        });
 
     }
 
@@ -130,8 +145,5 @@ public class SimpleRpcServerApi implements RpcServerApi {
     @Override
     public String getSelfClusterName() {
         return this.clusterNames[0];
-    }
-
-    public static void main(String[] args) {
     }
 }

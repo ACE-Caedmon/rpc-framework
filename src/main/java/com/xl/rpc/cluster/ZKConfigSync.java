@@ -6,7 +6,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -22,7 +21,7 @@ public class ZKConfigSync {
     private String clusterName;
     private String zkServerAddr;
 
-    interface ConfigSyncListener {
+    public interface ConfigSyncListener {
         void onConfigChanged(String config);
     }
 
@@ -38,11 +37,8 @@ public class ZKConfigSync {
         this.clusterName = clusterName;
         this.zkServerAddr = zkServer;
         configWatcher = new ConfigWatcher();
-        try {
-            zkc = new ZooKeeper(zkServer, Session_Timeout, watcher);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        zkc = ZKClient.getZookeeper(zkServer);
+        ZKClient.registerConnectedWatcher(watcher);
     }
 
     public String getConfig() {

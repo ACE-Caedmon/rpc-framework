@@ -60,11 +60,8 @@ public class ZkServiceDiscovery {
         zkServer = zkServer.trim();
         zkServerAddr = zkServer;
         parseAddr();
-        try {
-            zkc = new ZooKeeper(zkServer, Session_Timeout, watcher);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        zkc = ZKClient.getZookeeper(zkServer);
+        ZKClient.registerConnectedWatcher(watcher);
     }
 
     private void parseAddr() {
