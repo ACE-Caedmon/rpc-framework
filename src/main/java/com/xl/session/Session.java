@@ -9,6 +9,8 @@ package com.xl.session;
 import com.xl.rpc.annotation.MsgType;
 import com.xl.rpc.codec.RpcPacket;
 import com.xl.rpc.dispatch.SocketPacket;
+import com.xl.rpc.dispatch.method.AsyncCallBackMethod;
+import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
 import com.xl.rpc.dispatch.method.RpcCallback;
 import com.xl.rpc.dispatch.method.SyncRpcCallBack;
 import io.netty.channel.Channel;
@@ -40,6 +42,19 @@ public class Session implements ISession{
 	public static final AttributeKey<Map<String,SyncRpcCallBack<?>>> SYNC_CALLBACK_MAP =new AttributeKey<>("SYNC_CALLBACK_MAP");
 	/**异步回调Map*/
 	public static final AttributeKey<Map<String,RpcCallback>> ASYNC_CALLBACK_MAP=new AttributeKey<>("ASYNC_CALLBACK_MAP");
+
+	public static final AsyncRpcCallBack DEFAULT_ASYNC_CALL_BACK=new AsyncRpcCallBack() {
+		@Override
+		public void processResult(ISession session, Object result) {
+			logger.debug("Async callback process");
+		}
+
+		@Override
+		public void processException(Throwable throwable) {
+			throwable.printStackTrace();
+			logger.error("Async callback exception",throwable);
+		}
+	};
 	private Channel channel;//连接通道
 	private long createTime;//创建时间
 	private long lastActiveTime;//最后活动时间
@@ -180,10 +195,11 @@ public class Session implements ISession{
 	public void asyncRpcSend(RpcPacket packet,RpcCallback rpcCallback){
 		String uuid=UUID.randomUUID().toString();
 		packet.setUuid(uuid);
-		if(rpcCallback!=null){
-			Map<String,RpcCallback> callBackMap=getAttribute(ASYNC_CALLBACK_MAP);
-			callBackMap.put(uuid, rpcCallback);
+		if(rpcCallback==null){
+			rpcCallback=DEFAULT_ASYNC_CALL_BACK;
 		}
+		Map<String,RpcCallback> callBackMap=getAttribute(ASYNC_CALLBACK_MAP);
+		callBackMap.put(uuid, rpcCallback);
 		writeAndFlush(packet);
 	}
 

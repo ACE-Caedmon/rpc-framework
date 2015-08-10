@@ -23,10 +23,8 @@ public class ServerControl implements IServerControl{
     private UserService userService;
 
     @Override
-    public Map<String,UserInfo> login(@RpcRequest LoginProtoBuffer.Login.Builder login) {
+    public void login(@RpcRequest LoginProtoBuffer.Login.Builder login) {
         log.info("Protobuf接受:{},{}",login.getUsername(), login.getPassword());
-        Map<String,UserInfo> userInfos=new HashMap<>();
-        return userInfos;
     }
 
     @Override

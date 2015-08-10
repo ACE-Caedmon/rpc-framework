@@ -17,7 +17,7 @@ import java.util.Map;
 public interface IServerControl {
     @RpcMethod(Command.ServerControl_login)
     @RpcResponse
-    Map<String,UserInfo> login(@RpcRequest LoginProtoBuffer.Login.Builder login);
+    void login(@RpcRequest LoginProtoBuffer.Login.Builder login);
 
     @RpcMethod(Command.ServerControl_login)
     @RpcResponse
