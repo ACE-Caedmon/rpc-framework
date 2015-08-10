@@ -8,6 +8,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +33,10 @@ public class ZkServerManager {
     private Map<String,PathWatcher> providerWatchers = new HashMap<String, PathWatcher>();
     private static final Logger log= LoggerFactory.getLogger(ZkServerManager.class);
     private static int Session_Timeout = 5*1000;
+
+    private static String zkServerAddr;
+    List<InetSocketAddress> zkAddressList = new ArrayList<>();
+
     static class CacheData {
         public Map<String,List<String>> providerMap = new HashMap<String, List<String>>(); // 需要lock保护
     }
@@ -50,10 +59,29 @@ public class ZkServerManager {
     };
 
     public ZkServerManager(String zkServer) {
+        zkServer = zkServer.trim();
+        zkServerAddr = zkServer;
+        parseAddr();
         try {
             zkc = new ZooKeeper(zkServer, Session_Timeout, watcher);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void parseAddr() {
+        int DEFAULT_PORT = 2181;
+        String hostsList[] = zkServerAddr.split(",");
+        for (String host : hostsList) {
+            int port = DEFAULT_PORT;
+            int pidx = host.lastIndexOf(':');
+            if (pidx >= 0) {
+                if (pidx < host.length() - 1) {
+                    port = Integer.parseInt(host.substring(pidx + 1));
+                }
+                host = host.substring(0, pidx);
+            }
+            zkAddressList.add(new InetSocketAddress(host,port));
         }
     }
 
@@ -72,13 +100,34 @@ public class ZkServerManager {
     * logicName:logicName
     * address:ip:port
     */
-    public void registerService(String logicName,String address) throws Exception{
-        if (Util.isEmpty(address) || Util.isEmpty(logicName)) {
+    public void registerService(String logicName,String host,int port) throws Exception{
+        log.debug("registerService logicName {} host {} port {}", logicName,host,port);
+        if (Util.isEmpty(logicName)) {
             throw new RuntimeException("ClusterName or server address is null");
         }
         this.clusterName = logicName;
         createPath(getSvrTreePath());
-        String path = getSvrTreePath() + "/" + address;
+        if (Util.isEmpty(host)) {
+            String localIp = null;
+            for (InetSocketAddress svr : zkAddressList) {
+                try {
+                    Socket socket = new Socket();
+                    socket.connect(svr,5000);
+                    localIp = socket.getLocalAddress().getHostAddress();
+                    log.debug("determined local ip {}", localIp);
+                    socket.close();
+                    break;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    localIp = null;
+                }
+            }
+            host = localIp;
+            if (Util.isEmpty(host)) {
+                throw new RuntimeException("can not determine the local ip");
+            }
+        }
+        String path = getSvrTreePath() + "/" + host+":"+port;
         Stat stat = zkc.exists(path,false);
         // 说明程序挂了，立马又被拉起，这时候需要等zk服务器超时了再注册
         if (stat != null){
