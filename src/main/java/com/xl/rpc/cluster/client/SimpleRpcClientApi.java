@@ -1,12 +1,11 @@
 package com.xl.rpc.cluster.client;
 
-import com.sun.corba.se.spi.activation.Server;
 import com.xl.rpc.annotation.MsgType;
 import com.xl.rpc.annotation.RpcControl;
 import com.xl.rpc.boot.RpcClientSocketEngine;
 import com.xl.rpc.boot.SocketEngine;
 import com.xl.rpc.boot.TCPClientSettings;
-import com.xl.rpc.cluster.ZkServerManager;
+import com.xl.rpc.cluster.ZkServiceDiscovery;
 import com.xl.rpc.dispatch.CmdInterceptor;
 import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
 import com.xl.rpc.dispatch.method.BeanAccess;
@@ -14,7 +13,6 @@ import com.xl.rpc.dispatch.method.JavassitRpcMethodDispatcher;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xl.rpc.exception.EngineException;
 import com.xl.rpc.internal.PrototypeBeanAccess;
-import com.xl.session.ISession;
 import com.xl.utils.ClassUtils;
 import com.xl.utils.PropertyKit;
 import io.netty.channel.EventLoopGroup;
@@ -41,7 +39,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private String zkServer;
     private IClusterServerManager serverManager;
     private EventLoopGroup loopGroup;
-    private ZkServerManager zkServerManager;
+    private ZkServiceDiscovery zkServerManager;
     private String[] monitorService;
     private String loadBalancing="responseTime";
     private static SimpleRpcClientApi instance=new SimpleRpcClientApi();
@@ -169,8 +167,8 @@ public class SimpleRpcClientApi implements RpcClientApi {
     public void bind() {
         log.info("SimpleRpcClient bind ");
         String userDir=System.getProperty("user.dir");
-        zkServerManager =new ZkServerManager(zkServer);
-        zkServerManager.setListener(new ZkServerManager.ServerConfigListener() {
+        zkServerManager =new ZkServiceDiscovery(zkServer);
+        zkServerManager.setListener(new ZkServiceDiscovery.ServerDiscoveryListener() {
             @Override
             public void onServerListChanged(String s) {
                 SimpleRpcClientApi.this.refreshClusterServers(s);

@@ -3,7 +3,9 @@ package com.xl.rpc.cluster.server;
 import com.xl.rpc.boot.ServerSettings;
 import com.xl.rpc.boot.ServerSocketEngine;
 import com.xl.rpc.boot.SocketEngine;
-import com.xl.rpc.cluster.ZkServerManager;
+import com.xl.rpc.cluster.ZKConfigSync;
+import com.xl.rpc.cluster.ZKConfigSync.ConfigSyncListener;
+import com.xl.rpc.cluster.ZkServiceDiscovery;
 import com.xl.rpc.dispatch.method.BeanAccess;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xl.rpc.dispatch.method.JavassitRpcMethodDispatcher;
@@ -22,7 +24,7 @@ import java.util.Properties;
  * Created by Administrator on 2015/7/15.
  */
 public class SimpleRpcServerApi implements RpcServerApi {
-    private ZkServerManager zkServerManager;
+    private ZkServiceDiscovery zkServiceDiscovery;
     private String host="127.0.0.1";
     private int port=8001;
     private int bossThreadSize=Runtime.getRuntime().availableProcessors();
@@ -113,15 +115,20 @@ public class SimpleRpcServerApi implements RpcServerApi {
         RpcMethodDispatcher dispatcher=new JavassitRpcMethodDispatcher(beanAccess,cmdThreadSize);
         socketEngine=new ServerSocketEngine(settings,dispatcher);
         socketEngine.start();
-        zkServerManager =new ZkServerManager(this.zkServer);
+        zkServiceDiscovery =new ZkServiceDiscovery(this.zkServer);
         try{
             for(String clusterName:clusterNames){
-                zkServerManager.registerService(clusterName,host,port);
+                zkServiceDiscovery.registerService(clusterName,host,port);
             }
-
         }catch (Exception e){
             throw new ClusterException("Register cluster service error: clusterNames = "+ clusterNames,e);
         }
+        ZKConfigSync configSync = new ZKConfigSync(zkServer, clusterNames[0], new ConfigSyncListener() {
+            @Override
+            public void onConfigChanged(String config) {
+                log.info("onConfigChanged {}",config);
+            }
+        });
 
     }
 

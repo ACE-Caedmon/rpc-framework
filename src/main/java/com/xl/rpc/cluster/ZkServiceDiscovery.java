@@ -8,10 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,16 +20,16 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by zwc on 2015/7/10.
  */
-public class ZkServerManager {
+public class ZkServiceDiscovery {
 
     private ZooKeeper zkc;
-    ServerConfigListener listener;
+    ServerDiscoveryListener listener;
 
     private String clusterName;
     private List<String> monitorList;
     private static String ServerStore = "/server";
     private Map<String,PathWatcher> providerWatchers = new HashMap<String, PathWatcher>();
-    private static final Logger log= LoggerFactory.getLogger(ZkServerManager.class);
+    private static final Logger log= LoggerFactory.getLogger(ZkServiceDiscovery.class);
     private static int Session_Timeout = 5*1000;
 
     private static String zkServerAddr;
@@ -45,7 +43,7 @@ public class ZkServerManager {
 
     private CacheData cacheData = new CacheData();
 
-    public interface ServerConfigListener {
+    public interface ServerDiscoveryListener {
         void onServerListChanged(String server);
     }
 
@@ -58,15 +56,12 @@ public class ZkServerManager {
         }
     };
 
-    public ZkServerManager(String zkServer) {
+    public ZkServiceDiscovery(String zkServer) {
         zkServer = zkServer.trim();
         zkServerAddr = zkServer;
         parseAddr();
-        try {
-            zkc = new ZooKeeper(zkServer, Session_Timeout, watcher);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        zkc = ZKClient.getZookeeper(zkServer);
+        ZKClient.registerConnectedWatcher(watcher);
     }
 
     private void parseAddr() {
@@ -92,9 +87,10 @@ public class ZkServerManager {
     */
     public void monitorServiceProviders(List<String> monitorServerList) throws Exception{
         this.monitorList = monitorServerList;
-        initNameServiceWatchers();
+        initServiceDiscoveryWatchers();
         update();
     }
+
 
     /*
     * logicName:logicName
@@ -139,15 +135,12 @@ public class ZkServerManager {
         update();
     }
 
-    public void setListener(ServerConfigListener listener) {
+    public void setListener(ServerDiscoveryListener listener) {
         this.listener = listener;
     }
 
 
-
-
-
-    private void initNameServiceWatchers() throws KeeperException,InterruptedException{
+    private void initServiceDiscoveryWatchers() throws KeeperException,InterruptedException{
         if (monitorList != null) {
             for (String svrName : monitorList) {
                 String path = ServerStore + "/" + svrName;
@@ -157,7 +150,6 @@ public class ZkServerManager {
                 }
                 PathWatcher pathWatcher = providerWatchers.get(svrName);
                 pathWatcher.monitor();
-
             }
         }
     }
