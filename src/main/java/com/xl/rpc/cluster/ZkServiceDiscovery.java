@@ -26,7 +26,7 @@ public class ZkServiceDiscovery {
     ServerDiscoveryListener listener;
 
     private String clusterName;
-    private List<String> monitorList;
+    private List<String> monitorList = new ArrayList<>();
     private static String ServerStore = "/server";
     private Map<String,PathWatcher> providerWatchers = new HashMap<String, PathWatcher>();
     private static final Logger log= LoggerFactory.getLogger(ZkServiceDiscovery.class);
@@ -80,15 +80,27 @@ public class ZkServiceDiscovery {
         }
     }
 
-
-
     /*
     * monitorServerGroups: 监听其他服务器的实例状态
     */
     public void monitorServiceProviders(List<String> monitorServerList) throws Exception{
-        this.monitorList = monitorServerList;
-        initServiceDiscoveryWatchers();
+        for (String e:monitorServerList) {
+            if (!monitorList.contains(e)) {
+                monitorList.add(e);
+            }
+        }
         update();
+    }
+
+    /*
+     * if svrName not in the monitorList,add it
+     */
+    public List<String> getServerList(String svrName) {
+        if (!monitorList.contains(svrName)) {
+            monitorList.add(svrName);
+            update();
+        }
+        return cacheData.providerMap.get(svrName);
     }
 
 
@@ -102,7 +114,7 @@ public class ZkServiceDiscovery {
             throw new RuntimeException("ClusterName or server address is null");
         }
         this.clusterName = logicName;
-        createPath(getSvrTreePath());
+        createPath(ServerStore + "/" + clusterName);
         if (Util.isEmpty(host)) {
             String localIp = null;
             for (InetSocketAddress svr : zkAddressList) {
@@ -123,7 +135,7 @@ public class ZkServiceDiscovery {
                 throw new RuntimeException("can not determine the local ip");
             }
         }
-        String path = getSvrTreePath() + "/" + host+":"+port;
+        String path = ServerStore + "/" + clusterName + "/" + host+":"+port;
         Stat stat = zkc.exists(path,false);
         // 说明程序挂了，立马又被拉起，这时候需要等zk服务器超时了再注册
         if (stat != null){
@@ -135,24 +147,11 @@ public class ZkServiceDiscovery {
         update();
     }
 
+
     public void setListener(ServerDiscoveryListener listener) {
         this.listener = listener;
     }
 
-
-    private void initServiceDiscoveryWatchers() throws KeeperException,InterruptedException{
-        if (monitorList != null) {
-            for (String svrName : monitorList) {
-                String path = ServerStore + "/" + svrName;
-                if (!providerWatchers.containsKey(svrName)) {
-                    PathWatcher pathWatcher = new PathWatcher(path);
-                    providerWatchers.put(svrName,pathWatcher);
-                }
-                PathWatcher pathWatcher = providerWatchers.get(svrName);
-                pathWatcher.monitor();
-            }
-        }
-    }
 
 
     synchronized void update() throws ClusterException{
@@ -160,24 +159,26 @@ public class ZkServiceDiscovery {
             return;
         try{
             createPath(ServerStore);
-            // query provider list
-            if (monitorList != null) {
-                for (String svrName : monitorList) {
-                    List<String> nodes = getServerListByPath(ServerStore+"/"+svrName);
-                    cacheData.providerMap.put(svrName,nodes);
+
+            for (String svrName : monitorList) {
+                List<String> nodes = getServerListByPath(ServerStore + "/" + svrName);
+                saveProviders(svrName,nodes);
+            }
+
+            for (String svrName :monitorList) {
+                if (!providerWatchers.containsKey(svrName)) {
+                    PathWatcher watcher = new PathWatcher(ServerStore+"/"+svrName);
+                    providerWatchers.put(svrName,watcher);
                 }
             }
 
-            //  monitor provider server list
-            if (monitorList != null) {
-                for (String svrName : monitorList) {
-                    PathWatcher pathWatcher = providerWatchers.get(svrName);
-                    if(pathWatcher!=null){
-                        pathWatcher.monitor();
-                    }
-
+            for (String svrName : monitorList) {
+                PathWatcher pathWatcher = providerWatchers.get(svrName);
+                if(pathWatcher!=null){
+                    pathWatcher.monitor();
                 }
             }
+
         }catch (Exception e){
             throw new ClusterException("Update zookeeper nodes error",e);
         }
@@ -196,10 +197,7 @@ public class ZkServiceDiscovery {
         return cacheData.providerMap;
     }
 
-    public List<String> getServerList(String svrName) {
-        update();
-        return cacheData.providerMap.get(svrName);
-    }
+
 
     private List<String> getServerListByPath(String path) throws KeeperException, InterruptedException {
         List<String> children = zkc.getChildren(path,false);
@@ -207,17 +205,16 @@ public class ZkServiceDiscovery {
     }
 
 
-    private String getSvrTreePath() {
-        String path = ServerStore + "/" + clusterName;
-        return path;
-    }
 
+    private void createPath(String path){
+        try {
+            Stat stat = zkc.exists(path, false);
+            if (stat == null) {
+                zkc.create(path, "".getBytes(),
+                        ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            }
+        } catch (Exception e) {
 
-    private void createPath(String path) throws KeeperException, InterruptedException {
-        Stat stat = zkc.exists(path, false);
-        if (stat == null) {
-            zkc.create(path, "".getBytes(),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
     }
 
@@ -228,43 +225,32 @@ public class ZkServiceDiscovery {
         public PathWatcher(String path) {
             this.path = path;
         }
-        public void monitor() throws KeeperException, InterruptedException {
+        public void monitor() {
             createPath(path);
-            zkc.getChildren(path, this);
+            try {
+                zkc.getChildren(path, this);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         public void process(WatchedEvent watchedEvent) {
-            if (watchedEvent.getType() == Event.EventType.None && watchedEvent.getState() == Event.KeeperState.Disconnected)
-                return;
             if (watchedEvent.getType() == Event.EventType.NodeCreated ||
                     watchedEvent.getType() == Event.EventType.NodeDataChanged ||
-                    watchedEvent.getType() == Event.EventType.NodeDeleted) {
-
+                    watchedEvent.getType() == Event.EventType.NodeDeleted ||
+                    watchedEvent.getType() == Event.EventType.NodeChildrenChanged) {
+                String path = watchedEvent.getPath();
+                try{
+                    int index = path.lastIndexOf("/");
+                    String service = path.substring(index + 1);
+                    List<String> providers = getServerListByPath(path);
+                    saveProviders(service, providers);
+                    monitor();
+                }catch (Exception e){
+                    e.printStackTrace();
+                    log.error("Zookeeper process WatchEvent error:server = {}", path, e);
+                }
             }
-            String path = watchedEvent.getPath();
-            List<String> providers = null;
-            if(path==null){
-                log.warn("Zookeeper WatchEvent path null");
-                return;
-            }
-            int index = path.lastIndexOf("/");
-            String service = path.substring(index + 1);
-            try{
-                monitor();
-                providers = getServerListByPath(path);
-                saveProviders(service, providers);
-            }catch (Exception e){
-                e.printStackTrace();
-                log.error("Zookeeper process WatchEvent error:server = {}", path, e);
-            }
-
-
-        }
-    }
-
-    private void notifyServerListChange(String svrName) {
-        if (listener != null) {
-            listener.onServerListChanged(svrName);
         }
     }
 
@@ -273,13 +259,16 @@ public class ZkServiceDiscovery {
         boolean updated = false;
         lock.lock();
         List<String> nodes = cacheData.providerMap.get(svr);
-        if (!nodes.equals(providers)) {
-            cacheData.providerMap.put(svr, providers);
-            updated = true;
+        if (nodes == null && providers == null || nodes.equals(providers)) {
+            return;
         }
+        cacheData.providerMap.put(svr, providers);
+        updated = true;
         lock.unlock();
         if (updated) {
-            notifyServerListChange(svr);
+            if (listener != null) {
+                listener.onServerListChanged(svr);
+            }
         }
     }
 }
