@@ -71,7 +71,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
         zkServerManager =new ZkServerManager(this.zkServer);
         try{
             for(String clusterName:clusterNames){
-                zkServerManager.registerService(clusterName,host+":"+port);
+                zkServerManager.registerService(clusterName,host,port);
             }
 
         }catch (Exception e){
