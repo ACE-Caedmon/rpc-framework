@@ -2,9 +2,9 @@ package com.xl.rpc.cluster.client;
 
 import com.xl.rpc.annotation.MsgType;
 import com.xl.rpc.annotation.RpcControl;
+import com.xl.rpc.boot.RpcClientSocketEngine;
 import com.xl.rpc.boot.SocketEngine;
 import com.xl.rpc.boot.TCPClientSettings;
-import com.xl.rpc.boot.TCPClientSocketEngine;
 import com.xl.rpc.cluster.ZkServiceDiscovery;
 import com.xl.rpc.dispatch.CmdInterceptor;
 import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
@@ -13,7 +13,6 @@ import com.xl.rpc.dispatch.method.JavassitRpcMethodDispatcher;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xl.rpc.exception.EngineException;
 import com.xl.rpc.internal.PrototypeBeanAccess;
-import com.xl.session.ISession;
 import com.xl.utils.ClassUtils;
 import com.xl.utils.PropertyKit;
 import io.netty.channel.EventLoopGroup;
@@ -41,7 +40,6 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private IClusterServerManager serverManager;
     private EventLoopGroup loopGroup;
     private ZkServiceDiscovery zkServerManager;
-    private RpcMethodDispatcher dispatcher;
     private String[] monitorService;
     private String loadBalancing="responseTime";
     private static SimpleRpcClientApi instance=new SimpleRpcClientApi();
@@ -77,7 +75,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         }catch (Exception e){
             throw new EngineException("BeanAccess init error",e);
         }
-        dispatcher=new JavassitRpcMethodDispatcher(beanAccess,this.cmdThreadSize);
+
         this.rpcCallProxyFactory=new CglibRpcCallProxyFactory();
         //扫描接口，预加载生成接口代理
         try{
@@ -151,10 +149,10 @@ public class SimpleRpcClientApi implements RpcClientApi {
     public ServerNode newServerNode(String clusterName,String remoteHost,int remotePort) throws Exception{
         TCPClientSettings settings= createClientSettings(remoteHost, remotePort);
         this.loopGroup=new NioEventLoopGroup(settings.workerThreadSize);
-        TCPClientSocketEngine clientSocketEngine=new TCPClientSocketEngine(settings,dispatcher,loopGroup);
+        RpcMethodDispatcher dispatcher=new JavassitRpcMethodDispatcher((BeanAccess)Class.forName(this.beanAccessClass).newInstance(),this.cmdThreadSize);
+        RpcClientSocketEngine clientSocketEngine=new RpcClientSocketEngine(settings,dispatcher,loopGroup);
         clientSocketEngine.start();
-        ISession session=clientSocketEngine.getSession();
-        ServerNode serverNode=new ServerNode(session);
+        ServerNode serverNode=new ServerNode(clientSocketEngine);
         serverNode.setHost(remoteHost);
         serverNode.setPort(remotePort);
         serverNode.setSyncCallTimeout(settings.syncTimeout);
@@ -360,7 +358,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
     @Override
     public void asyncHashRpcCall(String clusterName, String key, String cmd, AsyncRpcCallBack callBack, Object... params) {
-        ServerNode node=getShardNode(clusterName, key);
+        ServerNode node=getShardNode(clusterName,key);
         node.asyncCall(cmd,callBack,params);
     }
     private ServerNode getShardNode(String clusterName,String key){
@@ -371,6 +369,9 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
     @Override
     public void addRpcMethodInterceptor(CmdInterceptor interceptor) {
-        this.dispatcher.addMethodInterceptor(interceptor);
+        for(Map.Entry<String,ServerNode> entry:serverManager.getAllServerNodes().entrySet()){
+            RpcClientSocketEngine socketEngine=entry.getValue().getSocketEngine();
+            socketEngine.addRpcMethodInterceptor(interceptor);
+        }
     }
 }

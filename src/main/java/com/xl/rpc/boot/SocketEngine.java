@@ -74,4 +74,11 @@ public abstract class SocketEngine {
     public void addCmdMethodInterceptor(CmdInterceptor interceptor){
         rpcMethodDispatcher.addMethodInterceptor(interceptor);
     }
+
+    public RpcMethodDispatcher getRpcMethodDispatcher() {
+        return rpcMethodDispatcher;
+    }
+    public void addRpcMethodInterceptor(CmdInterceptor interceptor){
+        this.rpcMethodDispatcher.addMethodInterceptor(interceptor);
+    }
 }
