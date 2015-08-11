@@ -38,7 +38,6 @@ public class ZkServiceDiscovery {
 
     private static final Logger log= LoggerFactory.getLogger(ZkServiceDiscovery.class);
 
-    private static int Session_Timeout = 5*1000;
 
 
     private static String zkServerAddr;
@@ -60,6 +59,7 @@ public class ZkServiceDiscovery {
     Watcher watcher = new Watcher(){
         // 监控所有被触发的事件
         public void process(WatchedEvent event) {
+            log.info("ZkServiceDiscovery process {}",event);
             if (event.getState() == Event.KeeperState.SyncConnected) {
                 updateAll();
             }
@@ -139,7 +139,7 @@ public class ZkServiceDiscovery {
         Stat stat = zkc.exists(path,false);
         // 说明程序挂了，立马又被拉起，这时候需要等zk服务器超时了再注册
         if (stat != null){
-            Thread.sleep((long) (Session_Timeout * 1.5));
+            Thread.sleep((long) (ZKClient.Session_Timeout * 1.5));
         }
         zkc.create(path, clusterName.getBytes(),
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
@@ -154,6 +154,7 @@ public class ZkServiceDiscovery {
 
     private synchronized void updateAll() {
         try {
+            createPath(ServerStore);
             List<String> services = getServerListByPath(ServerStore);
             for (String e:services) {
                 if (!monitorList.contains(e)) {
@@ -250,6 +251,7 @@ public class ZkServiceDiscovery {
         }
 
         public void process(WatchedEvent watchedEvent) {
+            log.info("PathWatcher process {} path {}",watchedEvent,path);
             if (watchedEvent.getType() == Event.EventType.NodeCreated ||
                     watchedEvent.getType() == Event.EventType.NodeDataChanged ||
                     watchedEvent.getType() == Event.EventType.NodeDeleted ||
@@ -268,8 +270,8 @@ public class ZkServiceDiscovery {
                         log.error("Zookeeper process WatchEvent error:server = {}", path, e);
                     }
                 }
-                monitor();
             }
+            monitor();
         }
     }
 

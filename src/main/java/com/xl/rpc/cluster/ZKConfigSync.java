@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -29,7 +31,7 @@ public class ZKConfigSync {
     private String config;
     private static String ConfigStore = "/config/";
 
-    private ConfigWatcher configWatcher;
+    private ConfigWatcher configWatcher = new ConfigWatcher();
 
 
 
@@ -37,14 +39,31 @@ public class ZKConfigSync {
         this.listener = listener;
         this.clusterName = clusterName;
         this.zkServerAddr = zkServer;
-        configWatcher = new ConfigWatcher();
         zkc = ZKClient.getZookeeper(zkServer);
         ZKClient.registerConnectedWatcher(watcher);
+        Timer t = new Timer();
+        t.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                updateConfig();
+            }
+        },5*60*1000,5*60*1000);
     }
+
+    Watcher watcher = new Watcher() {
+        // 监控所有被触发的事件
+        public void process(WatchedEvent event) {
+            log.info("ZKConfigSync process {} config {}",event,clusterName);
+            if (event.getState() == Event.KeeperState.SyncConnected) {
+                updateConfig();
+            }
+        }
+    };
 
     public String getConfig() {
         return config;
     }
+
 
     public void updateConfig() {
         String oldConfig = config;
@@ -54,7 +73,7 @@ public class ZKConfigSync {
         monitor();
         if (config == null && oldConfig == null ||
                 config.equals(oldConfig)) {
-            return;
+
         } else {
             if (listener != null) {
                 listener.onConfigChanged(config);
@@ -66,20 +85,11 @@ public class ZKConfigSync {
         return ConfigStore + clusterName;
     }
 
-
-    Watcher watcher = new Watcher() {
-        // 监控所有被触发的事件
-        public void process(WatchedEvent event) {
-            if (event.getState() == Event.KeeperState.SyncConnected) {
-                updateConfig();
-            }
-        }
-    };
-
-    void update() {
+    private void update() {
+        log.info("update");
         byte[] data = null;
         try {
-            if (zkc.exists(getPath(),false) != null) {
+            if (zkc.exists(getPath(),null) != null) {
                 data = zkc.getData(getPath(), null, null);
             } else {
                 this.config = null;
@@ -100,6 +110,7 @@ public class ZKConfigSync {
     }
 
     void monitor() {
+        log.info("monitor {}",getPath());
         try {
             zkc.exists(getPath(),configWatcher);
         } catch (Exception e) {
@@ -109,6 +120,7 @@ public class ZKConfigSync {
 
     class ConfigWatcher implements Watcher {
         public void process(WatchedEvent watchedEvent) {
+            log.info("ConfigWatcher process {},path {}", watchedEvent,getPath());
             if (watchedEvent.getType() == Event.EventType.NodeCreated ||
                     watchedEvent.getType() == Event.EventType.NodeDataChanged ||
                     watchedEvent.getType() == Event.EventType.NodeDeleted) {
@@ -116,6 +128,8 @@ public class ZKConfigSync {
                 if (getPath().equals(path)) {
                     updateConfig();
                 }
+            } else {
+                monitor();
             }
         }
     }
