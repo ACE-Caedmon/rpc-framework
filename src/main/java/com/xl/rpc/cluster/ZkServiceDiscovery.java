@@ -26,14 +26,24 @@ public class ZkServiceDiscovery {
     ServerDiscoveryListener listener;
 
     private String clusterName;
+
     private List<String> monitorList = new ArrayList<>();
+
     private static String ServerStore = "/server";
+
+
+    private PathWatcher rootPathWather = new PathWatcher(ServerStore);
+
     private Map<String,PathWatcher> providerWatchers = new HashMap<String, PathWatcher>();
+
     private static final Logger log= LoggerFactory.getLogger(ZkServiceDiscovery.class);
+
     private static int Session_Timeout = 5*1000;
+
 
     private static String zkServerAddr;
     List<InetSocketAddress> zkAddressList = new ArrayList<>();
+
 
     static class CacheData {
         public Map<String,List<String>> providerMap = new HashMap<String, List<String>>(); // 需要lock保护
@@ -51,7 +61,7 @@ public class ZkServiceDiscovery {
         // 监控所有被触发的事件
         public void process(WatchedEvent event) {
             if (event.getState() == Event.KeeperState.SyncConnected) {
-                update();
+                updateAll();
             }
         }
     };
@@ -80,27 +90,17 @@ public class ZkServiceDiscovery {
         }
     }
 
-    /*
-    * monitorServerGroups: 监听其他服务器的实例状态
-    */
-    public void monitorServiceProviders(List<String> monitorServerList) throws Exception{
-        for (String e:monitorServerList) {
-            if (!monitorList.contains(e)) {
-                monitorList.add(e);
-            }
-        }
-        update();
-    }
 
     /*
      * if svrName not in the monitorList,add it
      */
     public List<String> getServerList(String svrName) {
-        if (!monitorList.contains(svrName)) {
-            monitorList.add(svrName);
-            update();
-        }
         return cacheData.providerMap.get(svrName);
+    }
+
+    public Map<String,List<String>> getAllServerMap(){
+        updateAll();
+        return cacheData.providerMap;
     }
 
 
@@ -152,12 +152,28 @@ public class ZkServiceDiscovery {
         this.listener = listener;
     }
 
+    private synchronized void updateAll() {
+        try {
+            List<String> services = getServerListByPath(ServerStore);
+            for (String e:services) {
+                if (!monitorList.contains(e)) {
+                    monitorList.add(e);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        update();
+        log.info("servers {}",cacheData.providerMap);
+    }
 
 
-    synchronized void update() throws ClusterException{
+    void update() throws ClusterException{
         if (zkc == null)
             return;
         try{
+            rootPathWather.monitor();
+
             createPath(ServerStore);
 
             for (String svrName : monitorList) {
@@ -166,14 +182,16 @@ public class ZkServiceDiscovery {
             }
 
             for (String svrName :monitorList) {
-                if (!providerWatchers.containsKey(svrName)) {
-                    PathWatcher watcher = new PathWatcher(ServerStore+"/"+svrName);
-                    providerWatchers.put(svrName,watcher);
+                String path = ServerStore+"/"+svrName;
+                if (!providerWatchers.containsKey(path)) {
+                    PathWatcher watcher = new PathWatcher(path);
+                    providerWatchers.put(path,watcher);
                 }
             }
 
             for (String svrName : monitorList) {
-                PathWatcher pathWatcher = providerWatchers.get(svrName);
+                String path = ServerStore+"/"+svrName;
+                PathWatcher pathWatcher = providerWatchers.get(path);
                 if(pathWatcher!=null){
                     pathWatcher.monitor();
                 }
@@ -191,19 +209,16 @@ public class ZkServiceDiscovery {
     }
 
 
-
-    public Map<String,List<String>> getAllServerMap(){
-        update();
-        return cacheData.providerMap;
-    }
-
-
-
-    private List<String> getServerListByPath(String path) throws KeeperException, InterruptedException {
-        List<String> children = zkc.getChildren(path,false);
+    private List<String> getServerListByPath(String path) {
+        List<String> children = null;
+        try {
+            children = zkc.getChildren(path,false);
+        } catch (Exception e) {
+            e.printStackTrace();
+            children = null;
+        }
         return children;
     }
-
 
 
     private void createPath(String path){
@@ -240,26 +255,34 @@ public class ZkServiceDiscovery {
                     watchedEvent.getType() == Event.EventType.NodeDeleted ||
                     watchedEvent.getType() == Event.EventType.NodeChildrenChanged) {
                 String path = watchedEvent.getPath();
-                try{
-                    int index = path.lastIndexOf("/");
-                    String service = path.substring(index + 1);
-                    List<String> providers = getServerListByPath(path);
-                    saveProviders(service, providers);
-                    monitor();
-                }catch (Exception e){
-                    e.printStackTrace();
-                    log.error("Zookeeper process WatchEvent error:server = {}", path, e);
+                if (ServerStore.equals(path)) {
+                    updateAll();
+                } else {
+                    try{
+                        int index = path.lastIndexOf("/");
+                        String service = path.substring(index + 1);
+                        List<String> providers = getServerListByPath(path);
+                        saveProviders(service, providers);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                        log.error("Zookeeper process WatchEvent error:server = {}", path, e);
+                    }
                 }
+                monitor();
             }
         }
     }
 
 
+
     private void saveProviders(String svr,List<String> providers) {
-        boolean updated = false;
+        if (providers == null) {
+            return;
+        }
+        boolean updated;
         lock.lock();
         List<String> nodes = cacheData.providerMap.get(svr);
-        if (nodes == null && providers == null || nodes.equals(providers)) {
+        if (providers.equals(nodes)) {
             return;
         }
         cacheData.providerMap.put(svr, providers);

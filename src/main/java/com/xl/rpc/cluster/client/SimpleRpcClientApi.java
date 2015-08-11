@@ -146,6 +146,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         settings.syncTimeout= callTimeout;
         return settings;
     }
+
     public ServerNode newServerNode(String clusterName,String remoteHost,int remotePort) throws Exception{
         TCPClientSettings settings= createClientSettings(remoteHost, remotePort);
         this.loopGroup=new NioEventLoopGroup(settings.workerThreadSize);
@@ -163,6 +164,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     public static SimpleRpcClientApi getInstance(){
         return instance;
     }
+
     @Override
     public void bind() {
         log.info("SimpleRpcClient bind ");
@@ -180,12 +182,6 @@ public class SimpleRpcClientApi implements RpcClientApi {
             clusterNames.add(s);
             serverManager.addClusterGroup(s);
             log.info("Zookeeper add monitor service :clusterName = {}",s);
-        }
-        try{
-            zkServerManager.monitorServiceProviders(clusterNames);
-        }catch (Exception e){
-            e.printStackTrace();
-            log.error("Zookeeper monitor service error",e);
         }
 
         for(String clusterName: zkServerManager.getAllServerMap().keySet()){
