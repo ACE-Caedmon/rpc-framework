@@ -168,7 +168,6 @@ public class SimpleRpcClientApi implements RpcClientApi {
     @Override
     public void bind() {
         log.info("SimpleRpcClient bind ");
-        String userDir=System.getProperty("user.dir");
         zkServerManager =new ZkServiceDiscovery(zkServer);
         zkServerManager.setListener(new ZkServiceDiscovery.ServerDiscoveryListener() {
             @Override

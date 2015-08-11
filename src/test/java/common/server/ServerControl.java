@@ -25,6 +25,7 @@ public class ServerControl implements IServerControl{
     @Override
     public void login(@RpcRequest LoginProtoBuffer.Login.Builder login) {
         log.info("Protobuf接受:{},{}",login.getUsername(), login.getPassword());
+        throw new NullPointerException("test test");
     }
 
     @Override
@@ -37,6 +38,6 @@ public class ServerControl implements IServerControl{
             userInfo.setUsername("user-"+i);
             userInfos.put(userInfo.getUsername(),userInfo);
         }
-        return userInfos;
+        throw new NullPointerException("test test");
     }
 }
