@@ -1,5 +1,7 @@
 package com.xl.rpc.cluster;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.*;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -17,10 +19,19 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ZKClient {
     private static final Logger log = LoggerFactory.getLogger(ZKClient.class);
-    private static ZooKeeper zkc;
-    public static int Session_Timeout = 10*1000;
-    private static Lock lock = new ReentrantLock();
-    static Watcher watcher = new Watcher(){
+    private ZooKeeper zkc;
+    public static final int Session_Timeout = 10*1000;
+    private Lock lock = new ReentrantLock();
+    private List<Watcher> connectedWacther = new ArrayList<>();
+    private static final ZKClient instance=new ZKClient();
+
+    private ZKClient(){
+
+    }
+    public static ZKClient getInstance(){
+        return instance;
+    }
+    Watcher watcher = new Watcher(){
         // 监控所有被触发的事件
         public void process(WatchedEvent event) {
             log.info("process {}",event);
@@ -35,10 +46,8 @@ public class ZKClient {
         }
     };
 
-    static private String serverAddr;
-    static private List<Watcher> connectedWacther = new ArrayList<>();
 
-    static public void registerConnectedWatcher(Watcher watcher) {
+    public void registerConnectedWatcher(Watcher watcher) {
         if (!connectedWacther.contains(watcher)) {
             lock.lock();
             connectedWacther.add(watcher);
@@ -49,16 +58,15 @@ public class ZKClient {
         }
     }
 
-    static public ZooKeeper getZookeeper(String serverAddr) {
+    public ZooKeeper getZookeeper(String zookeeperAddress) {
         if (zkc == null) {
-            ZKClient.serverAddr = serverAddr;
             try {
-                zkc = new ZooKeeper(serverAddr, Session_Timeout, watcher);
+                zkc = new ZooKeeper(zookeeperAddress, Session_Timeout, watcher);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
-            if (!serverAddr.equals(serverAddr)) {
+            if (!zookeeperAddress.equals(zookeeperAddress)) {
                 throw  new RuntimeException("zookeeper server addr must unique");
             }
         }

@@ -65,23 +65,25 @@ public class PropertyKit {
         return properties;
     }
     public static Properties loadProperties(String path){
-        InputStream in=null;
         Properties properties=new Properties();
-        try {
-            in=PropertyKit.class.getClassLoader().getResourceAsStream(path);
-            properties.load(in);
-
-            return properties;
-        } catch (Exception e) {
+        InputStream in=PropertyKit.class.getClassLoader().getResourceAsStream(path);
+        return loadProperties(in);
+    }
+    public static Properties loadProperties(InputStream inputStream) {
+        Properties properties=new Properties();
+        try{
+            properties.load(inputStream);
+        }catch (IOException e){
             e.printStackTrace();
-        }finally{
+        }finally {
             try {
-                in.close();
+                inputStream.close();
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
+
         return properties;
     }
     public static JSONObject properties2Json(String path){

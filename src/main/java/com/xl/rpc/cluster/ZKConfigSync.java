@@ -1,5 +1,6 @@
 package com.xl.rpc.cluster;
 
+import com.xl.rpc.cluster.zookeeper.ZkConfigWatcher;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -36,7 +37,7 @@ public class ZKConfigSync {
     private String config;
     private static String ConfigStore = "/config/";
 
-    private ConfigWatcher configWatcher = new ConfigWatcher();
+    private ZkConfigWatcher configWatcher;
 
     private ScheduledExecutorService pullConfigTimer= Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
         @Override
@@ -51,8 +52,9 @@ public class ZKConfigSync {
         this.listener = listener;
         this.clusterName = clusterName;
         this.zkServerAddr = zkServer;
-        zkc = ZKClient.getZookeeper(zkServer);
-        ZKClient.registerConnectedWatcher(watcher);
+        this.configWatcher= new ZkConfigWatcher(this);
+        zkc = ZKClient.getInstance().getZookeeper(zkServer);
+        ZKClient.getInstance().registerConnectedWatcher(watcher);
         pullConfigTimer.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -98,7 +100,7 @@ public class ZKConfigSync {
         }
     }
 
-    private String getPath() {
+    public String getPath() {
         return ConfigStore + clusterName;
     }
 
@@ -126,7 +128,7 @@ public class ZKConfigSync {
         }
     }
 
-    void monitor() {
+    public void monitor() {
         log.info("monitor {}",getPath());
         try {
             zkc.exists(getPath(),configWatcher);
@@ -135,20 +137,5 @@ public class ZKConfigSync {
         }
     }
 
-    class ConfigWatcher implements Watcher {
-        public void process(WatchedEvent watchedEvent) {
-            log.info("ConfigWatcher process {},path {}", watchedEvent,getPath());
-            if (watchedEvent.getType() == Event.EventType.NodeCreated ||
-                    watchedEvent.getType() == Event.EventType.NodeDataChanged ||
-                    watchedEvent.getType() == Event.EventType.NodeDeleted) {
-                String path = watchedEvent.getPath();
-                if (getPath().equals(path)) {
-                    updateConfig();
-                }
-            } else {
-                monitor();
-            }
-        }
-    }
 
 }

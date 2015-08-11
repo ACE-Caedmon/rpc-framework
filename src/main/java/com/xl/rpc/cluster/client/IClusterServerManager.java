@@ -38,5 +38,5 @@ public interface IClusterServerManager {
 
     Map<String,ServerNode> getAllServerNodes();
 
-    void addClusterGroup(String clusterName);
+    ClusterGroup addClusterGroup(String clusterName);
 }

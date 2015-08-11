@@ -84,7 +84,9 @@ public class ClusterServerManager implements IClusterServerManager {
     }
 
     @Override
-    public void addClusterGroup(String clusterName) {
-        clusterGroupMap.put(clusterName,new ClusterGroup(clusterName));
+    public ClusterGroup addClusterGroup(String clusterName) {
+        ClusterGroup group=new ClusterGroup(clusterName);
+        clusterGroupMap.put(clusterName,group);
+        return group;
     }
 }

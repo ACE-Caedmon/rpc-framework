@@ -36,7 +36,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private int workerThreadSize=Runtime.getRuntime().availableProcessors();
     private int cmdThreadSize= Runtime.getRuntime().availableProcessors();
     private String[] scanPackage=new String[]{""};
-    private String zkServer;
+    private String zookeeperAddress;
     private IClusterServerManager serverManager;
     private EventLoopGroup loopGroup;
     private ZkServiceDiscovery zkServerManager;
@@ -51,7 +51,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private static final String BEAN_ACCESS_PROPERTY="rpc.client.beanAccessClass";
     private static final String MONITOR_SERVICE_PROPERTY="rpc.client.monitorService";
     private static final String RPC_RETRY_COUNT_PROPERTY="rpc.client.retryCount";
-    private static final String ZK_SERVER_ADDRESS_PROPERTY ="rpc.client.zkServer";
+    private static final String ZK_SERVER_ADDRESS_PROPERTY ="rpc.zookeeper.address";
     private static final String LOAD_BALANCING_PROPERTY="rpc.client.loadBalancing";
     private static final String JAVASSIT_WRITE_CLASS="javassit.writeClass";
     private SimpleRpcClientApi(){
@@ -120,14 +120,12 @@ public class SimpleRpcClientApi implements RpcClientApi {
         }
         if(properties.containsKey(MONITOR_SERVICE_PROPERTY)){
             this.monitorService=properties.getProperty(MONITOR_SERVICE_PROPERTY).split(",");
-        }else{
-            throw new NullPointerException(MONITOR_SERVICE_PROPERTY+"not specified");
         }
         if(properties.containsKey(RPC_RETRY_COUNT_PROPERTY)){
             this.retryCount=Integer.parseInt(properties.getProperty(RPC_RETRY_COUNT_PROPERTY));
         }
         if(properties.containsKey(ZK_SERVER_ADDRESS_PROPERTY)){
-            this.zkServer=properties.getProperty(ZK_SERVER_ADDRESS_PROPERTY);
+            this.zookeeperAddress =properties.getProperty(ZK_SERVER_ADDRESS_PROPERTY);
         }else{
             throw new NullPointerException(ZK_SERVER_ADDRESS_PROPERTY +"not specified");
         }
@@ -158,7 +156,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         serverNode.setPort(remotePort);
         serverNode.setSyncCallTimeout(settings.syncTimeout);
         serverNode.setClusterName(clusterName);
-        log.info("Create new server:{}",serverNode.getKey());
+        log.info("Create new server:{}", serverNode.getKey());
         return serverNode;
     }
     public static SimpleRpcClientApi getInstance(){
@@ -168,7 +166,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     @Override
     public void bind() {
         log.info("SimpleRpcClient bind ");
-        zkServerManager =new ZkServiceDiscovery(zkServer);
+        zkServerManager =new ZkServiceDiscovery(zookeeperAddress);
         zkServerManager.setListener(new ZkServiceDiscovery.ServerDiscoveryListener() {
             @Override
             public void onServerListChanged(String s) {
@@ -177,16 +175,18 @@ public class SimpleRpcClientApi implements RpcClientApi {
         });
         serverManager=ClusterServerManager.getInstance();
         List<String> clusterNames=new ArrayList<>();
-        for(String s:monitorService){
-            clusterNames.add(s);
-            serverManager.addClusterGroup(s);
-            log.info("Zookeeper add monitor service :clusterName = {}",s);
+        if(monitorService!=null){
+            for(String s:monitorService){
+                clusterNames.add(s);
+                serverManager.addClusterGroup(s);
+                log.info("Zookeeper add monitor service :clusterName = {}",s);
+            }
         }
 
         for(String clusterName: zkServerManager.getAllServerMap().keySet()){
             refreshClusterServers(clusterName);
             if(!clusterNames.contains(clusterName)){
-                log.warn("No active server nodes in cluster:{}",clusterName);
+                log.warn("No active server nodes in cluster:'{}'",clusterName);
             }
         }
 
@@ -256,7 +256,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         List<String> newServerAddressList= zkServerManager.getServerList(clusterName);
         ClusterGroup group=serverManager.getGroupByName(clusterName);
         if(group==null){
-            return;
+            group=serverManager.addClusterGroup(clusterName);
         }
         Map<String,ServerNode> oldServers=serverManager.getAllServerNodes();
         //遍历新数据
@@ -270,7 +270,6 @@ public class SimpleRpcClientApi implements RpcClientApi {
                     ServerNode serverNode=newServerNode(clusterName,remoteHost, remotePort);
                     serverNode.setClusterName(clusterName);
                     serverManager.addServerNode(serverNode);
-                    log.info("Update server node:server = {} ",serverNode.getKey());
                 }catch (Exception e){
                     e.printStackTrace();
                     log.error("Update server node error:clusterName = {},server = {}",clusterName,address,e);

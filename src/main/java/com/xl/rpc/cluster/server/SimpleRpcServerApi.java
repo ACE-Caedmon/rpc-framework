@@ -18,6 +18,9 @@ import io.netty.util.internal.SystemPropertyUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Properties;
 
 /**
@@ -25,7 +28,7 @@ import java.util.Properties;
  */
 public class SimpleRpcServerApi implements RpcServerApi {
     private ZkServiceDiscovery zkServiceDiscovery;
-    private String host="127.0.0.1";
+    private String host;
     private int port=8001;
     private int bossThreadSize=Runtime.getRuntime().availableProcessors();
     private int workerThreadSize=Runtime.getRuntime().availableProcessors();
@@ -44,7 +47,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
     private static final String RPC_SERVER_CLUSTER_NAMES="rpc.server.clusterNames";
     private static final String SCAN_PACKAGE_NAME_PROPERTY="rpc.server.scanPackage";
     private static final String BEAN_ACCESS_PROPERTY="rpc.server.beanAccessClass";
-    private static final String ZK_SERVER_ADDRESS="rpc.server.zkServer";
+    private static final String ZK_SERVER_ADDRESS="rpc.zookeeper.address";
     private static final String JAVASSIT_WRITE_CLASS="javassit.writeClass";
     public SimpleRpcServerApi(String configPath){
         Properties properties= PropertyKit.loadProperties(configPath);
@@ -126,7 +129,9 @@ public class SimpleRpcServerApi implements RpcServerApi {
         ZKConfigSync configSync = new ZKConfigSync(zkServer, clusterNames[0], new ConfigSyncListener() {
             @Override
             public void onConfigChanged(String config) {
-                log.info("onConfigChanged {}",config);
+                InputStream input=new ByteArrayInputStream(config.getBytes());
+                Properties properties=PropertyKit.loadProperties(input);
+                System.out.println(properties.size());
             }
         });
 

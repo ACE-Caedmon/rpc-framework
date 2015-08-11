@@ -1,5 +1,6 @@
 package com.xl.rpc.cluster;
 
+import com.xl.rpc.cluster.zookeeper.ZkPathWatcher;
 import com.xl.rpc.exception.ClusterException;
 import com.xl.utils.Util;
 import org.apache.zookeeper.*;
@@ -21,27 +22,17 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by zwc on 2015/7/10.
  */
 public class ZkServiceDiscovery {
-
+    private static final Logger log= LoggerFactory.getLogger(ZkServiceDiscovery.class);
     private ZooKeeper zkc;
     ServerDiscoveryListener listener;
-
     private String clusterName;
-
     private List<String> monitorList = new ArrayList<>();
+    public static final String ServerStore = "/server";
+    private ZkPathWatcher rootPathWather = new ZkPathWatcher(this,ServerStore);
 
-    private static String ServerStore = "/server";
+    private Map<String,ZkPathWatcher> providerWatchers = new HashMap<String, ZkPathWatcher>();
 
-
-    private PathWatcher rootPathWather = new PathWatcher(ServerStore);
-
-    private Map<String,PathWatcher> providerWatchers = new HashMap<String, PathWatcher>();
-
-    private static final Logger log= LoggerFactory.getLogger(ZkServiceDiscovery.class);
-
-
-
-    private static String zkServerAddr;
-    List<InetSocketAddress> zkAddressList = new ArrayList<>();
+    List<InetSocketAddress> zookeeperAddressList = new ArrayList<>();
 
 
     static class CacheData {
@@ -66,17 +57,9 @@ public class ZkServiceDiscovery {
         }
     };
 
-    public ZkServiceDiscovery(String zkServer) {
-        zkServer = zkServer.trim();
-        zkServerAddr = zkServer;
-        parseAddr();
-        zkc = ZKClient.getZookeeper(zkServer);
-        ZKClient.registerConnectedWatcher(watcher);
-    }
-
-    private void parseAddr() {
+    public ZkServiceDiscovery(String zookeeperAddress) {
         int DEFAULT_PORT = 2181;
-        String hostsList[] = zkServerAddr.split(",");
+        String hostsList[] = zookeeperAddress.split(",");
         for (String host : hostsList) {
             int port = DEFAULT_PORT;
             int pidx = host.lastIndexOf(':');
@@ -86,10 +69,11 @@ public class ZkServiceDiscovery {
                 }
                 host = host.substring(0, pidx);
             }
-            zkAddressList.add(new InetSocketAddress(host,port));
+            zookeeperAddressList.add(new InetSocketAddress(host, port));
         }
+        zkc = ZKClient.getInstance().getZookeeper(zookeeperAddress);
+        ZKClient.getInstance().registerConnectedWatcher(watcher);
     }
-
 
     /*
      * if svrName not in the monitorList,add it
@@ -109,7 +93,6 @@ public class ZkServiceDiscovery {
     * address:ip:port
     */
     public void registerService(String logicName,String host,int port) throws Exception{
-        log.debug("registerService logicName {} host {} port {}", logicName,host,port);
         if (Util.isEmpty(logicName)) {
             throw new RuntimeException("ClusterName or server address is null");
         }
@@ -117,12 +100,12 @@ public class ZkServiceDiscovery {
         createPath(ServerStore + "/" + clusterName);
         if (Util.isEmpty(host)) {
             String localIp = null;
-            for (InetSocketAddress svr : zkAddressList) {
+            for (InetSocketAddress svr : zookeeperAddressList) {
                 try {
                     Socket socket = new Socket();
                     socket.connect(svr,5000);
                     localIp = socket.getLocalAddress().getHostAddress();
-                    log.debug("determined local ip {}", localIp);
+                    log.debug("Determined local ip {}", localIp);
                     socket.close();
                     break;
                 } catch (IOException e) {
@@ -152,7 +135,7 @@ public class ZkServiceDiscovery {
         this.listener = listener;
     }
 
-    private synchronized void updateAll() {
+    public synchronized void updateAll() {
         try {
             createPath(ServerStore);
             List<String> services = getServerListByPath(ServerStore);
@@ -165,7 +148,7 @@ public class ZkServiceDiscovery {
             e.printStackTrace();
         }
         update();
-        log.info("servers {}",cacheData.providerMap);
+        log.info("Update servers {}",cacheData.providerMap);
     }
 
 
@@ -174,9 +157,7 @@ public class ZkServiceDiscovery {
             return;
         try{
             rootPathWather.monitor();
-
             createPath(ServerStore);
-
             for (String svrName : monitorList) {
                 List<String> nodes = getServerListByPath(ServerStore + "/" + svrName);
                 saveProviders(svrName,nodes);
@@ -185,14 +166,14 @@ public class ZkServiceDiscovery {
             for (String svrName :monitorList) {
                 String path = ServerStore+"/"+svrName;
                 if (!providerWatchers.containsKey(path)) {
-                    PathWatcher watcher = new PathWatcher(path);
+                    ZkPathWatcher watcher = new ZkPathWatcher(this,path);
                     providerWatchers.put(path,watcher);
                 }
             }
 
             for (String svrName : monitorList) {
                 String path = ServerStore+"/"+svrName;
-                PathWatcher pathWatcher = providerWatchers.get(path);
+                ZkPathWatcher pathWatcher = providerWatchers.get(path);
                 if(pathWatcher!=null){
                     pathWatcher.monitor();
                 }
@@ -210,7 +191,7 @@ public class ZkServiceDiscovery {
     }
 
 
-    private List<String> getServerListByPath(String path) {
+    public List<String> getServerListByPath(String path) {
         List<String> children = null;
         try {
             children = zkc.getChildren(path,false);
@@ -222,7 +203,7 @@ public class ZkServiceDiscovery {
     }
 
 
-    private void createPath(String path){
+    public void createPath(String path){
         try {
             Stat stat = zkc.exists(path, false);
             if (stat == null) {
@@ -230,54 +211,13 @@ public class ZkServiceDiscovery {
                         ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
         } catch (Exception e) {
-
-        }
-    }
-
-
-    // path monitor
-    class PathWatcher implements Watcher {
-        String path;
-        public PathWatcher(String path) {
-            this.path = path;
-        }
-        public void monitor() {
-            createPath(path);
-            try {
-                zkc.getChildren(path, this);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void process(WatchedEvent watchedEvent) {
-            log.info("PathWatcher process {} path {}",watchedEvent,path);
-            if (watchedEvent.getType() == Event.EventType.NodeCreated ||
-                    watchedEvent.getType() == Event.EventType.NodeDataChanged ||
-                    watchedEvent.getType() == Event.EventType.NodeDeleted ||
-                    watchedEvent.getType() == Event.EventType.NodeChildrenChanged) {
-                String path = watchedEvent.getPath();
-                if (ServerStore.equals(path)) {
-                    updateAll();
-                } else {
-                    try{
-                        int index = path.lastIndexOf("/");
-                        String service = path.substring(index + 1);
-                        List<String> providers = getServerListByPath(path);
-                        saveProviders(service, providers);
-                    }catch (Exception e){
-                        e.printStackTrace();
-                        log.error("Zookeeper process WatchEvent error:server = {}", path, e);
-                    }
-                }
-            }
-            monitor();
+            e.printStackTrace();
         }
     }
 
 
 
-    private void saveProviders(String svr,List<String> providers) {
+    public void saveProviders(String svr,List<String> providers) {
         if (providers == null) {
             return;
         }
@@ -295,5 +235,8 @@ public class ZkServiceDiscovery {
                 listener.onServerListChanged(svr);
             }
         }
+    }
+    public ZooKeeper getZookeeper(){
+        return zkc;
     }
 }
