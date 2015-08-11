@@ -9,6 +9,11 @@ import org.slf4j.LoggerFactory;
 import java.io.UnsupportedEncodingException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -33,7 +38,14 @@ public class ZKConfigSync {
 
     private ConfigWatcher configWatcher = new ConfigWatcher();
 
-
+    private ScheduledExecutorService pullConfigTimer= Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread thread=new Thread(r);
+            thread.setName("Pull-ZkConfig-Timer");
+            return thread;
+        }
+    });
 
     public ZKConfigSync(String zkServer, String clusterName,ConfigSyncListener listener) {
         this.listener = listener;
@@ -41,13 +53,12 @@ public class ZKConfigSync {
         this.zkServerAddr = zkServer;
         zkc = ZKClient.getZookeeper(zkServer);
         ZKClient.registerConnectedWatcher(watcher);
-        Timer t = new Timer();
-        t.schedule(new TimerTask() {
+        pullConfigTimer.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 updateConfig();
             }
-        },5*60*1000,5*60*1000);
+        },0,1, TimeUnit.MINUTES);
     }
 
     Watcher watcher = new Watcher() {
