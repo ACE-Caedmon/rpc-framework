@@ -56,7 +56,13 @@ public class ZKConfigSync {
         pullConfigTimer.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                updateConfig();
+                try{
+                    updateConfig();
+                }catch (Exception e){
+                    e.printStackTrace();
+                    log.error("Update config error");
+                }
+
             }
         },0,1, TimeUnit.MINUTES);
     }
