@@ -43,7 +43,6 @@ public class ZkServiceDiscovery {
         public Map<String,List<String>> providerMap = new HashMap<String, List<String>>(); // 需要lock保护
     }
 
-    private Lock lock = new ReentrantLock();
 
     private CacheData cacheData = new CacheData();
 
@@ -150,8 +149,7 @@ public class ZkServiceDiscovery {
         }
         zkc.create(path, clusterName.getBytes(),
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-        log.debug("Register cluster success:clusterName = {}",logicName);
-        updateAll();
+        log.debug("Register cluster success:clusterName = {}", logicName);
     }
 
 
@@ -241,19 +239,18 @@ public class ZkServiceDiscovery {
 
 
 
-    public void saveProviders(String svr,List<String> providers) {
+    public synchronized void saveProviders(String svr,List<String> providers) {
         if (providers == null) {
             return;
         }
         boolean updated;
-        lock.lock();
         List<String> nodes = cacheData.providerMap.get(svr);
         if (providers.equals(nodes)) {
             return;
         }
         cacheData.providerMap.put(svr, providers);
         updated = true;
-        lock.unlock();
+
         if (updated) {
             if (listener != null) {
                 listener.onServerListChanged(svr);
@@ -262,5 +259,9 @@ public class ZkServiceDiscovery {
     }
     public ZooKeeper getZookeeper(){
         return zkc;
+    }
+
+    public void dumpServers() {
+        log.info("dump servers {}",cacheData.providerMap);
     }
 }

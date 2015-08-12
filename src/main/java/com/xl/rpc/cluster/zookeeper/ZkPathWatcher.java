@@ -46,6 +46,7 @@ public class ZkPathWatcher implements Watcher{
                     String service = path.substring(index + 1);
                     List<String> providers = zkServiceDiscovery.getServerListByPath(path);
                     zkServiceDiscovery.saveProviders(service, providers);
+                    zkServiceDiscovery.dumpServers();
                 }catch (Exception e){
                     log.error("Zookeeper process WatchEvent error:server = {}", path, e);
                 }

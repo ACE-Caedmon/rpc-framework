@@ -29,7 +29,6 @@ public class ZKConfigSync {
 
     private String clusterName;
     private String zkServerAddr;
-    private Lock lock = new ReentrantLock();
     public interface ConfigSyncListener {
         void onConfigChanged(String config);
     }
@@ -84,12 +83,11 @@ public class ZKConfigSync {
     }
 
 
-    public void updateConfig() {
+    public synchronized void updateConfig() {
         String oldConfig = config;
-        lock.lock();
         update();
-        lock.unlock();
         monitor();
+        log.info("cluster {} oldConfig {} newConfig {}",clusterName,oldConfig,config);
         if (config == null && oldConfig == null ||
                 config.equals(oldConfig)) {
 
@@ -105,7 +103,6 @@ public class ZKConfigSync {
     }
 
     private void update() {
-        log.info("update");
         byte[] data = null;
         try {
             if (zkc.exists(getPath(),null) != null) {
@@ -129,7 +126,6 @@ public class ZKConfigSync {
     }
 
     public void monitor() {
-        log.info("monitor {}",getPath());
         try {
             zkc.exists(getPath(),configWatcher);
         } catch (Exception e) {
