@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ZKClient {
     private static final Logger log = LoggerFactory.getLogger(ZKClient.class);
     private ZooKeeper zkc;
-    public static final int Session_Timeout = 10*1000;
+    public static final int Session_Timeout = 8*1000;
     private Lock lock = new ReentrantLock();
     private List<Watcher> connectedWacther = new ArrayList<>();
     private static final ZKClient instance=new ZKClient();
@@ -63,7 +63,7 @@ public class ZKClient {
             try {
                 zkc = new ZooKeeper(zookeeperAddress, Session_Timeout, watcher);
             } catch (IOException e) {
-                e.printStackTrace();
+                log.warn("can not connect to zookeeper",e);
             }
         } else {
             if (!zookeeperAddress.equals(zookeeperAddress)) {

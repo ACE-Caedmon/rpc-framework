@@ -29,6 +29,7 @@ import java.util.Properties;
  */
 public class SimpleRpcServerApi implements RpcServerApi {
     private ZkServiceDiscovery zkServiceDiscovery;
+    private ZKConfigSync zkConfigSync;
     private String host;
     private int port=8001;
     private int bossThreadSize=Runtime.getRuntime().availableProcessors();
@@ -127,7 +128,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
         }catch (Exception e){
             throw new ClusterException("Register cluster service error: clusterNames = "+ Arrays.toString(clusterNames),e);
         }
-        ZKConfigSync configSync = new ZKConfigSync(zkServer, clusterNames[0], new ConfigSyncListener() {
+        zkConfigSync = new ZKConfigSync(zkServer, clusterNames[0], new ConfigSyncListener() {
             @Override
             public void onConfigChanged(String config) {
                 InputStream input=new ByteArrayInputStream(config.getBytes());

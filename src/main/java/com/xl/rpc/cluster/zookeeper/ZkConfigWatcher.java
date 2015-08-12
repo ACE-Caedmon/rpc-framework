@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 public class ZkConfigWatcher implements Watcher{
     private static final Logger log= LoggerFactory.getLogger(ZkConfigWatcher.class);
     private ZKConfigSync zkConfigSync;
+
     public ZkConfigWatcher(ZKConfigSync zkConfigSync){
         this.zkConfigSync=zkConfigSync;
     }

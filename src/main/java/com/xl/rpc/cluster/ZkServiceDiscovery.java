@@ -11,7 +11,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -30,7 +33,7 @@ public class ZkServiceDiscovery {
     private List<String> monitorList = new ArrayList<>();
     public static final String ServerStore = "/server";
     private ZkPathWatcher rootPathWather = new ZkPathWatcher(this,ServerStore);
-    private String host;
+
     private Map<String,ZkPathWatcher> providerWatchers = new HashMap<String, ZkPathWatcher>();
 
     List<InetSocketAddress> zookeeperAddressList = new ArrayList<>();
@@ -40,7 +43,6 @@ public class ZkServiceDiscovery {
         public Map<String,List<String>> providerMap = new HashMap<String, List<String>>(); // 需要lock保护
     }
 
-    private Lock lock = new ReentrantLock();
 
     private CacheData cacheData = new CacheData();
 
@@ -62,10 +64,7 @@ public class ZkServiceDiscovery {
         @Override
         public Thread newThread(Runnable r) {
             Thread thread = new Thread(r);
-            if(thread.isDaemon()){
-                thread.setDaemon(false);
-            }
-            thread.setName("Pull-Servers-Timer");
+            thread.setName("Pull-ZkConfig-Timer");
             return thread;
         }
     });
@@ -93,11 +92,10 @@ public class ZkServiceDiscovery {
                     updateAll();
                 } catch (Exception e) {
                     e.printStackTrace();
-                    log.error("Update servers error");
+                    log.error("Update server error");
                 }
-
             }
-        }, 0, 1, TimeUnit.SECONDS);
+        }, 0, 1, TimeUnit.MINUTES);
     }
 
     /*
@@ -149,22 +147,17 @@ public class ZkServiceDiscovery {
         if (stat != null){
             Thread.sleep((long) (ZKClient.Session_Timeout * 1.5));
         }
-        this.host=host;
         zkc.create(path, clusterName.getBytes(),
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-        log.debug("Register cluster success:clusterName = {}",logicName);
-        update();
+        log.debug("Register cluster success:clusterName = {}", logicName);
     }
 
-    public String getHost() {
-        return host;
-    }
 
     public void setListener(ServerDiscoveryListener listener) {
         this.listener = listener;
     }
 
-    public void updateAll() {
+    public synchronized void updateAll() {
         try {
             createPath(ServerStore);
             List<String> services = getServerListByPath(ServerStore);
@@ -174,10 +167,10 @@ public class ZkServiceDiscovery {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("updateAll fail",e);
         }
         update();
-        //log.info("Update servers {}",cacheData.providerMap);
+        log.info("Update servers {}",cacheData.providerMap);
     }
 
 
@@ -240,29 +233,24 @@ public class ZkServiceDiscovery {
                         ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("createPath",e);
         }
     }
 
 
 
-    public void saveProviders(String svr,List<String> providers) {
+    public synchronized void saveProviders(String svr,List<String> providers) {
         if (providers == null) {
             return;
         }
         boolean updated;
-        lock.lock();
-        try{
-
-            List<String> nodes = cacheData.providerMap.get(svr);
-            if (providers.equals(nodes)) {
-                return;
-            }
-            cacheData.providerMap.put(svr, providers);
-            updated = true;
-        }finally {
-            lock.unlock();
+        List<String> nodes = cacheData.providerMap.get(svr);
+        if (providers.equals(nodes)) {
+            return;
         }
+        cacheData.providerMap.put(svr, providers);
+        updated = true;
+
         if (updated) {
             if (listener != null) {
                 listener.onServerListChanged(svr);
@@ -271,5 +259,9 @@ public class ZkServiceDiscovery {
     }
     public ZooKeeper getZookeeper(){
         return zkc;
+    }
+
+    public void dumpServers() {
+        log.info("dump servers {}",cacheData.providerMap);
     }
 }
