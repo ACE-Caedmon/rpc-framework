@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Properties;
 
 /**
@@ -124,7 +125,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
                 zkServiceDiscovery.registerService(clusterName,host,port);
             }
         }catch (Exception e){
-            throw new ClusterException("Register cluster service error: clusterNames = "+ clusterNames,e);
+            throw new ClusterException("Register cluster service error: clusterNames = "+ Arrays.toString(clusterNames),e);
         }
         ZKConfigSync configSync = new ZKConfigSync(zkServer, clusterNames[0], new ConfigSyncListener() {
             @Override

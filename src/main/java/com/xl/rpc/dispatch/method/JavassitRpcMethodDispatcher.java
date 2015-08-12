@@ -75,7 +75,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                 proxy=new AsyncCallBackMethod(rpcPacket);
             }
         }
-        log.debug("Create controlMethod:{}", proxy.getClass().getName());
+        log.debug("Create method proxy:{}", proxy.getClass().getName());
         return proxy;
     }
 
@@ -83,7 +83,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
     public void loadClasses(Class... classes) throws Exception{
         for(Class controlClass:classes){
             loadControlClass(controlClass);
-            log.info("Load cmdControl: "+controlClass.getName());
+            log.info("Load rpc control: "+controlClass.getName());
         }
     }
     private MsgType getMethodMsgType(Method method){
@@ -176,14 +176,22 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     }
                     Class resultClass=ctProxyClass.toClass();
                     ControlMethodProxyCreator creator=buildMethodProxyCreator(resultClass);
+
                     Class[] paramTypes=method.getParameterTypes();
-                    String[] classNames=new String[paramTypes.length];
+                    List<String> classNames=new ArrayList<>(paramTypes.length);
                     int i=0;
                     for(Class paramTypeName:paramTypes){
-                        classNames[i]=paramTypeName.getName();
-                        i++;
+                        if(ISession.class.isAssignableFrom(paramTypeName)){
+                            continue;
+                        }
+                        classNames.add(paramTypeName.getName());
                     }
-                    proxyCreatorMap.put(cmd+"-"+ Arrays.toString(classNames), creator);
+                    String creatorKey=cmd+"-"+ Arrays.toString(classNames.toArray());
+                    if(proxyCreatorMap.containsKey(creatorKey)){
+                        throw new IllegalStateException("Method creator has exists:controlClass = "+controlClass.getName()+",method = "+method.getName());
+                    }
+                    proxyCreatorMap.put(creatorKey, creator);
+                    log.info("Cached method creator:key = {},method = {}",creatorKey,method.getName());
 
                 }else{
                     //已经加载过
@@ -212,7 +220,6 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
         }catch (Exception e){
             throw new  ControlMethodCreateException(e);
         }
-        log.info("Create ControlMethodProxyCreator:{}",creatorClassName);
         return creator;
     }
     private String getMethodInvokeSrc(Method method) throws Exception{

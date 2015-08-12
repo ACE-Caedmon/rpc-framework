@@ -185,11 +185,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
         for(String clusterName: zkServerManager.getAllServerMap().keySet()){
             refreshClusterServers(clusterName);
-            if(!clusterNames.contains(clusterName)){
-                log.warn("No active server nodes in cluster:'{}'",clusterName);
-            }
         }
-
         log.info("SimpleRpcClient bind OK !");
     }
 

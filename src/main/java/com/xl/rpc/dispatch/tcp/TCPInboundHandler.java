@@ -63,6 +63,7 @@ public class TCPInboundHandler extends SimpleChannelInboundHandler<ControlMethod
 	public void channelActive(final ChannelHandlerContext ctx) throws Exception {
 		ISession session=ctx.channel().attr(Session.SESSION_KEY).get();
 		SessionFire.getInstance().fireEvent(SessionFire.SessionEvent.SESSION_CONNECT, session);
+		log.debug("ChannelActive:{}",ctx.channel().toString());
 	}
     /**
      * 出现异常时
