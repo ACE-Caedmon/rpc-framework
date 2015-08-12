@@ -63,7 +63,7 @@ public class ZKClient {
             try {
                 zkc = new ZooKeeper(zookeeperAddress, Session_Timeout, watcher);
             } catch (IOException e) {
-                e.printStackTrace();
+                log.warn("can not connect to zookeeper",e);
             }
         } else {
             if (!zookeeperAddress.equals(zookeeperAddress)) {

@@ -133,7 +133,7 @@ public class ZKConfigSync {
         try {
             zkc.exists(getPath(),configWatcher);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("monitor fail",e);
         }
     }
 

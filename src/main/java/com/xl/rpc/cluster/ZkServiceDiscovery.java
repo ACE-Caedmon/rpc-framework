@@ -93,9 +93,8 @@ public class ZkServiceDiscovery {
                     updateAll();
                 } catch (Exception e) {
                     e.printStackTrace();
-                    log.error("Update config error");
+                    log.error("Update server error");
                 }
-
             }
         }, 0, 1, TimeUnit.MINUTES);
     }
@@ -152,7 +151,7 @@ public class ZkServiceDiscovery {
         zkc.create(path, clusterName.getBytes(),
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         log.debug("Register cluster success:clusterName = {}",logicName);
-        update();
+        updateAll();
     }
 
 
@@ -170,7 +169,7 @@ public class ZkServiceDiscovery {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("updateAll fail",e);
         }
         update();
         log.info("Update servers {}",cacheData.providerMap);
@@ -236,7 +235,7 @@ public class ZkServiceDiscovery {
                         ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("createPath",e);
         }
     }
 

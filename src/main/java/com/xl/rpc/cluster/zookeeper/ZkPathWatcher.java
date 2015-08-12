@@ -27,7 +27,7 @@ public class ZkPathWatcher implements Watcher{
         try {
             zooKeeper.getChildren(path, this);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("monitor fail",e);
         }
     }
 
@@ -47,7 +47,6 @@ public class ZkPathWatcher implements Watcher{
                     List<String> providers = zkServiceDiscovery.getServerListByPath(path);
                     zkServiceDiscovery.saveProviders(service, providers);
                 }catch (Exception e){
-                    e.printStackTrace();
                     log.error("Zookeeper process WatchEvent error:server = {}", path, e);
                 }
             }
