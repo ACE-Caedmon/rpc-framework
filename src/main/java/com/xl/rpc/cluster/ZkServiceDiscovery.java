@@ -15,6 +15,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -57,6 +61,15 @@ public class ZkServiceDiscovery {
         }
     };
 
+    private ScheduledExecutorService pullServerTimer = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread thread = new Thread(r);
+            thread.setName("Pull-ZkConfig-Timer");
+            return thread;
+        }
+    });
+
     public ZkServiceDiscovery(String zookeeperAddress) {
         int DEFAULT_PORT = 2181;
         String hostsList[] = zookeeperAddress.split(",");
@@ -73,6 +86,18 @@ public class ZkServiceDiscovery {
         }
         zkc = ZKClient.getInstance().getZookeeper(zookeeperAddress);
         ZKClient.getInstance().registerConnectedWatcher(watcher);
+        pullServerTimer.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    updateAll();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    log.error("Update config error");
+                }
+
+            }
+        }, 0, 1, TimeUnit.MINUTES);
     }
 
     /*
