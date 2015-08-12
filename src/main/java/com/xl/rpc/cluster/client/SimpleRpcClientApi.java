@@ -191,17 +191,17 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
 
     @Override
-    public void asyncRpcCall(String clusterName,String cmd, Object... content) {
+    public void asyncRpcCall(String clusterName,String cmd, Class[] paramTypes,Object... content) {
         ServerNode node=serverManager.getOptimalServerNode(clusterName);
         try{
-            node.asyncCall(cmd, null,content);
+            node.asyncCall(cmd, null,paramTypes,content);
         }catch (Exception e){
             log.error("AsyncRpcCall error:server = {},cmd = {}",node.getKey(),cmd,e);
             //重新选择节点重传
             List<ServerNode> nodes=serverManager.getGroupByName(clusterName).getNodeList();
             for(ServerNode activeNode:nodes){
                 try{
-                    activeNode.asyncCall(cmd,null, content);
+                    activeNode.asyncCall(cmd,null,paramTypes, content);
                 }catch (Exception e1){
                     log.error("AsyncRpcCall retry call error:clusterName = {},server = {},cmd = {}",clusterName,node.getKey(),cmd,e1);
                     continue;
@@ -211,10 +211,10 @@ public class SimpleRpcClientApi implements RpcClientApi {
     }
 
     @Override
-    public <T> T syncRpcCall(String clusterName, String cmd, Class<T> resultType, Object... content) throws TimeoutException{
+    public <T> T syncRpcCall(String clusterName, String cmd, Class<T> resultType,Class[] paramTypes, Object... content) throws TimeoutException{
         ServerNode node=serverManager.getOptimalServerNode(clusterName);
         try{
-            T result=node.syncCall(cmd, resultType, content);
+            T result=node.syncCall(cmd, resultType,paramTypes, content);
             return result;
         }catch (Exception e){
             if(e instanceof TimeoutException){
@@ -227,7 +227,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
             for(int i=0;i<retry;i++){
                 try{
                     ServerNode activeNode=nodes.get(i);
-                    return activeNode.syncCall(cmd, resultType, content);
+                    return activeNode.syncCall(cmd, resultType,paramTypes, content);
                 }catch (Exception e1){
                     log.error("Sync rpc retry call error:clusterName = {},server = {},cmd = {},params = {}",clusterName,node.getKey(),cmd,content[0],e1);
                     continue;
@@ -303,29 +303,29 @@ public class SimpleRpcClientApi implements RpcClientApi {
     }
 
     @Override
-    public <T> T syncRpcCall(String clusterName, String address, String cmd, Class<T> resultType, Object... params) throws Exception{
+    public <T> T syncRpcCall(String clusterName, String address, String cmd, Class<T> resultType, Class[] paramTypes,Object... params) throws Exception{
         String serverKey=clusterName+"-"+address;
         ServerNode node=serverManager.getServerNode(serverKey);
         if(node==null){
             throw new NullPointerException("No server node exists:server = "+serverKey);
         }
-        return node.syncCall(cmd, resultType, params);
+        return node.syncCall(cmd, resultType,paramTypes, params);
     }
 
     @Override
-    public void asyncRpcCall(String clusterName,String address, String cmd, Object... params) throws Exception{
+    public void asyncRpcCall(String clusterName,String address, String cmd,Class[] paramTypes, Object... params) throws Exception{
         String serverKey=clusterName+"-"+address;
         ServerNode node=serverManager.getServerNode(serverKey);
         if(node==null){
             throw new NullPointerException("No server node exists:server = "+serverKey);
         }
-        node.asyncCall(cmd,null, params);
+        node.asyncCall(cmd,null,paramTypes, params);
     }
 
     @Override
-    public void asyncRpcCall(String clusterName, String cmd, AsyncRpcCallBack callback,Object...params) {
+    public void asyncRpcCall(String clusterName, String cmd, AsyncRpcCallBack callback,Class[] paramTypes,Object...params) {
         ServerNode node=serverManager.getOptimalServerNode(clusterName);
-        node.asyncCall(cmd,callback,params);
+        node.asyncCall(cmd,callback,paramTypes,params);
     }
 
     public IClusterServerManager getServerManager() {
@@ -333,23 +333,23 @@ public class SimpleRpcClientApi implements RpcClientApi {
     }
 
     @Override
-    public <T> T syncHashRpcCall(String clusterName, String key, String cmd, Class<T> resultType, Object... params) throws Exception {
+    public <T> T syncHashRpcCall(String clusterName, String key, String cmd, Class<T> resultType,Class[] paramTypes, Object... params) throws Exception {
         ClusterGroup group=serverManager.getGroupByName(clusterName);
         ServerNode node=group.getShardNode(key);
-        return node.syncCall(cmd, resultType, params);
+        return node.syncCall(cmd, resultType,paramTypes, params);
     }
 
     @Override
-    public void asyncHashRpcCall(String clusterName, String key, String cmd, Object... params) throws Exception {
+    public void asyncHashRpcCall(String clusterName, String key, String cmd,Class[] paramTypes, Object... params) throws Exception {
         ClusterGroup group=serverManager.getGroupByName(clusterName);
         ServerNode node=group.getShardNode(key);
-        node.asyncCall(cmd,null, params);
+        node.asyncCall(cmd,null,paramTypes,params);
     }
 
     @Override
-    public void asyncHashRpcCall(String clusterName, String key, String cmd, AsyncRpcCallBack callBack, Object... params) {
+    public void asyncHashRpcCall(String clusterName, String key, String cmd, AsyncRpcCallBack callBack,Class[] paramTypes, Object... params) {
         ServerNode node=getShardNode(clusterName,key);
-        node.asyncCall(cmd,callBack,params);
+        node.asyncCall(cmd,callBack,paramTypes,params);
     }
     private ServerNode getShardNode(String clusterName,String key){
         ClusterGroup group=serverManager.getGroupByName(clusterName);

@@ -11,10 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -33,7 +30,7 @@ public class ZkServiceDiscovery {
     private List<String> monitorList = new ArrayList<>();
     public static final String ServerStore = "/server";
     private ZkPathWatcher rootPathWather = new ZkPathWatcher(this,ServerStore);
-
+    private String host;
     private Map<String,ZkPathWatcher> providerWatchers = new HashMap<String, ZkPathWatcher>();
 
     List<InetSocketAddress> zookeeperAddressList = new ArrayList<>();
@@ -65,7 +62,10 @@ public class ZkServiceDiscovery {
         @Override
         public Thread newThread(Runnable r) {
             Thread thread = new Thread(r);
-            thread.setName("Pull-ZkConfig-Timer");
+            if(thread.isDaemon()){
+                thread.setDaemon(false);
+            }
+            thread.setName("Pull-Servers-Timer");
             return thread;
         }
     });
@@ -93,11 +93,11 @@ public class ZkServiceDiscovery {
                     updateAll();
                 } catch (Exception e) {
                     e.printStackTrace();
-                    log.error("Update config error");
+                    log.error("Update servers error");
                 }
 
             }
-        }, 0, 1, TimeUnit.MINUTES);
+        }, 0, 1, TimeUnit.SECONDS);
     }
 
     /*
@@ -149,18 +149,22 @@ public class ZkServiceDiscovery {
         if (stat != null){
             Thread.sleep((long) (ZKClient.Session_Timeout * 1.5));
         }
+        this.host=host;
         zkc.create(path, clusterName.getBytes(),
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         log.debug("Register cluster success:clusterName = {}",logicName);
         update();
     }
 
+    public String getHost() {
+        return host;
+    }
 
     public void setListener(ServerDiscoveryListener listener) {
         this.listener = listener;
     }
 
-    public synchronized void updateAll() {
+    public void updateAll() {
         try {
             createPath(ServerStore);
             List<String> services = getServerListByPath(ServerStore);
@@ -173,7 +177,7 @@ public class ZkServiceDiscovery {
             e.printStackTrace();
         }
         update();
-        log.info("Update servers {}",cacheData.providerMap);
+        //log.info("Update servers {}",cacheData.providerMap);
     }
 
 
@@ -248,13 +252,17 @@ public class ZkServiceDiscovery {
         }
         boolean updated;
         lock.lock();
-        List<String> nodes = cacheData.providerMap.get(svr);
-        if (providers.equals(nodes)) {
-            return;
+        try{
+
+            List<String> nodes = cacheData.providerMap.get(svr);
+            if (providers.equals(nodes)) {
+                return;
+            }
+            cacheData.providerMap.put(svr, providers);
+            updated = true;
+        }finally {
+            lock.unlock();
         }
-        cacheData.providerMap.put(svr, providers);
-        updated = true;
-        lock.unlock();
         if (updated) {
             if (listener != null) {
                 listener.onServerListChanged(svr);

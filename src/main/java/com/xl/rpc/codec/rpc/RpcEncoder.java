@@ -35,13 +35,15 @@ public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
             Object[] params=packet.getParams();
             StringBuilder classNameArray=new StringBuilder();
             String classNameResult;
-            if(params!=null){
-                for(Object e:params){
-                    if(e!=null){
-                        classNameArray.append(",").append(e.getClass().getName());;
+            if(packet.getClassNameArray()!=null&&params!=null){
+                int i=0;
+                for(String paramType:packet.getClassNameArray()){
+                    if(paramType!=null){
+                        classNameArray.append(",").append(paramType);;
                     }else{
                         classNameArray.append(",null");
                     }
+                    i++;
                 }
                 classNameResult=classNameArray.substring(1);
             }else{

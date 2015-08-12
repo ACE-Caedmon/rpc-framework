@@ -64,13 +64,15 @@ public class RpcPacket extends SocketPacket {
 
     @Override
     public String toString() {
-        return "RpcPacket{" +
-                "classNameArray=" + Arrays.toString(classNameArray) +
-                ", exception=" + exception +
-                ", uuid='" + uuid + '\'' +
-                ", sync=" + sync +
-                ", fromCall=" + fromCall +
-                '}';
+        final StringBuilder sb = new StringBuilder("RpcPacket{");
+        sb.append("fromCall=").append(fromCall);
+        sb.append(",cmd=").append(super.cmd);
+        sb.append(", sync=").append(sync);
+        sb.append(", uuid='").append(uuid).append('\'');
+        sb.append(", exception=").append(exception);
+        sb.append(", classNameArray=").append(Arrays.toString(classNameArray));
+        sb.append('}');
+        return sb.toString();
     }
 }
 

@@ -58,8 +58,9 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
     }
     @Override
     public ControlMethod newControlMethodProxy(RpcPacket rpcPacket) {
+        String cmd=rpcPacket.getCmd();
         String classNames=rpcPacket.getClassNames();
-        String methodKey=rpcPacket.getCmd()+"-"+classNames;
+        String methodKey=cmd+"-"+classNames;
         ControlMethodProxyCreator creator= proxyCreatorMap.get(methodKey);
         ControlMethod proxy=null;
         if(creator!=null){
@@ -160,13 +161,14 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     if(rpcResponse !=null){
                         if(!ClassUtils.isVoidReturn(responseType)){
                             //判断接受的消息是否为同步消息
+                            methodBody.append("packet.setClassNameArray(new String[]{"+responseType.getName()+".class.getName()});");
                             if(responseType==Object[].class){
                                 methodBody.append(" packet.setParams(response);$1.writeAndFlush(packet);");
                             }else{
                                 methodBody.append(" packet.setParams(new Object[]{response});$1.writeAndFlush(packet);");
                             }
                         }else{
-                            methodBody.append(" packet.setParams(null);$1.writeAndFlush(packet);");
+                            methodBody.append("packet.setClassNameArray(null);packet.setParams(null);$1.writeAndFlush(packet);");
                         }
                     }
                     log.debug("Javassit generate code:{}", methodBody.toString());

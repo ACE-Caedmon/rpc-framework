@@ -1,5 +1,6 @@
 package com.xl.rpc.cluster.client;
 
+import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
 import net.sf.cglib.proxy.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,5 +44,4 @@ public class CglibRpcCallProxyFactory implements RpcCallProxyFactory{
         log.info("Create RpcCallProxy instance :{}", syncProxy.getClass().getName());
         return entry;
     }
-
 }

@@ -1,5 +1,7 @@
 package com.xl.rpc.cluster.client;
 
+import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
+
 /**
  * Created by Administrator on 2015/7/20.
  */

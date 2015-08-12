@@ -2,6 +2,7 @@ package com.xl.rpc.cluster.client;
 
 import com.xl.rpc.annotation.RpcControl;
 import com.xl.rpc.annotation.RpcMethod;
+import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
 import com.xl.utils.ClassUtils;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -16,6 +17,9 @@ public class CglibRpcCallBack implements MethodInterceptor {
     private boolean sync=true;
     public CglibRpcCallBack(boolean sync){
         this.sync=sync;
+    }
+    public CglibRpcCallBack(AsyncRpcCallBack rpcCallBack){
+        this.sync=false;
     }
     @Override
     public Object intercept(Object o, Method method, Object[] params, MethodProxy methodProxy) throws Throwable {
@@ -38,10 +42,11 @@ public class CglibRpcCallBack implements MethodInterceptor {
         }
         String cmd=method.getAnnotation(RpcMethod.class).value();
         Class returnType=method.getReturnType();
+        Class[] paramTypes=method.getParameterTypes();
         if(sync){
-            return rpcClientApi.syncRpcCall(clusterName,cmd,returnType,params);
+            return rpcClientApi.syncRpcCall(clusterName,cmd,returnType,paramTypes,params);
         }else{
-            SimpleRpcClientApi.getInstance().asyncRpcCall(clusterName,cmd,params);
+            rpcClientApi.asyncRpcCall(clusterName,cmd,paramTypes,params);
             return null;
         }
     }

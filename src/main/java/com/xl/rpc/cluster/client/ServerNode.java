@@ -44,8 +44,10 @@ public class ServerNode implements Comparable<ServerNode>{
     public int compareTo(ServerNode o) {
         return this.computeLoad()-o.computeLoad();
     }
-    public void asyncCall(String cmd, RpcCallback callback, Object... params){
+    public void asyncCall(String cmd, RpcCallback callback, Class[] paramTypes,Object... params){
+        checkParams(paramTypes,params);
         RpcPacket packet=new RpcPacket(cmd,params);
+        packet.setClassNameArray(buildClassNameArray(paramTypes,params));
         packet.setSync(false);
         getSession().asyncRpcSend(packet, callback);
         log.info("Async rpc call:server = {},cmd ={}",getKey(),cmd);
@@ -53,11 +55,35 @@ public class ServerNode implements Comparable<ServerNode>{
     public String getKey(){
         return clusterName+"-"+host+":"+port;
     }
-    public <T> T syncCall(String cmd, Class<T> resultType, Object... content) throws Exception{
+    private static void checkParams(Class[] paramTypes,Object...params){
+        if(params.length!=paramTypes.length){
+            throw new IllegalArgumentException("Params length is "+params.length+",but paramTypes length is "+paramTypes.length);
+        }
+        for(int i=0;i<params.length;i++){
+            Class actualType=params[i].getClass();
+            if(!paramTypes[i].isAssignableFrom(actualType)){
+                throw new IllegalArgumentException("Param except type "+paramTypes[i]+",actual type is "+actualType);
+            }
+        }
+    }
+    private static String[] buildClassNameArray(Class[] paramTypes,Object...params){
+        String[] classNameArray=new String[paramTypes.length];
+        for(int i=0;i<paramTypes.length;i++){
+            if(params[i]==null){
+                classNameArray[i]="null";
+            }else{
+                classNameArray[i]=paramTypes[i].getName();
+            }
+        }
+        return classNameArray;
+    }
+    public <T> T syncCall(String cmd, Class<T> resultType,Class[] paramTypes, Object... params) throws Exception{
         if(!isActive()){
             throw new ClusterNodeException("Server node is not active:clusterName = "+clusterName+",server = "+host+":"+port);
         }
-        RpcPacket packet=new RpcPacket(cmd,content);
+        checkParams(paramTypes,params);
+        RpcPacket packet=new RpcPacket(cmd,params);
+        packet.setClassNameArray(buildClassNameArray(paramTypes,params));
         packet.setSync(true);
         long before= CommonUtils.now();
         T result=getSession().syncRpcSend(packet, resultType, (long) syncCallTimeout, TimeUnit.SECONDS);

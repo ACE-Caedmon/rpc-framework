@@ -140,7 +140,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
 
     @Override
     public String getHost() {
-        return this.host;
+        return this.zkServiceDiscovery.getHost();
     }
 
     @Override

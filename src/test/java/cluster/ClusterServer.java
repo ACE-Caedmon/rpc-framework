@@ -8,6 +8,7 @@ import org.apache.log4j.PropertyConfigurator;
  */
 public class ClusterServer {
     public static void main(String[] args) {
+        System.setProperty("javassit.writeClass","true");
         PropertyConfigurator.configure("log4j.properties");
         SimpleRpcServerApi api=new SimpleRpcServerApi("rpc.properties");
         api.bind();
