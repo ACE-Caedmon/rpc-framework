@@ -153,12 +153,11 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     CtMethod ctMethod=ctProxyClass.getDeclaredMethod("doCmd");
                     StringBuilder methodBody=new StringBuilder();
                     methodBody.append(getMethodInvokeSrc(method));
-                    RpcResponse rpcResponse =method.getAnnotation(RpcResponse.class);
                     Class responseType=method.getReturnType();
                     //将response构造成数组作为参数，否则会编译出错
 
                     //带有RpcResponse 将返回值响应
-                    if(rpcResponse !=null){
+                    //if(rpcResponse !=null){
                         if(!ClassUtils.isVoidReturn(responseType)){
                             //判断接受的消息是否为同步消息
                             methodBody.append("packet.setClassNameArray(new String[]{"+responseType.getName()+".class.getName()});");
@@ -170,7 +169,9 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                         }else{
                             methodBody.append("packet.setClassNameArray(null);packet.setParams(null);$1.writeAndFlush(packet);");
                         }
-                    }
+//                    }else{
+//                        methodBody.append("packet.setClassNameArray(null);packet.setParams(null);$1.writeAndFlush(packet);");
+//                    }
                     log.debug("Javassit generate code:{}", methodBody.toString());
                     ctMethod.insertAfter(methodBody.toString());
                     if(EngineParams.isWriteJavassit()){
@@ -268,13 +269,9 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
         }
 
         String methodName=method.getName();
-
-        //是否自动将返回值发送给客户端
-        Annotation cmdResponse=ClassUtils.getAnnotation(method, RpcResponse.class);
-        boolean isCmdResponse=(cmdResponse!=null);
         //判断返回值类型
         Class returnType=method.getReturnType();
-        if(isCmdResponse&&!ClassUtils.isVoidReturn(returnType)){
+        if(!ClassUtils.isVoidReturn(returnType)){
             invokeSrc.append(returnType.getName())
                     .append(" response= ");
         }

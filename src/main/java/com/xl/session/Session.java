@@ -34,10 +34,6 @@ public class Session implements ISession{
 	public static final AttributeKey<ISession> SESSION_KEY=new AttributeKey<ISession>("SESSION_KEY");
 	/**秘钥*/
 	public static final AttributeKey<String> SECRRET_KEY=new AttributeKey<String>("SECRRET_KEY");
-	/**发送给客户端的数据是否需要加密**/
-	public static final AttributeKey<Boolean> NEED_ENCRYPT=new AttributeKey<>("NEED_ENCRYPT");
-	/**每个客户端连接存储的密码表**/
-	public static final AttributeKey<List<Short>>  PASSPORT=new AttributeKey<>("PASSPORT");
 	/**同步返回Future*/
 	public static final AttributeKey<Map<String,SyncRpcCallBack<?>>> SYNC_CALLBACK_MAP =new AttributeKey<>("SYNC_CALLBACK_MAP");
 	/**异步回调Map*/

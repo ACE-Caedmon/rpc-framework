@@ -3,7 +3,6 @@ package common.server;
 import com.xl.rpc.annotation.RpcControl;
 import com.xl.rpc.annotation.RpcMethod;
 import com.xl.rpc.annotation.RpcRequest;
-import com.xl.rpc.annotation.RpcResponse;
 import com.xl.rpc.message.LoginProtoBuffer;
 import common.UserInfo;
 import common.client.Command;
@@ -16,10 +15,8 @@ import java.util.Map;
 @RpcControl("test")
 public interface IServerControl {
     @RpcMethod(Command.ServerControl_login)
-    @RpcResponse
     void login(@RpcRequest LoginProtoBuffer.Login.Builder login);
 
     @RpcMethod(Command.ServerControl_login)
-    @RpcResponse
     Map<String,UserInfo> login(@RpcRequest String userName,@RpcRequest String password);
 }

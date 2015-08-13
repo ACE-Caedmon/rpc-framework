@@ -30,6 +30,7 @@ public class ZkServiceDiscovery {
     private ZooKeeper zkc;
     ServerDiscoveryListener listener;
     private String clusterName;
+    private String host;
     private List<String> monitorList = new ArrayList<>();
     public static final String ServerStore = "/server";
     private ZkPathWatcher rootPathWather = new ZkPathWatcher(this,ServerStore);
@@ -137,6 +138,7 @@ public class ZkServiceDiscovery {
                 }
             }
             host = localIp;
+
             if (Util.isEmpty(host)) {
                 throw new RuntimeException("can not determine the local ip");
             }
@@ -147,6 +149,7 @@ public class ZkServiceDiscovery {
         if (stat != null){
             Thread.sleep((long) (ZKClient.Session_Timeout * 1.5));
         }
+        this.host=host;
         zkc.create(path, clusterName.getBytes(),
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         log.debug("Register cluster success:clusterName = {}", logicName);
@@ -263,5 +266,9 @@ public class ZkServiceDiscovery {
 
     public void dumpServers() {
         log.info("dump servers {}",cacheData.providerMap);
+    }
+
+    public String getHost() {
+        return host;
     }
 }

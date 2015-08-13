@@ -3,7 +3,6 @@ package common.server;
 import com.xl.rpc.annotation.RpcControl;
 import com.xl.rpc.annotation.RpcMethod;
 import com.xl.rpc.annotation.RpcRequest;
-import com.xl.rpc.annotation.RpcResponse;
 import common.client.Command;
 
 /**
@@ -12,6 +11,5 @@ import common.client.Command;
 @RpcControl("same")
 public interface ISameControl {
     @RpcMethod(Command.SameControl_same)
-    @RpcResponse
     void sameRequest(@RpcRequest String param);
 }
