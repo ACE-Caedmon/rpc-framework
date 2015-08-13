@@ -86,6 +86,7 @@ import java.util.List;
         }catch (Exception e){
             e.printStackTrace();
             rpcPacket.setException(true);
+            rpcPacket.setClassNameArray(new String[]{e.getClass().getName()});
             rpcPacket.setParams(e);
             ctx.channel().attr(Session.SESSION_KEY).get().writeAndFlush(rpcPacket);
         }

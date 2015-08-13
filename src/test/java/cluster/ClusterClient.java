@@ -21,26 +21,24 @@ public class ClusterClient {
         final int loop=1;
         final TimeUse timeUse=new TimeUse();
         int totalUse=0;
-//        for(int i=0;i<loop;i++){
-//            final int count=i;
-//            long start=System.currentTimeMillis();
-//            String input="test"+count;
-//            IServerControl serverControl=container.getAsyncRemoteCallProxy(IServerControl.class);
-//            Map map=serverControl.login("json", "json");
-//            ISameControl sameControl=container.getSyncRemoteCallProxy(ISameControl.class);
-//            sameControl.sameRequest("same request");
-//            long end=System.currentTimeMillis();
-//            int use=(int)(end-start);
-//
-//            if(use>timeUse.max){
-//                timeUse.max=use;
-//            }
-//            if(use<timeUse.min){
-//                timeUse.min=use;
-//            }
-//            totalUse=totalUse+use;
-//            log.debug("调用耗时:"+use);
-//        }
+        for(int i=0;i<loop;i++){
+            final int count=i;
+            long start=System.currentTimeMillis();
+            String input="test"+count;
+            IServerControl serverControl=container.getAsyncRemoteCallProxy(IServerControl.class);
+            Map map=serverControl.login("json", "json");
+            long end=System.currentTimeMillis();
+            int use=(int)(end-start);
+
+            if(use>timeUse.max){
+                timeUse.max=use;
+            }
+            if(use<timeUse.min){
+                timeUse.min=use;
+            }
+            totalUse=totalUse+use;
+            log.debug("调用耗时:"+use);
+        }
         System.out.println("调用次数:"+loop+",最大耗时:"+timeUse.max+",最小耗时:"+timeUse.min+",总耗时:"+totalUse+",平均耗时:"+totalUse/loop);
     }
     public static class TimeUse{

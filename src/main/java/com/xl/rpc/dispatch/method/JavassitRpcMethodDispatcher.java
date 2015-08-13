@@ -340,6 +340,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     }
                     //把异常发回给调用方
                     packet.setException(true);
+                    packet.setClassNameArray(new String[]{e.getClass().getName()});
                     packet.setParams(e);
                     try{
                         session.writeAndFlush(packet);

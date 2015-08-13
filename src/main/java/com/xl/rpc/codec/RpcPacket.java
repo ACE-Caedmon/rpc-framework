@@ -1,5 +1,6 @@
 package com.xl.rpc.codec;
 
+import com.google.protobuf.AbstractMessage;
 import com.xl.rpc.dispatch.SocketPacket;
 
 import java.util.Arrays;
@@ -66,10 +67,9 @@ public class RpcPacket extends SocketPacket {
     public String toString() {
         final StringBuilder sb = new StringBuilder("RpcPacket{");
         sb.append("fromCall=").append(fromCall);
-        sb.append(",cmd=").append(super.cmd);
-        sb.append(", sync=").append(sync);
+        sb.append(", cmd=").append(super.cmd);
         sb.append(", uuid='").append(uuid).append('\'');
-        sb.append(", exception=").append(exception);
+        sb.append(", params=").append(Arrays.toString(params));
         sb.append(", classNameArray=").append(Arrays.toString(classNameArray));
         sb.append('}');
         return sb.toString();
