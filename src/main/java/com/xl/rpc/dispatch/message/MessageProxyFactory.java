@@ -95,7 +95,7 @@ public class MessageProxyFactory {
         }
         for(String packageName:INVAILD_PACKAGE_NAMES){
             if(className.startsWith(packageName)){
-                proxyClassNamePrefix=className.replaceFirst(packageName,"");
+                proxyClassNamePrefix=proxyClassNamePrefix.replaceFirst(packageName,"");
                 break;
             }
         }

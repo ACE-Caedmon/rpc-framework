@@ -38,10 +38,10 @@ public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
             if(packet.getClassNameArray()!=null&&params!=null){
                 int i=0;
                 for(String paramType:packet.getClassNameArray()){
-                    if(paramType!=null){
-                        classNameArray.append(",").append(paramType);;
-                    }else{
+                    if(paramType==null||params[i]==null){
                         classNameArray.append(",null");
+                    }else{
+                        classNameArray.append(",").append(paramType);
                     }
                     i++;
                 }

@@ -26,7 +26,8 @@ public class ClusterClient {
             long start=System.currentTimeMillis();
             String input="test"+count;
             IServerControl serverControl=container.getAsyncRemoteCallProxy(IServerControl.class);
-            Map map=serverControl.login("json", "json");
+            Object result=serverControl.testLong(1);
+            System.out.println(result);
             long end=System.currentTimeMillis();
             int use=(int)(end-start);
 

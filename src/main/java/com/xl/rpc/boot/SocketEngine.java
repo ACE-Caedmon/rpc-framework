@@ -38,12 +38,12 @@ public abstract class SocketEngine {
         extensions.clear();
     }
     public void start(){
-        load();
+        loadControls();
         startSocket();
 
     }
     public abstract void startSocket();
-    public void load(){
+    public void loadControls(){
         //生成
         try{
             String[] scanPackage=settings.scanPackage;

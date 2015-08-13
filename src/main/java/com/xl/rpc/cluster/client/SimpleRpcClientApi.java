@@ -42,6 +42,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private ZkServiceDiscovery zkServerManager;
     private String[] monitorService;
     private String loadBalancing="responseTime";
+    private Set<String> availableClusterNames=new HashSet<>();
     private static SimpleRpcClientApi instance=new SimpleRpcClientApi();
     private static final String WORK_THREAD_SIZE_PROPERTY="rpc.client.workerThreadSize";
     private static final String CMD_THREAD_SIZE_PROPERTY="rpc.client.cmdThreadSize";
@@ -82,9 +83,12 @@ public class SimpleRpcClientApi implements RpcClientApi {
             List<Class> allClasses=ClassUtils.getClasssFromPackage(scanPackage);
             log.info("Scan all classes {}",allClasses.size());
             for(Class clazz:allClasses){
-                if(ClassUtils.hasAnnotation(clazz,RpcControl.class)&&clazz.isInterface()){
+                RpcControl rpcControl= ClassUtils.getAnnotation(clazz,RpcControl.class);
+                if(rpcControl!=null&&clazz.isInterface()){
+                    String clusterName=rpcControl.value();
                     rpcCallProxyFactory.getRpcCallProxy(true,clazz);
-                    log.info("Create rpcCallProxy : class = {}", StringUtil.simpleClassName(clazz));
+                    availableClusterNames.add(clusterName);
+                    log.info("Create rpcCallProxy : clusterName = {},class = {}", clusterName,StringUtil.simpleClassName(clazz));
                 }
             }
         }catch (Exception e){
@@ -252,7 +256,12 @@ public class SimpleRpcClientApi implements RpcClientApi {
         List<String> newServerAddressList= zkServerManager.getServerList(clusterName);
         ClusterGroup group=serverManager.getGroupByName(clusterName);
         if(group==null){
-            group=serverManager.addClusterGroup(clusterName);
+            if(availableClusterNames.contains(clusterName)){
+                group=serverManager.addClusterGroup(clusterName);
+            }else {
+                log.debug("Skip refresh cluster:{}",clusterName);
+                return;
+            }
         }
         Map<String,ServerNode> oldServers=serverManager.getAllServerNodes();
         //遍历新数据

@@ -38,6 +38,11 @@ public class ServerControl implements IServerControl{
             userInfo.setUsername("user-"+i);
             userInfos.put(userInfo.getUsername(),userInfo);
         }
-        throw new NullPointerException("test test");
+        return null;
+    }
+
+    @Override
+    public long testLong(@RpcRequest long userId) {
+        return userId;
     }
 }

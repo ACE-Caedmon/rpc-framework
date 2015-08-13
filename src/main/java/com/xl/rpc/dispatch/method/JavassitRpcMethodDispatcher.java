@@ -76,7 +76,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                 proxy=new AsyncCallBackMethod(rpcPacket);
             }
         }
-        log.debug("Create method proxy:{}", proxy.getClass().getName());
+        log.info("Create method proxy:{}", proxy.getClass().getName());
         return proxy;
     }
 
@@ -84,7 +84,6 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
     public void loadClasses(Class... classes) throws Exception{
         for(Class controlClass:classes){
             loadControlClass(controlClass);
-            log.info("Load rpc control: "+controlClass.getName());
         }
     }
     private MsgType getMethodMsgType(Method method){
@@ -194,11 +193,11 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                         throw new IllegalStateException("Method creator has exists:controlClass = "+controlClass.getName()+",method = "+method.getName());
                     }
                     proxyCreatorMap.put(creatorKey, creator);
-                    log.info("Cached method creator:key = {},method = {}",creatorKey,method.getName());
+                    log.info("Cached method creator:key = {},method = {}.{}()",creatorKey,controlClass.getName(),method.getName());
 
                 }else{
                     //已经加载过
-                    log.warn("Class name has exists: controlClass = "+controlClass.getName()+",cmd = "+cmd+"");
+                    log.debug("Class name has exists: controlClass = "+controlClass.getName()+",cmd = "+cmd+"");
                 }
 
             }
