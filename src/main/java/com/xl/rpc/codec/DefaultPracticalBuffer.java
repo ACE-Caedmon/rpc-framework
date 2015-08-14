@@ -144,7 +144,7 @@ public class DefaultPracticalBuffer implements PracticalBuffer {
 	}
 
 	@Override
-	public <T> T readJSON(Class<T> clazz) {
+	public Object readJSON(Class clazz) {
 		String json=readString();
 		return JSON.parseObject(json, clazz);
 	}

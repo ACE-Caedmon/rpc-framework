@@ -42,7 +42,7 @@ public class ServerControl implements IServerControl{
     }
 
     @Override
-    public long testLong(@RpcRequest long userId) {
-        return userId;
+    public Integer testLong(@RpcRequest Long userId) {
+        return new Integer(1);
     }
 }

@@ -1,5 +1,6 @@
 package com.xl.utils;
 
+import com.xl.rpc.dispatch.message.MessageProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,10 +14,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -25,6 +23,30 @@ import java.util.jar.JarFile;
  */
 public class ClassUtils {
     private static final Logger log= LoggerFactory.getLogger(ClassUtils.class);
+    public static final Map<Class,Class> PRIMITIVE_CLASS_CACHE =new HashMap<>();
+    public static final Map<Class,Class> PACKING_CLASS_CACHE=new HashMap<>();
+    public static final Set<String> INVAILD_PACKAGE_NAMES=new HashSet<>();
+    static {
+        PRIMITIVE_CLASS_CACHE.put(Boolean.TYPE, Boolean.class);
+        PRIMITIVE_CLASS_CACHE.put(Byte.TYPE, Byte.class);
+        PRIMITIVE_CLASS_CACHE.put(Character.TYPE, Character.class);
+        PRIMITIVE_CLASS_CACHE.put(Double.TYPE, Double.class);
+        PRIMITIVE_CLASS_CACHE.put(Float.TYPE, Float.class);
+        PRIMITIVE_CLASS_CACHE.put(Integer.TYPE, Integer.class);
+        PRIMITIVE_CLASS_CACHE.put(Long.TYPE, Long.class);
+        PRIMITIVE_CLASS_CACHE.put(Short.TYPE, Short.class);
+        INVAILD_PACKAGE_NAMES.add("java.lang.");
+        INVAILD_PACKAGE_NAMES.add("java.util.");
+        PACKING_CLASS_CACHE.put(Boolean.class, Boolean.TYPE);
+        PACKING_CLASS_CACHE.put(Byte.class,Byte.TYPE);
+        PACKING_CLASS_CACHE.put(Character.class,Character.TYPE);
+        PACKING_CLASS_CACHE.put(Double.class,Double.TYPE);
+        PACKING_CLASS_CACHE.put(Float.class,Float.TYPE);
+        PACKING_CLASS_CACHE.put(Integer.class,Integer.TYPE);
+        PACKING_CLASS_CACHE.put(Long.class,Long.TYPE);
+        PACKING_CLASS_CACHE.put(Short.class, Short.TYPE);
+
+    }
     public static List<Class> getClasssFromPackage(String...packageNames) throws Exception{
         List<Class> classes = new ArrayList<>();
         List<File> allFiles=new ArrayList<>();
@@ -53,9 +75,17 @@ public class ClassUtils {
                         try{
                             Class c=Thread.currentThread().getContextClassLoader().loadClass(className);
                             for(String pkg:packageNames){
-                                if(c.getPackage().getName().startsWith(pkg)){
-                                    classes.add(c);
+                                Package classPackage=c.getPackage();
+                                if(classPackage!=null){
+                                    if(classPackage.getName().startsWith(pkg)){
+                                        classes.add(c);
+                                    }
+                                }else{
+                                    if(pkg.trim().equals("")){
+                                        classes.add(c);
+                                    }
                                 }
+
                             }
                         }catch (ClassNotFoundException e){
 
@@ -293,5 +323,40 @@ public class ClassUtils {
             }
         }
         return false;
+    }
+    public static String getCompleteClassName(Class clazz){
+        String className=clazz.getName();
+        Class primitiveClass= PRIMITIVE_CLASS_CACHE.get(clazz);
+        MessageProxy proxy=null;
+        String proxyClassNamePrefix=className;
+        //是否为基本数据类型 int,long等
+        if(primitiveClass!=null){
+            proxyClassNamePrefix=primitiveClass.getName();
+        }
+        for(String packageName:INVAILD_PACKAGE_NAMES){
+            if(proxyClassNamePrefix.startsWith(packageName)){
+                proxyClassNamePrefix=proxyClassNamePrefix.replaceFirst(packageName,"");
+                break;
+            }
+        }
+        return proxyClassNamePrefix;
+    }
+    public static boolean isPrimitive(Class type){
+        return PRIMITIVE_CLASS_CACHE.containsKey(type);
+    }
+    public static boolean isPrimitivePackingType(Class type){
+        return PACKING_CLASS_CACHE.containsKey(type);
+    }
+    public static Class getPackingType(Class type){
+        if(isPrimitive(type)){
+            return PRIMITIVE_CLASS_CACHE.get(type);
+        }
+        return type;
+    }
+    public static Class getPrimitiveType(Class type){
+        if(isPrimitivePackingType(type)){
+            return PACKING_CLASS_CACHE.get(type);
+        }
+        return type;
     }
 }

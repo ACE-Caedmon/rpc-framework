@@ -5,6 +5,7 @@ import com.google.protobuf.MessageOrBuilder;
 import com.xl.rpc.annotation.MsgType;
 import com.xl.rpc.codec.DefaultPracticalBuffer;
 import com.xl.rpc.codec.PracticalBuffer;
+import com.xl.utils.ClassUtils;
 import com.xl.utils.EngineParams;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -32,22 +33,9 @@ public class MessageProxyFactory {
             Unpooled.class.getName()+".buffer();"+
             PracticalBuffer.class.getName()+" data=new "+DefaultPracticalBuffer.class.getName()+"(buffer);";
     public static MessageProxyFactory ONLY_INSTANCE=new MessageProxyFactory();
-    public static final Map<Class,Class> PRIMITIVE_CLASS_CACHE =new HashMap<>();
-    public static final Set<String> INVAILD_PACKAGE_NAMES=new HashSet<>();
     private static final Logger log= LoggerFactory.getLogger(MessageProxyFactory.class);
     private Object lock=new Object();
-    static {
-        PRIMITIVE_CLASS_CACHE.put(Boolean.TYPE, Boolean.class);
-        PRIMITIVE_CLASS_CACHE.put(Byte.TYPE, Byte.class);
-        PRIMITIVE_CLASS_CACHE.put(Character.TYPE, Character.class);
-        PRIMITIVE_CLASS_CACHE.put(Double.TYPE, Double.class);
-        PRIMITIVE_CLASS_CACHE.put(Float.TYPE, Float.class);
-        PRIMITIVE_CLASS_CACHE.put(Integer.TYPE, Integer.class);
-        PRIMITIVE_CLASS_CACHE.put(Long.TYPE, Long.class);
-        PRIMITIVE_CLASS_CACHE.put(Short.TYPE, Short.class);
-        INVAILD_PACKAGE_NAMES.add("java.lang.");
-        INVAILD_PACKAGE_NAMES.add("java.util.");
-    }
+
     private Map<String,ProtobufMapper> protobufMapperCache=new HashMap<>();
     private static class ProtobufMapper{
         String builderClassName;
@@ -75,9 +63,8 @@ public class MessageProxyFactory {
                 if(proxy==null){
                     proxy=createMessageProxy(type,clazz);
                     proxyCache.put(clazz,proxy);
-                    if(PRIMITIVE_CLASS_CACHE.containsKey(clazz)){
-                        proxyCache.put(PRIMITIVE_CLASS_CACHE.get(clazz),proxy);
-                    }
+                    Class keyClass=ClassUtils.getPackingType(clazz);
+                    proxyCache.put(keyClass,proxy);
                     proxCacheByMsgType.put(type,proxyCache);
                 }
             }
@@ -85,21 +72,9 @@ public class MessageProxyFactory {
         return proxy;
     }
     private  MessageProxy createMessageProxy(MsgType type,Class clazz) throws Exception{
-        String className=clazz.getName();
-        Class primitiveClass= PRIMITIVE_CLASS_CACHE.get(clazz);
+        String className= ClassUtils.getCompleteClassName(clazz);
         MessageProxy proxy=null;
-        String proxyClassNamePrefix=className;
-        //是否为基本数据类型 int,long等
-        if(primitiveClass!=null){
-            proxyClassNamePrefix=primitiveClass.getName();
-        }
-        for(String packageName:INVAILD_PACKAGE_NAMES){
-            if(className.startsWith(packageName)){
-                proxyClassNamePrefix=proxyClassNamePrefix.replaceFirst(packageName,"");
-                break;
-            }
-        }
-        String proxyClassName=proxyClassNamePrefix+type+PROXY_SUFFIX;
+        String proxyClassName=className+type+PROXY_SUFFIX;
         CtClass ctClass=classPool.getOrNull(proxyClassName);
         if(ctClass!=null){
             throw new IllegalStateException("MessageProxy has exists:"+proxyClassName);
@@ -117,7 +92,7 @@ public class MessageProxyFactory {
         }
         switch (type){
             case JSON:
-                decodeMethodBody="{"+className+" result = ("+className+")$1.readJSON("+className+".class);return ("+className+")result;}";
+                decodeMethodBody="{Object result = $1.readJSON("+className+".class);return result;}";
                 encodeMethodBody="{"+BUFFER_INIT_CODE+
                         "data.writeJSON($1);return data;}";
                 break;

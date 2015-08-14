@@ -20,5 +20,5 @@ public interface IServerControl {
     @RpcMethod(Command.ServerControl_login)
     Map<String,UserInfo> login(@RpcRequest String userName,@RpcRequest String password);
     @RpcMethod(Command.ServerControl_login)
-    long testLong(@RpcRequest long userId);
+    Integer testLong(@RpcRequest Long userId);
 }

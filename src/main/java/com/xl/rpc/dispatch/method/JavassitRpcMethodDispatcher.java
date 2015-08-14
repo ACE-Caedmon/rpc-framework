@@ -182,11 +182,11 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     Class[] paramTypes=method.getParameterTypes();
                     List<String> classNames=new ArrayList<>(paramTypes.length);
                     int i=0;
-                    for(Class paramTypeName:paramTypes){
-                        if(ISession.class.isAssignableFrom(paramTypeName)){
+                    for(Class paramType:paramTypes){
+                        if(ISession.class.isAssignableFrom(paramType)){
                             continue;
                         }
-                        classNames.add(paramTypeName.getName());
+                        classNames.add(ClassUtils.getPackingType(paramType).getName());
                     }
                     String creatorKey=cmd+"-"+ Arrays.toString(classNames.toArray());
                     if(proxyCreatorMap.containsKey(creatorKey)){
@@ -197,7 +197,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
 
                 }else{
                     //已经加载过
-                    log.debug("Class name has exists: controlClass = "+controlClass.getName()+",cmd = "+cmd+"");
+                    log.debug("Class name has exists: controlClass = " + controlClass.getName() + ",cmd = " + cmd + "");
                 }
 
             }

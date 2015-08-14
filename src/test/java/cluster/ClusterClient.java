@@ -25,8 +25,8 @@ public class ClusterClient {
             final int count=i;
             long start=System.currentTimeMillis();
             String input="test"+count;
-            IServerControl serverControl=container.getAsyncRemoteCallProxy(IServerControl.class);
-            Object result=serverControl.testLong(1);
+            IServerControl serverControl=container.getSyncRemoteCallProxy(IServerControl.class);
+            Object result=serverControl.testLong(1L);
             System.out.println(result);
             long end=System.currentTimeMillis();
             int use=(int)(end-start);
