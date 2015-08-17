@@ -38,14 +38,7 @@ public class ZkServiceDiscovery {
     private Map<String,ZkPathWatcher> providerWatchers = new HashMap<String, ZkPathWatcher>();
 
     List<InetSocketAddress> zookeeperAddressList = new ArrayList<>();
-
-
-    static class CacheData {
-        public Map<String,List<String>> providerMap = new HashMap<String, List<String>>(); // 需要lock保护
-    }
-
-
-    private CacheData cacheData = new CacheData();
+    public Map<String,List<String>> providerMap = new HashMap<String, List<String>>(); // 需要lock保护
 
     public interface ServerDiscoveryListener {
         void onServerListChanged(String server);
@@ -103,12 +96,12 @@ public class ZkServiceDiscovery {
      * if svrName not in the monitorList,add it
      */
     public List<String> getServerList(String svrName) {
-        return cacheData.providerMap.get(svrName);
+        return providerMap.get(svrName);
     }
 
     public Map<String,List<String>> getAllServerMap(){
         updateAll();
-        return cacheData.providerMap;
+        return providerMap;
     }
 
 
@@ -173,7 +166,7 @@ public class ZkServiceDiscovery {
             log.warn("updateAll fail",e);
         }
         update();
-        log.info("Update servers {}",cacheData.providerMap);
+        log.info("Update servers {}",providerMap);
     }
 
 
@@ -247,11 +240,11 @@ public class ZkServiceDiscovery {
             return;
         }
         boolean updated;
-        List<String> nodes = cacheData.providerMap.get(svr);
+        List<String> nodes = providerMap.get(svr);
         if (providers.equals(nodes)) {
             return;
         }
-        cacheData.providerMap.put(svr, providers);
+        providerMap.put(svr, providers);
         updated = true;
 
         if (updated) {
@@ -265,7 +258,7 @@ public class ZkServiceDiscovery {
     }
 
     public void dumpServers() {
-        log.info("dump servers {}",cacheData.providerMap);
+        log.info("dump servers {}",providerMap);
     }
 
     public String getHost() {

@@ -32,7 +32,6 @@ public class RpcClientSocketEngine extends SocketEngine{
     }
     @Override
     public void startSocket() {
-        log.info("ClientSocketEngine Init !");
         EventLoopGroup workerGroup=null;
         if(this.eventExecutors==null){
             workerGroup= new NioEventLoopGroup(settings.workerThreadSize);
@@ -49,10 +48,8 @@ public class RpcClientSocketEngine extends SocketEngine{
             ChannelFuture future=f.sync();
             future.get();
             this.channel=f.channel();
-            log.info("Worker thread : {}",settings.workerThreadSize);
-            log.info("Logic thread:{}",settings.cmdThreadSize);
-            log.info("Socket port :{}",settings.port);
-
+            log.debug("Worker thread : {}",settings.workerThreadSize);
+            log.debug("Logic thread:{}",settings.cmdThreadSize);
         } catch (Exception e) {
             e.printStackTrace();
             if(log.isErrorEnabled()){
@@ -61,7 +58,7 @@ public class RpcClientSocketEngine extends SocketEngine{
             workerGroup.shutdownGracefully();
             return;
         }
-        log.info("ClientSocketEngine Start OK!");
+        log.info("ClientSocketEngine connect to {} success!",((TCPClientSettings) settings).host+":"+settings.port);
     }
     public Channel getChannel(){
         return this.channel;

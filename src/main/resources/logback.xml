@@ -19,7 +19,7 @@
     <logger name="jdbc.sqltiming" level="INFO"/>
     <logger name="org.apache.zookeeper.ClientCnxn" level="INFO"/>
     <logger name="io.netty.util" level="INFO"/>
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="console" />
         <appender-ref ref="rollingFile" />
     </root>
