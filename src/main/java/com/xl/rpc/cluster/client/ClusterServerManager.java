@@ -166,7 +166,16 @@ public class ClusterServerManager implements IClusterServerManager {
 
     @Override
     public ServerNode getServerNode(String key) {
-        return allServersMap.get(key);
+        String clusterName=key.split("-")[0];
+        ClusterGroup clusterGroup=clusterGroupMap.get(clusterName);
+        if(clusterGroup==null){
+            throw new ClusterNotExistsException("Cluster not exists  '"+clusterName+"'");
+        }
+        if(clusterGroup.getNodeList().isEmpty()){
+            refreshClusterServers(clusterName);
+        }
+        ServerNode node=allServersMap.get(key);
+        return node;
     }
 
     @Override

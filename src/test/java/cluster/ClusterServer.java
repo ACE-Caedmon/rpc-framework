@@ -1,6 +1,7 @@
 package cluster;
 
 import com.xl.rpc.cluster.server.SimpleRpcServerApi;
+import com.xl.rpc.internal.InternalContainer;
 import org.apache.log4j.PropertyConfigurator;
 
 /**
@@ -8,9 +9,9 @@ import org.apache.log4j.PropertyConfigurator;
  */
 public class ClusterServer {
     public static void main(String[] args) {
-        System.setProperty("javassit.writeClass","true");
-        PropertyConfigurator.configure("log4j.properties");
-        SimpleRpcServerApi api=new SimpleRpcServerApi("rpc.properties");
-        api.bind();
+        System.setProperty("javassit.writeClass", "true");
+        InternalContainer container=InternalContainer.getInstance();
+        container.setRunProfile(InternalContainer.RunProfile.debug);
+        container.startRpcServer("rpc.properties");
     }
 }

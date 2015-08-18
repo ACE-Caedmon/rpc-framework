@@ -5,6 +5,7 @@ import com.xl.rpc.annotation.RpcControl;
 import com.xl.rpc.boot.RpcClientSocketEngine;
 import com.xl.rpc.dispatch.CmdInterceptor;
 import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
+import com.xl.rpc.exception.ClusterNotExistsException;
 import com.xl.utils.ClassUtils;
 import com.xl.utils.PropertyKit;
 import io.netty.util.internal.StringUtil;
@@ -148,6 +149,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         String serverKey=clusterName+"-"+address;
         ServerNode node=serverManager.getServerNode(serverKey);
         if(node==null){
+
             throw new NullPointerException("No server node exists:server = "+serverKey);
         }
         return node.syncCall(cmd, resultType,paramTypes, params);
