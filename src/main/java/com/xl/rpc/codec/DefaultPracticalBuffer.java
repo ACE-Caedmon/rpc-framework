@@ -74,17 +74,17 @@ public class DefaultPracticalBuffer implements PracticalBuffer {
 	}
 
 	@Override
-	public Message readProtoBuf(Builder message) {
+	public Message.Builder readProtoBuf(Message.Builder builder) {
 		int length=buf.readInt();
 		byte[] dst=new byte[length];
 		buf.readBytes(dst);
 		try {
-			message.mergeFrom(dst);
+			builder.mergeFrom(dst);
 		} catch (InvalidProtocolBufferException e) {
 			e.printStackTrace();
 		}
-		return message.build();
-
+		builder.build();
+		return builder;
 	}
 
 	@Override

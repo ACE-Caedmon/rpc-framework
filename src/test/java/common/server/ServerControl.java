@@ -23,9 +23,9 @@ public class ServerControl implements IServerControl{
     private UserService userService;
 
     @Override
-    public void login(@RpcRequest LoginProtoBuffer.Login login) {
+    public LoginProtoBuffer.Login.Builder login(@RpcRequest LoginProtoBuffer.Login.Builder login) {
         log.info("Protobuf接受:{},{}",login.getUsername(), login.getPassword());
-        throw new NullPointerException("test test");
+        return login;
     }
 
     @Override

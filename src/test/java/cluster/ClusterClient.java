@@ -25,7 +25,9 @@ public class ClusterClient {
             LoginProtoBuffer.Login.Builder login= LoginProtoBuffer.Login.newBuilder();
             login.setUsername("test");
             login.setPassword("password");
-            serverControl.login(login.build());
+            Class c=Class.forName(login.getClass().getName());
+            System.out.println("!!!!!!!!!!!!!!!!!!"+c);
+            serverControl.login(login);
             long end=System.currentTimeMillis();
             int use=(int)(end-start);
 

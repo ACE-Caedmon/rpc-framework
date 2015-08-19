@@ -19,7 +19,7 @@ public interface PracticalBuffer {
 	double readDouble();
 	String readString();
 	void readBytes(byte[] dst);
-	Message readProtoBuf(Builder builder);
+	Message.Builder readProtoBuf(Message.Builder builder);
 	<T> T readJSON(Class<T> clazz);
 	PracticalBuffer readBinary(int length);
 	void writeByte(byte b);

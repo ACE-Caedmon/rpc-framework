@@ -57,6 +57,11 @@ public class InternalContainer {
         }
     }
 
+    public synchronized void initSpringContext(String... config){
+        if(springContext==null){
+            springContext=new ClassPathXmlApplicationContext(config);
+        }
+    }
 
     public synchronized void setSpringContext(ClassPathXmlApplicationContext context){
         this.springContext=context;
