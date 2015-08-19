@@ -36,7 +36,6 @@ public class ClassUtils {
         PRIMITIVE_CLASS_CACHE.put(Long.TYPE, Long.class);
         PRIMITIVE_CLASS_CACHE.put(Short.TYPE, Short.class);
         INVAILD_PACKAGE_NAMES.add("java.lang.");
-        INVAILD_PACKAGE_NAMES.add("java.util.");
         PACKING_CLASS_CACHE.put(Boolean.class, Boolean.TYPE);
         PACKING_CLASS_CACHE.put(Byte.class,Byte.TYPE);
         PACKING_CLASS_CACHE.put(Character.class,Character.TYPE);

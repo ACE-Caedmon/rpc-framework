@@ -4,7 +4,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.google.protobuf.AbstractMessage.Builder;
+import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
 import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +74,7 @@ public class DefaultPracticalBuffer implements PracticalBuffer {
 	}
 
 	@Override
-	public Builder readProtoBuf(Builder message) {
+	public Message readProtoBuf(Builder message) {
 		int length=buf.readInt();
 		byte[] dst=new byte[length];
 		buf.readBytes(dst);
@@ -81,8 +83,8 @@ public class DefaultPracticalBuffer implements PracticalBuffer {
 		} catch (InvalidProtocolBufferException e) {
 			e.printStackTrace();
 		}
-		message.build();
-		return  message;
+		return message.build();
+
 	}
 
 	@Override
@@ -137,7 +139,7 @@ public class DefaultPracticalBuffer implements PracticalBuffer {
 	}
 
 	@Override
-	public void writeProtoBuf(Builder<?> builder) {
+	public void writeProtoBuf(Message.Builder builder) {
 		byte[] dst=builder.build().toByteArray();
 		buf.writeInt(dst.length);
 		buf.writeBytes(dst);

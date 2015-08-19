@@ -11,7 +11,6 @@ public class ClusterServer {
     public static void main(String[] args) {
         System.setProperty("javassit.writeClass", "true");
         InternalContainer container=InternalContainer.getInstance();
-        container.setRunProfile(InternalContainer.RunProfile.debug);
         container.startRpcServer("rpc.properties");
     }
 }

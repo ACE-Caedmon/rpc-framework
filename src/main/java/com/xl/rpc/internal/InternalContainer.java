@@ -19,78 +19,45 @@ public class InternalContainer {
     private RpcClientApi rpcClientApi;
     private RpcServerApi rpcServerApi;
     private ClassPathXmlApplicationContext springContext;
-    private RunProfile runProfile = RunProfile.debug;
-    private InternalContainer(){
+    private InternalContainer() {
 
-    }
-
-    public void setRunProfile(RunProfile runProfile) {
-        this.runProfile = runProfile;
-    }
-
-    public enum RunProfile {
-        debug,product;
     }
     public static InternalContainer getInstance(){
         return instance;
     }
-    public synchronized void startRpcClient(Properties... propertiesArray){
+    public synchronized void startRpcClient(Properties properties){
         if(this.rpcClientApi==null){
-            Properties suitableProperties= getSuitableProperties(propertiesArray);
-            this.rpcClientApi=SimpleRpcClientApi.getInstance().load(suitableProperties);
+            this.rpcClientApi=SimpleRpcClientApi.getInstance().load(properties);
             this.rpcClientApi.bind();
         }
     }
-    public synchronized void startRpcServer(Properties... propertiesArray){
+    public synchronized void startRpcServer(Properties properties){
         if(this.rpcServerApi==null){
-            Properties suitableProperties=getSuitableProperties(propertiesArray);
-            this.rpcServerApi=new SimpleRpcServerApi(suitableProperties);
+            this.rpcServerApi=new SimpleRpcServerApi(properties);
             this.rpcServerApi.bind();
         }
     }
-    public synchronized void startRpcClient(String... configs){
-        startRpcClient(loadProperties(configs));
+    public synchronized void startRpcClient(String config){
+        Properties properties=PropertyKit.getProperties(config);
+        startRpcClient(properties);
     }
-    public synchronized void startRpcServer(String... configs){
+    public synchronized void startRpcServer(String config){
         if(this.rpcServerApi==null){
-            Properties[] propertiesArray=loadProperties(configs);
-            startRpcServer(getSuitableProperties(propertiesArray));
+            startRpcServer(PropertyKit.getProperties(config));
         }
     }
-    public synchronized void initSpringContext(String... config){
+    public synchronized void initSpringContext(String activeProfile,String... config){
         if(springContext==null){
             springContext=new ClassPathXmlApplicationContext();
             StandardEnvironment environment=new StandardEnvironment();
-            environment.addActiveProfile(runProfile.name());
+            environment.addActiveProfile(activeProfile);
             springContext.setEnvironment(environment);
             springContext.setConfigLocations(config);
             springContext.refresh();
         }
     }
-    public  Properties getSuitableProperties(Properties... propertiesArray){
-        Properties suitableProperties=null;
-        for(Properties properties:propertiesArray){
-            if(properties.containsKey("server.profile")){
-                String value=properties.getProperty("server.profile");
-                if(value.trim().toLowerCase().equals(runProfile.name())){
-                    suitableProperties=properties;
-                    break;
-                }
-            }
-        }
-        if(suitableProperties==null){
-            throw new IllegalArgumentException("Do not found suit profile '"+runProfile+"'");
-        }
-        return suitableProperties;
-    }
-    public static Properties[] loadProperties(String...configs){
-        Properties[] propertiesArray=new Properties[configs.length];
-        for(int i=0;i<propertiesArray.length;i++){
-            Properties properties= PropertyKit.getProperties(configs[i]);
-            propertiesArray[i]=properties;
-        }
-        return propertiesArray;
-    }
+
+
     public synchronized void setSpringContext(ClassPathXmlApplicationContext context){
         this.springContext=context;
     }

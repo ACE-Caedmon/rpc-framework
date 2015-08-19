@@ -153,24 +153,17 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                     StringBuilder methodBody=new StringBuilder();
                     methodBody.append(getMethodInvokeSrc(method));
                     Class responseType=method.getReturnType();
-                    //将response构造成数组作为参数，否则会编译出错
-
-                    //带有RpcResponse 将返回值响应
-                    //if(rpcResponse !=null){
-                        if(!ClassUtils.isVoidReturn(responseType)){
-                            //判断接受的消息是否为同步消息
-                            methodBody.append("packet.setClassNameArray(new String[]{"+responseType.getName()+".class.getName()});");
-                            if(responseType==Object[].class){
-                                methodBody.append(" packet.setParams(response);$1.writeAndFlush(packet);");
-                            }else{
-                                methodBody.append(" packet.setParams(new Object[]{response});$1.writeAndFlush(packet);");
-                            }
+                    if(!ClassUtils.isVoidReturn(responseType)){
+                        //判断接受的消息是否为同步消息
+                        methodBody.append("packet.setClassNameArray(new String[]{"+responseType.getName()+".class.getName()});");
+                        if(responseType==Object[].class){
+                            methodBody.append(" packet.setParams(response);$1.writeAndFlush(packet);");
                         }else{
-                            methodBody.append("packet.setClassNameArray(null);packet.setParams(null);$1.writeAndFlush(packet);");
+                            methodBody.append(" packet.setParams(new Object[]{response});$1.writeAndFlush(packet);");
                         }
-//                    }else{
-//                        methodBody.append("packet.setClassNameArray(null);packet.setParams(null);$1.writeAndFlush(packet);");
-//                    }
+                    }else{
+                        methodBody.append("packet.setClassNameArray(null);packet.setParams(null);$1.writeAndFlush(packet);");
+                    }
                     log.debug("Javassit generate code:{}", methodBody.toString());
                     ctMethod.insertAfter(methodBody.toString());
                     if(EngineParams.isWriteJavassit()){
@@ -253,7 +246,11 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                 MsgType requestType = rpcRequest.value();
                 MessageProxyFactory.ONLY_INSTANCE.getMessageProxy(requestType, parameterType);
                 String paramClassName=parameterType.getName();
-                invokeParams[i] = "(" +paramClassName+ ")"+"(this.packet.getParams()["+paramsCount+"])";
+                if(ClassUtils.isPrimitive(parameterType)){
+                    invokeParams[i]=ClassUtils.getPackingType(parameterType).getName()+".valueOf(this.packet.getParams()["+paramsCount+"].toString())."+paramClassName+"Value()";
+                }else{
+                    invokeParams[i] = "(" +paramClassName+ ")"+"(this.packet.getParams()["+paramsCount+"])";
+                }
                 paramsCount++;
             }
             if(rpcSession !=null){
@@ -271,7 +268,8 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
         //判断返回值类型
         Class returnType=method.getReturnType();
         if(!ClassUtils.isVoidReturn(returnType)){
-            invokeSrc.append(returnType.getName())
+            String responseType=ClassUtils.getCompleteClassName(returnType);
+            invokeSrc.append(responseType)
                     .append(" response= ");
         }
         invokeSrc.append("this.control." + methodName + "(");
@@ -284,6 +282,7 @@ public class JavassitRpcMethodDispatcher implements RpcMethodDispatcher {
                 invokeSrc.append(");");
             }
         }
+        System.out.println(invokeSrc.toString());
         return invokeSrc.toString();
     }
     @Override

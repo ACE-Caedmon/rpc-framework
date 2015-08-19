@@ -1,14 +1,10 @@
 package cluster;
 
-import com.xl.rpc.cluster.client.SimpleRpcClientApi;
 import com.xl.rpc.internal.InternalContainer;
-import common.server.ISameControl;
+import com.xl.rpc.message.LoginProtoBuffer;
 import common.server.IServerControl;
-import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * Created by Administrator on 2015/7/17.
@@ -26,8 +22,10 @@ public class ClusterClient {
             long start=System.currentTimeMillis();
             String input="test"+count;
             IServerControl serverControl=container.getSyncRemoteCallProxy(IServerControl.class);
-            Object result=serverControl.testLong(1L);
-            System.out.println(result);
+            LoginProtoBuffer.Login.Builder login= LoginProtoBuffer.Login.newBuilder();
+            login.setUsername("test");
+            login.setPassword("password");
+            serverControl.login(login.build());
             long end=System.currentTimeMillis();
             int use=(int)(end-start);
 

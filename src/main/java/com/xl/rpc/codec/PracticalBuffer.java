@@ -1,6 +1,8 @@
 package com.xl.rpc.codec;
 
 import com.google.protobuf.AbstractMessage.Builder;
+import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.Message;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -17,7 +19,7 @@ public interface PracticalBuffer {
 	double readDouble();
 	String readString();
 	void readBytes(byte[] dst);
-	Builder readProtoBuf(Builder builder);
+	Message readProtoBuf(Builder builder);
 	<T> T readJSON(Class<T> clazz);
 	PracticalBuffer readBinary(int length);
 	void writeByte(byte b);
@@ -28,7 +30,7 @@ public interface PracticalBuffer {
 	void writeLong(long l);
 	void writeDouble(double d);
 	void writeString(String s);
-	void writeProtoBuf(Builder<?> builder);
+	void writeProtoBuf(Message.Builder  builder);
 	void writeJSON(Object bean);
 	void writeBytes(PracticalBuffer buffer);
 	ByteBuf getByteBuf();

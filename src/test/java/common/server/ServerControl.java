@@ -23,7 +23,7 @@ public class ServerControl implements IServerControl{
     private UserService userService;
 
     @Override
-    public void login(@RpcRequest LoginProtoBuffer.Login.Builder login) {
+    public void login(@RpcRequest LoginProtoBuffer.Login login) {
         log.info("Protobuf接受:{},{}",login.getUsername(), login.getPassword());
         throw new NullPointerException("test test");
     }
@@ -43,6 +43,16 @@ public class ServerControl implements IServerControl{
 
     @Override
     public Integer testLong(@RpcRequest Long userId) {
-        return new Integer(1);
+        return 100000;
+    }
+    public static void main(String[] args) {
+        System.out.println(new Long(1L).toString());
+        System.out.println(new Integer(1).toString());
+        System.out.println(new Character('C').toString());
+        System.out.println(new Byte((byte)1).toString());
+        System.out.println(new Float(1.1).toString());
+        System.out.println(new Short((short)1).toString());
+
+
     }
 }

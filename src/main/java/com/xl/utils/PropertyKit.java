@@ -1,6 +1,7 @@
 package com.xl.utils;
 
 import com.alibaba.fastjson.JSONObject;
+import com.xl.rpc.internal.InternalContainer;
 
 import java.io.*;
 import java.util.HashMap;
@@ -15,6 +16,31 @@ public class PropertyKit {
     public static String getProperty(String path,String key){
         Properties properties=getProperties(path);
         return properties.getProperty(key);
+    }
+    public static   Properties getSuitableProperties(String profile,String...configs){
+        Properties suitableProperties=null;
+        Properties[] propertiesArray=loadProperties(configs);
+        for(Properties properties:propertiesArray){
+            if(properties.containsKey("server.profile")){
+                String value=properties.getProperty("server.profile");
+                if(value.trim().toLowerCase().equals(profile)){
+                    suitableProperties=properties;
+                    break;
+                }
+            }
+        }
+        if(suitableProperties==null){
+            throw new IllegalArgumentException("No suitable profile found '"+profile+"'");
+        }
+        return suitableProperties;
+    }
+    public static Properties[] loadProperties(String...configs){
+        Properties[] propertiesArray=new Properties[configs.length];
+        for(int i=0;i<propertiesArray.length;i++){
+            Properties properties= PropertyKit.getProperties(configs[i]);
+            propertiesArray[i]=properties;
+        }
+        return propertiesArray;
     }
     public static void removeProperty(String path,String key){
         Properties properties= getProperties(path);

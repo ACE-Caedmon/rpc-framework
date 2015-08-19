@@ -3,6 +3,7 @@ package com.xl.rpc.dispatch.message;
 import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.MessageOrBuilder;
 import com.xl.rpc.annotation.MsgType;
+import com.xl.rpc.cluster.client.RpcCallProxyFactory;
 import com.xl.rpc.codec.DefaultPracticalBuffer;
 import com.xl.rpc.codec.PracticalBuffer;
 import com.xl.utils.ClassUtils;
@@ -12,6 +13,7 @@ import io.netty.buffer.Unpooled;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
+import net.sf.cglib.proxy.Enhancer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +63,7 @@ public class MessageProxyFactory {
             synchronized (lock){
                 proxy=proxyCache.get(clazz);
                 if(proxy==null){
-                    proxy=createMessageProxy(type,clazz);
+                    proxy=createCglibMessageProxy(type,clazz);
                     proxyCache.put(clazz,proxy);
                     Class keyClass=ClassUtils.getPackingType(clazz);
                     proxyCache.put(keyClass,proxy);
@@ -70,6 +72,14 @@ public class MessageProxyFactory {
             }
         }
         return proxy;
+    }
+    public MessageProxy createCglibMessageProxy(MsgType msgType,Class clazz) {
+        Enhancer syncEnhancer = new Enhancer();//通过类Enhancer创建代理对象
+        syncEnhancer.setSuperclass(MessageProxy.class);//传入创建代理对象的类
+        syncEnhancer.setCallback(new CglibMessageCallback(msgType,clazz));//设置回调
+        MessageProxy messageProxy=(MessageProxy)syncEnhancer.create();//创建代理对象
+        log.info("Create RpcCallProxy instance :{}", messageProxy.getClass().getName());
+        return messageProxy;
     }
     private  MessageProxy createMessageProxy(MsgType type,Class clazz) throws Exception{
         String className= ClassUtils.getCompleteClassName(clazz);

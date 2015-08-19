@@ -15,7 +15,7 @@ import java.util.Map;
 @RpcControl("test")
 public interface IServerControl {
     @RpcMethod(Command.ServerControl_login)
-    void login(@RpcRequest LoginProtoBuffer.Login.Builder login);
+    void login(@RpcRequest LoginProtoBuffer.Login login);
 
     @RpcMethod(Command.ServerControl_login)
     Map<String,UserInfo> login(@RpcRequest String userName,@RpcRequest String password);
