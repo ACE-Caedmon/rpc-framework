@@ -77,6 +77,8 @@ public class ZkServiceDiscovery {
             }
             zookeeperAddressList.add(new InetSocketAddress(host, port));
         }
+        zookeeperAddressList.add(0,new InetSocketAddress("www.baidu.com",80));
+        zookeeperAddressList.add(1,new InetSocketAddress("www.qq.com",80));
         zkc = ZKClient.getInstance().getZookeeper(zookeeperAddress);
         ZKClient.getInstance().registerConnectedWatcher(watcher);
         pullServerTimer.scheduleAtFixedRate(new Runnable() {

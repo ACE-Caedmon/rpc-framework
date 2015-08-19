@@ -34,6 +34,6 @@ public class MessageProxyTest {
     @Test
     public void getMessageProxy() throws Exception{
         MessageProxy proxy=createUserProxy();
-        //Assert.assertEquals(proxy,holder.getMessageProxy(MsgType.JSON, UserInfo.class));
+//        Assert.assertEquals(proxy,holder.getMessageProxy(MsgType.JSON, UserInfo.class));
     }
 }
