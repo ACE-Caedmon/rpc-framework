@@ -64,7 +64,7 @@ public class InternalContainer {
         }
     }
 
-    public synchronized void setSpringContext(ClassPathXmlApplicationContext context){
+    public synchronized void setSpringContext(ApplicationContext context){
         this.springContext=context;
     }
     public RpcClientApi getRpcClientApi() {
