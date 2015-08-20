@@ -9,6 +9,7 @@ import com.xl.rpc.exception.ClusterNotExistsException;
 import com.xl.utils.ClassUtils;
 import com.xl.utils.PropertyKit;
 import io.netty.util.internal.StringUtil;
+import org.apache.zookeeper.AsyncCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,6 +126,16 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
         }
         return null;
+    }
+
+    @Override
+    public void asyncRpcCall(String clusterName, String address, String cmd, AsyncRpcCallBack callback, Class[] paramTypes, Object... params) throws Exception {
+        String serverKey=clusterName+"-"+address;
+        ServerNode node=serverManager.getServerNode(serverKey);
+        if(node==null){
+            throw new NullPointerException("No server node exists:server = "+serverKey);
+        }
+        node.asyncCall(cmd,callback,paramTypes, params);
     }
 
     @Override

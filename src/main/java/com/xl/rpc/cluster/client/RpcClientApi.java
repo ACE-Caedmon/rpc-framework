@@ -2,6 +2,7 @@ package com.xl.rpc.cluster.client;
 
 import com.xl.rpc.dispatch.CmdInterceptor;
 import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
+import org.apache.zookeeper.AsyncCallback;
 
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -54,7 +55,7 @@ public interface RpcClientApi {
      *@params params 消息参数
      * */
     void asyncRpcCall(String clusterName,String address,String cmd,Class[] paramTypes,Object...params) throws Exception;
-
+    void asyncRpcCall(String clusterName,String address,String cmd,AsyncRpcCallBack callback,Class[] paramTypes,Object...params) throws Exception;
     /**
      * 一致性hash选择节点发送消息，当节点存活时，同一个key绝对是发送给同一个服务器节点
      *@param clusterName 集群服务名
