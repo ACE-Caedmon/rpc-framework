@@ -18,7 +18,7 @@ public class InternalContainer {
     private static final InternalContainer instance=new InternalContainer();
     private RpcClientApi rpcClientApi;
     private RpcServerApi rpcServerApi;
-    private ClassPathXmlApplicationContext springContext;
+    private ApplicationContext springContext;
     private InternalContainer() {
 
     }
@@ -48,12 +48,13 @@ public class InternalContainer {
     }
     public synchronized void initSpringContext(String activeProfile,String... config){
         if(springContext==null){
-            springContext=new ClassPathXmlApplicationContext();
+            final ClassPathXmlApplicationContext classPathApplicationContext=new ClassPathXmlApplicationContext();
             StandardEnvironment environment=new StandardEnvironment();
             environment.addActiveProfile(activeProfile);
-            springContext.setEnvironment(environment);
-            springContext.setConfigLocations(config);
-            springContext.refresh();
+            classPathApplicationContext.setEnvironment(environment);
+            classPathApplicationContext.setConfigLocations(config);
+            classPathApplicationContext.refresh();
+            this.springContext=classPathApplicationContext;
         }
     }
 
