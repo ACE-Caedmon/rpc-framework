@@ -47,6 +47,9 @@ public class MessageProxyFactory {
 
     }
     public MessageProxy getMessageProxy(MsgType type,Class clazz) throws Exception{
+        if(ClassUtils.isPrimitive(clazz)){
+            throw new IllegalArgumentException("Currently not supported primitive type "+clazz.getName());
+        }
         Map<Class,MessageProxy> proxyCache=proxCacheByMsgType.get(type);
         MessageProxy proxy=null;
         if(proxyCache==null){
