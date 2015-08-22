@@ -86,4 +86,6 @@ public interface RpcClientApi {
 
     void addRpcMethodInterceptor(CmdInterceptor interceptor);
 
+    boolean existsServerNode(String clusterName,String address);
+
 }

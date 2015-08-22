@@ -218,4 +218,9 @@ public class SimpleRpcClientApi implements RpcClientApi {
             socketEngine.addRpcMethodInterceptor(interceptor);
         }
     }
+
+    @Override
+    public boolean existsServerNode(String clusterName, String address) {
+        return serverManager.getServerNode(clusterName+"-"+address)!=null;
+    }
 }
