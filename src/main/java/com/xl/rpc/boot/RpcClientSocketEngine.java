@@ -55,7 +55,7 @@ public class RpcClientSocketEngine extends SocketEngine{
             if(log.isErrorEnabled()){
                 log.error("<<<<<<<SocketEngine Start Error!>>>>>>", e);
             }
-            workerGroup.shutdownGracefully();
+            //workerGroup.shutdownGracefully();
             return;
         }
         log.info("ClientSocketEngine connect to {} success!",((TCPClientSettings) settings).host+":"+settings.port);
