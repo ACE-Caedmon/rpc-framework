@@ -11,15 +11,6 @@ import java.net.URL;
  */
 public class SocketLogServer {
     public static void main(String[] args) throws Exception{
-//        XlServerSocketReceiver receiver=new XlServerSocketReceiver();
-//        LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-//        lc.reset();
-//        JoranConfigurator configurator = new JoranConfigurator();
-//        configurator.setContext(lc);
-//        URL url=Thread.currentThread().getContextClassLoader().getResource("logback.xml");
-//        configurator.doConfigure(url.getFile());
-//        receiver.setContext(lc);
-//        receiver.start();
         PatternLayout.defaultConverterMap.put("serviceName",RpcLogConverter.ServiceNameConvert.class.getName());
         PatternLayout.defaultConverterMap.put("address", RpcLogConverter.AddressConvert.class.getName());
         URL url=Thread.currentThread().getContextClassLoader().getResource("logback.xml");

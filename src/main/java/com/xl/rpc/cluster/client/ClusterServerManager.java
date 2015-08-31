@@ -125,6 +125,7 @@ public class ClusterServerManager implements IClusterServerManager {
 
     @Override
     public void addServerNode(ServerNode node) {
+        removeServerNode(node.getKey());
         allServersMap.put(node.getKey(), node);
         ClusterGroup group=clusterGroupMap.get(node.getClusterName());
         if(group==null){

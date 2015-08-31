@@ -21,7 +21,7 @@ public class RemoteCallTest extends BasicTest{
         LoginProtoBuffer.Login.Builder message= LoginProtoBuffer.Login.newBuilder();
         message.setUsername("Test_Proto_Name");
         message.setPassword("Test_Proto_Password");
-        LoginProtoBuffer.Login.Builder result=serverControl.testProtobuf(message);
+        LoginProtoBuffer.Login.Builder result= syncServerControl.testProtobuf(message);
         boolean nameOK=message.getUsername().equals(result.getUsername());
         boolean passwordOk=message.getPassword().equals(result.getPassword());
         Assert.assertEquals(true,nameOK&&passwordOk);
@@ -29,7 +29,7 @@ public class RemoteCallTest extends BasicTest{
     @Test
     public void testEnum(){
         Name param=Name.Caedmon;
-        Name result=serverControl.testEnum(param);
+        Name result= syncServerControl.testEnum(param);
         Assert.assertEquals(param,result);
     }
     @Test
@@ -40,7 +40,7 @@ public class RemoteCallTest extends BasicTest{
             params.add(i);
         }
         long start=System.currentTimeMillis();
-        List<UserInfo> result=serverControl.testList(params);
+        List<UserInfo> result= syncServerControl.testList(params);
         long end=System.currentTimeMillis();
         Assert.assertEquals(params.size(),result.size());
     }
@@ -48,39 +48,41 @@ public class RemoteCallTest extends BasicTest{
     public void testMap(){
         Map<Integer,UserInfo> params=new HashMap<>();
         params.put(1,new UserInfo());
-        Map<Integer,UserInfo> result=serverControl.testMap(params);
+        Map<Integer,UserInfo> result= syncServerControl.testMap(params);
         Assert.assertEquals(params.size(),result.size());
     }
     @Test
     public void testNull(){
         String param=null;
-        String result=serverControl.testNull(param);
+        String result= syncServerControl.testNull(param);
         Assert.assertEquals(null,result);
     }
     @Test
     public void testPrimitive(){
         int param=100;
-        long result=serverControl.testPrimitive(param);
+        long result= syncServerControl.testPrimitive(param);
         Assert.assertEquals(param,result);
     }
     @Test
-    public void testRpcSession(){
-        container.getRpcClientApi().asyncRpcCall("test", Command.Test_RpcSession, new Class[]{String.class}, "Test_RpcSession");
+    public void testRpcSession() throws Exception{
+        container.getRpcClientApi().asyncRpcCall("test","192.168.1.9:8003",Command.Test_RpcSession, "Test_RpcSession");
     }
     @Test
     public void testThrowable(){
-        serverControl.testThrowable();
+        asyncServerControl.testThrowable();
+
+        //syncServerControl.testThrowable();
     }
     @Test
     public void testMultipleParam(){
         final String name="name";
         final String password="password";
-        UserInfo userInfo=serverControl.testMultipleParam(name, password);
+        UserInfo userInfo= syncServerControl.testMultipleParam(name, password);
         Assert.assertEquals(name,userInfo.getUsername());
         Assert.assertEquals(password, userInfo.getPassword());
     }
     @Test
     public void testNoParam(){
-        Assert.assertEquals("success",serverControl.testNoParam());
+        Assert.assertEquals("success", syncServerControl.testNoParam());
     }
 }

@@ -71,25 +71,12 @@ public abstract class RpcMethodDispatcher {
         threadPool.execute(new Runnable() {
             @Override
             public void run() {
-                String cmd = packet.getCmd();
-                try {
-                    Object reason=before(session,packet);
-                    if (reason==null) {
-                        if(packet.isFromCall()){
-                            processClientRequest(session, packet);
-                        }else{
-                            processServerResponse(session, packet);
-                        }
-                        after(session,packet);
-                    }else{
-                        packet.setParams(new Object[]{new MethodInterceptException(reason.getClass().getName())});
-                    }
-                } catch (Throwable e) {
-                    log.error("Method execute error:cmd = {}", cmd, e);
-                    notifyError(session, packet, e);
-                    packet.setParams(new Object[]{e});
-                    responseToClient(session, packet);
+                if(packet.isFromCall()){
+                    processClientRequest(session, packet);
+                }else{
+                    processServerResponse(session, packet);
                 }
+                after(session,packet);
             }
         });
 

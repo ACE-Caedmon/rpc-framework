@@ -19,7 +19,7 @@ public class SpringRmiClient {
         int totalUse=0;
         TimeUse timeUse=new TimeUse();
         for(int i=0;i<loop;i++){
-            //serverControl.testProtobuf("Caedmon);
+            //syncServerControl.testProtobuf("Caedmon);
             long end=System.currentTimeMillis();
             int use=(int)(end-start);
 

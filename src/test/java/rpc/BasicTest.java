@@ -9,12 +9,14 @@ import org.junit.Before;
  */
 public class BasicTest {
     protected static final InternalContainer container=InternalContainer.getInstance();
-    protected static IServerControl serverControl;
+    protected static IServerControl syncServerControl;
+    protected static IServerControl asyncServerControl;
     @Before
     public void init(){
         InternalContainer container=InternalContainer.getInstance();
         container.startRpcServer("rpc.properties");
         container.startRpcClient("rpc.properties");
-        serverControl=container.getSyncRemoteCallProxy(IServerControl.class);
+        syncServerControl =container.getSyncRemoteCallProxy(IServerControl.class);
+        asyncServerControl=container.getAsyncRemoteCallProxy(IServerControl.class);
     }
 }
