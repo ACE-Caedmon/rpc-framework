@@ -12,9 +12,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Created by Administrator on 2015/4/25.
  */
@@ -51,12 +48,7 @@ public class RpcClientSocketEngine extends SocketEngine{
             log.debug("Worker thread : {}",settings.workerThreadSize);
             log.debug("Logic thread:{}",settings.cmdThreadSize);
         } catch (Exception e) {
-            e.printStackTrace();
-            if(log.isErrorEnabled()){
-                log.error("<<<<<<<SocketEngine Start Error!>>>>>>", e);
-            }
-            workerGroup.shutdownGracefully();
-            return;
+            throw new RuntimeException("RpcClientSocketEngine start error:address="+((TCPClientSettings) settings).host+":"+settings.port);
         }
         log.info("ClientSocketEngine connect to {} success!",((TCPClientSettings) settings).host+":"+settings.port);
     }

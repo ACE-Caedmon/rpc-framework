@@ -16,10 +16,10 @@ import io.netty.handler.logging.LoggingHandler;
  * Created by Caedmon on 2015/4/25.
  */
 public class TCPClientInitializer extends ChannelInitializer<SocketChannel>{
-    private RpcMethodDispatcher rpcMethodDispatcher;
+    private RpcMethodDispatcher dispatcher;
     private TCPClientSettings settings;
-    public TCPClientInitializer(RpcMethodDispatcher rpcMethodDispatcher,TCPClientSettings settings){
-        this.rpcMethodDispatcher = rpcMethodDispatcher;
+    public TCPClientInitializer(RpcMethodDispatcher dispatcher,TCPClientSettings settings){
+        this.dispatcher = dispatcher;
         this.settings=settings;
     }
     @Override
@@ -28,11 +28,11 @@ public class TCPClientInitializer extends ChannelInitializer<SocketChannel>{
             ch.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
         }
         ch.pipeline().addLast(new TCPHeadDecoder());
-        ch.pipeline().addLast(new RpcDecoder(rpcMethodDispatcher));
+        ch.pipeline().addLast(new RpcDecoder());
         ch.pipeline().addLast(new TCPHeadEncoder());
         ch.pipeline().addLast(new RpcEncoder());
         ch.pipeline().addLast(new RpcClientMarkEncoder());
-        ch.pipeline().addLast(new TCPInboundHandler(rpcMethodDispatcher));
+        ch.pipeline().addLast(new TCPInboundHandler(dispatcher));
         ch.attr(Session.SECRRET_KEY).set(settings.secretKey);
 
 

@@ -1,15 +1,17 @@
 package common.server;
 
 import com.xl.rpc.annotation.RpcRequest;
-import com.xl.rpc.message.LoginProtoBuffer;
+import com.xl.rpc.annotation.RpcSession;
+import message.LoginProtoBuffer;
+import com.xl.session.ISession;
 import common.UserInfo;
-import common.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,40 +21,69 @@ import java.util.Map;
 @Component("serverControl")
 public class ServerControl implements IServerControl{
     private static final Logger log= LoggerFactory.getLogger(ServerControl.class);
-    @Autowired
-    private UserService userService;
 
     @Override
-    public LoginProtoBuffer.Login.Builder login(@RpcRequest LoginProtoBuffer.Login.Builder login) {
-        log.info("Protobuf接受:{},{}",login.getUsername(), login.getPassword());
+    public LoginProtoBuffer.Login.Builder testProtobuf(LoginProtoBuffer.Login.Builder login) {
+        log.info("Test_Protobuf:{}",login.toString());
         return login;
     }
 
     @Override
-    public Map<String, UserInfo> login(@RpcRequest String userName, @RpcRequest String password) {
-        log.info("JSON接受:{},{}",userName,password);
-        Map<String,UserInfo> userInfos=new HashMap<>();
-        for(int i=0;i<100;i++){
+    public Name testEnum(Name name) {
+        log.info("Test_Enum:"+name);
+        return name;
+    }
+
+    @Override
+    public List<UserInfo> testList(List<Integer> params) {
+        List<UserInfo> list=new ArrayList<>();
+        for(Integer param:params){
             UserInfo userInfo=new UserInfo();
-            userInfo.setUserId(i);
-            userInfo.setUsername("user-"+i);
-            userInfos.put(userInfo.getUsername(),userInfo);
+            userInfo.setUsername("Name-"+param);
+            list.add(userInfo);
+            log.info("Test_List:{}",param);
         }
+        return list;
+    }
+
+    @Override
+    public Map<Integer, UserInfo> testMap(Map<Integer, UserInfo> params) {
+        log.info("Test_Map:{}",params.toString());
+        return params;
+    }
+
+    @Override
+    public String testNull(String param) {
+        log.info("Test_Null:{}",param);
         return null;
     }
 
     @Override
-    public Integer testLong(@RpcRequest Long userId) {
-        return 100000;
+    public long testPrimitive(int param) {
+        log.info("Test_Primitive:{}",param);
+        return Long.valueOf(param);
     }
-    public static void main(String[] args) {
-        System.out.println(new Long(1L).toString());
-        System.out.println(new Integer(1).toString());
-        System.out.println(new Character('C').toString());
-        System.out.println(new Byte((byte)1).toString());
-        System.out.println(new Float(1.1).toString());
-        System.out.println(new Short((short)1).toString());
 
+    @Override
+    public void testRpcSession(ISession session,String param) {
+        log.info("Test_RpcSession:session={},param={}",session.getChannel(),param);
+    }
 
+    @Override
+    public void testThrowable(){
+        throw new NullPointerException("Exception for test");
+    }
+
+    @Override
+    public UserInfo testMultipleParam(String userName, String password) {
+        UserInfo userInfo=new UserInfo();
+        userInfo.setUsername(userName);
+        userInfo.setPassword(password);
+        return userInfo;
+    }
+
+    @Override
+    public String testNoParam() {
+        return "success";
     }
 }

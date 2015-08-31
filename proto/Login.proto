@@ -1,5 +1,5 @@
 
-option java_package = "com.xl.message";
+option java_package = "message";
 
 option java_outer_classname = "LoginProtoBuffer";
 message Login {

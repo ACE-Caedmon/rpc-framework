@@ -5,7 +5,6 @@ import com.xl.rpc.codec.RpcPacket;
 import com.xl.rpc.dispatch.method.RpcCallback;
 import com.xl.rpc.exception.ClusterNodeException;
 import com.xl.session.ISession;
-import com.xl.utils.CommonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,10 +43,10 @@ public class ServerNode implements Comparable<ServerNode>{
     public int compareTo(ServerNode o) {
         return this.computeLoad()-o.computeLoad();
     }
-    public void asyncCall(String cmd, RpcCallback callback, Class[] paramTypes,Object... params){
-        checkParams(paramTypes,params);
+    public void asyncCall(String cmd, RpcCallback callback,Object... params){
+        //RpcPacket.validate(paramTypes,params);
         RpcPacket packet=new RpcPacket(cmd,params);
-        packet.setClassNameArray(buildClassNameArray(paramTypes,params));
+        //packet.setClassNameArray(buildClassNameArray(paramTypes));
         packet.setSync(false);
         getSession().asyncRpcSend(packet, callback);
         log.info("Async rpc call:server = {},cmd ={}",getKey(),cmd);
@@ -55,39 +54,24 @@ public class ServerNode implements Comparable<ServerNode>{
     public String getKey(){
         return clusterName+"-"+host+":"+port;
     }
-    private static void checkParams(Class[] paramTypes,Object...params){
-        if(params.length!=paramTypes.length){
-            throw new IllegalArgumentException("Params length is "+params.length+",but paramTypes length is "+paramTypes.length);
-        }
-        for(int i=0;i<params.length;i++){
-            Class actualType=params[i].getClass();
-            if(!paramTypes[i].isAssignableFrom(actualType)){
-                throw new IllegalArgumentException("Param except type "+paramTypes[i]+",actual type is "+actualType);
-            }
-        }
-    }
-    private static String[] buildClassNameArray(Class[] paramTypes,Object...params){
+    private static String[] buildClassNameArray(Class[] paramTypes){
         String[] classNameArray=new String[paramTypes.length];
         for(int i=0;i<paramTypes.length;i++){
-            if(params[i]==null){
-                classNameArray[i]="null";
-            }else{
-                classNameArray[i]=paramTypes[i].getName();
-            }
+            classNameArray[i]=paramTypes[i].getName();
         }
         return classNameArray;
     }
-    public <T> T syncCall(String cmd, Class<T> resultType,Class[] paramTypes, Object... params) throws Exception{
+    public <T> T syncCall(String cmd, Class<T> resultType, Object... params) throws Exception{
         if(!isActive()){
             throw new ClusterNodeException("Server node is not active:clusterName = "+clusterName+",server = "+host+":"+port);
         }
-        checkParams(paramTypes,params);
+        //RpcPacket.validate(paramTypes, params);
         RpcPacket packet=new RpcPacket(cmd,params);
-        packet.setClassNameArray(buildClassNameArray(paramTypes,params));
+        //packet.setClassNameArray(buildClassNameArray(paramTypes));
         packet.setSync(true);
-        long before= CommonUtils.now();
+        long before= System.currentTimeMillis();
         T result=getSession().syncRpcSend(packet, resultType, (long) syncCallTimeout, TimeUnit.SECONDS);
-        long after=CommonUtils.now();
+        long after=System.currentTimeMillis();
         syncCallNumber++;
         this.averageResponseTime=(totalResponseTime+(after-before))/syncCallNumber;
         log.info("Sync rpc call:server = {},cmd ={},responseTime = {}",getKey(),cmd,this.averageResponseTime);
@@ -157,7 +141,11 @@ public class ServerNode implements Comparable<ServerNode>{
         this.syncCallTimeout = syncCallTimeout;
     }
     public void destory(){
-        getSession().disconnect(true);
+        ISession session=getSession();
+        if(session!=null){
+            session.disconnect(true);
+        }
+
     }
     public int getWeight() {
         return weight;

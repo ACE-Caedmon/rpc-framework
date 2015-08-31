@@ -29,7 +29,7 @@ public class TCPServerInitializer extends ChannelInitializer<SocketChannel>{
 		}
 
 		ch.pipeline().addLast(new TCPHeadDecoder());
-		ch.pipeline().addLast(new RpcDecoder(controlProxyDispatcher));
+		ch.pipeline().addLast(new RpcDecoder());
 		ch.pipeline().addLast(new TCPHeadEncoder());
 
 		ch.pipeline().addLast(new RpcEncoder());

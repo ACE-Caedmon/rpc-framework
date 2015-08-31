@@ -168,7 +168,6 @@ public class ZkServiceDiscovery {
             log.warn("updateAll fail",e);
         }
         update();
-        log.info("Update servers {}",providerMap);
     }
 
 

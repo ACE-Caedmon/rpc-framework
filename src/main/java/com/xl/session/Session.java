@@ -6,10 +6,7 @@ package com.xl.session;
  * 客户端连接对应的Session
  * */
 
-import com.xl.rpc.annotation.MsgType;
 import com.xl.rpc.codec.RpcPacket;
-import com.xl.rpc.dispatch.SocketPacket;
-import com.xl.rpc.dispatch.method.AsyncCallBackMethod;
 import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
 import com.xl.rpc.dispatch.method.RpcCallback;
 import com.xl.rpc.dispatch.method.SyncRpcCallBack;
@@ -21,7 +18,6 @@ import io.netty.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -110,7 +106,10 @@ public class Session implements ISession{
 		// TODO Auto-generated method stub
 		this.lastActiveTime=lastActiveTime;
 	}
-	public Future<?> writeAndFlush(SocketPacket packet) {
+	public Future<?> writeAndFlush(RpcPacket packet) {
+		if(packet.getParams()==null){
+			throw new NullPointerException("RpcPacket.params can not be null");
+		}
 		if(channel.isActive()){
 			final ChannelFuture future=channel.writeAndFlush(packet);
 			setLastActiveTime(System.currentTimeMillis());
@@ -145,7 +144,7 @@ public class Session implements ISession{
 		this.active=active;
 	}
 	@Override
-	public Future<?> disconnect(boolean immediately, SocketPacket packet) {
+	public Future<?> disconnect(boolean immediately, RpcPacket packet) {
 		Future<?> future=channel.newSucceededFuture();
 		if(channel.isActive()){
 			future=this.writeAndFlush(packet);

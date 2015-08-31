@@ -9,5 +9,6 @@ import com.xl.session.ISession;
 public class RpcCloseEventHandler implements IEventHandler<ISession>{
     @Override
     public void handleEvent(ISession session) {
+
     }
 }

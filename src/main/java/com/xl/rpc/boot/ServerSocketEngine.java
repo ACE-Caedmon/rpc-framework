@@ -1,7 +1,7 @@
 package com.xl.rpc.boot;
 
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
-import com.xl.rpc.dispatch.method.JavassitRpcMethodDispatcher;
+import com.xl.rpc.dispatch.method.ReflectRpcMethodDispatcher;
 import com.xl.rpc.internal.PrototypeBeanAccess;
 import com.xl.rpc.dispatch.tcp.TCPServerInitializer;
 import io.netty.bootstrap.ServerBootstrap;
@@ -25,7 +25,7 @@ public class ServerSocketEngine extends SocketEngine{
         this.settings=settings;
     }
     public ServerSocketEngine(ServerSettings settings){
-        this(settings,new JavassitRpcMethodDispatcher(new PrototypeBeanAccess(),Runtime.getRuntime().availableProcessors()));
+        this(settings,new ReflectRpcMethodDispatcher(new PrototypeBeanAccess(),Runtime.getRuntime().availableProcessors()));
     }
     /**
      * 启动网络服务

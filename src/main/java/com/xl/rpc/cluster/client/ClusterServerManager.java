@@ -4,11 +4,10 @@ import com.xl.rpc.boot.RpcClientSocketEngine;
 import com.xl.rpc.boot.TCPClientSettings;
 import com.xl.rpc.cluster.ZkServiceDiscovery;
 import com.xl.rpc.dispatch.method.BeanAccess;
-import com.xl.rpc.dispatch.method.JavassitRpcMethodDispatcher;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
+import com.xl.rpc.dispatch.method.ReflectRpcMethodDispatcher;
 import com.xl.rpc.exception.ClusterNotExistsException;
 import com.xl.rpc.exception.EngineException;
-import io.netty.channel.nio.NioEventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,7 +99,7 @@ public class ClusterServerManager implements IClusterServerManager {
         }catch (Exception e){
             throw new EngineException("BeanAccess init error",e);
         }
-        RpcMethodDispatcher dispatcher=new JavassitRpcMethodDispatcher(beanAccess,rpcClientTemplate.getCmdThreadSize());
+        RpcMethodDispatcher dispatcher=new ReflectRpcMethodDispatcher(beanAccess,rpcClientTemplate.getCmdThreadSize());
         RpcClientSocketEngine clientSocketEngine=new RpcClientSocketEngine(settings,dispatcher,rpcClientTemplate.getLoopGroup());
         clientSocketEngine.start();
         ServerNode serverNode=new ServerNode(clientSocketEngine);

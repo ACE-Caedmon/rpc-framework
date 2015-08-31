@@ -1,5 +1,8 @@
 package com.xl.utils;
 
+import com.xl.rpc.exception.BaseException;
+import com.xl.rpc.internal.InternalContainer;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -37,5 +40,14 @@ public class Util {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void  exceptionTest(){
+       // try{
+            InternalContainer.getInstance().startRpcClient(new String(""));
+       // }catch (Exception e){
+         //   throw new BaseException("test",e);
+        //}
+
     }
 }

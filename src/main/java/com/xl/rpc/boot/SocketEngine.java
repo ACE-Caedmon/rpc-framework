@@ -2,7 +2,7 @@ package com.xl.rpc.boot;
 
 import com.xl.rpc.annotation.RpcControl;
 import com.xl.rpc.annotation.Extension;
-import com.xl.rpc.dispatch.CmdInterceptor;
+import com.xl.rpc.dispatch.RpcMethodInterceptor;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xl.utils.ClassUtils;
 import io.netty.util.internal.StringUtil;
@@ -71,14 +71,14 @@ public abstract class SocketEngine {
             e.printStackTrace();
         }
     }
-    public void addCmdMethodInterceptor(CmdInterceptor interceptor){
+    public void addCmdMethodInterceptor(RpcMethodInterceptor interceptor){
         rpcMethodDispatcher.addMethodInterceptor(interceptor);
     }
 
     public RpcMethodDispatcher getRpcMethodDispatcher() {
         return rpcMethodDispatcher;
     }
-    public void addRpcMethodInterceptor(CmdInterceptor interceptor){
+    public void addRpcMethodInterceptor(RpcMethodInterceptor interceptor){
         this.rpcMethodDispatcher.addMethodInterceptor(interceptor);
     }
 }

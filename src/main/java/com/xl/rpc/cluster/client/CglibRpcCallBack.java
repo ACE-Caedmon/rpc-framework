@@ -42,14 +42,10 @@ public class CglibRpcCallBack implements MethodInterceptor {
         }
         String cmd=method.getAnnotation(RpcMethod.class).value();
         Class returnType=method.getReturnType();
-        Class[] paramTypes=method.getParameterTypes();
-        for(int i=0;i<paramTypes.length;i++){
-            paramTypes[i]=ClassUtils.getPackingType(paramTypes[i]);
-        }
         if(sync){
-            return rpcClientApi.syncRpcCall(clusterName,cmd,returnType,paramTypes,params);
+            return rpcClientApi.syncRpcCall(clusterName,cmd,returnType,params);
         }else{
-            rpcClientApi.asyncRpcCall(clusterName,cmd,paramTypes,params);
+            rpcClientApi.asyncRpcCall(clusterName,cmd,params);
             return null;
         }
     }

@@ -1,6 +1,4 @@
 package com.xl.utils;
-
-import com.xl.rpc.dispatch.message.MessageProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,9 +9,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.URI;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -167,7 +163,6 @@ public class ClassUtils {
         for (JarEntry entry : jarEntryList) {
             String className = entry.getName().replace('/', '.');
             className = className.substring(0, className.length() - 6);
-            log.info("Add class={}", className);
             try {
                 classes.add(Thread.currentThread().getContextClassLoader().loadClass(className));
             } catch (Throwable e) {
@@ -326,7 +321,6 @@ public class ClassUtils {
     public static String getCompleteClassName(Class clazz){
         String className=clazz.getName();
         Class primitiveClass= PRIMITIVE_CLASS_CACHE.get(clazz);
-        MessageProxy proxy=null;
         String proxyClassNamePrefix=className;
         //是否为基本数据类型 int,long等
         if(primitiveClass!=null){

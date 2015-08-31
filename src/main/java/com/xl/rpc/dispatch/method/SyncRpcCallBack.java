@@ -17,17 +17,6 @@ public class SyncRpcCallBack<T> implements RpcCallback<T>{
     public SyncRpcCallBack(DefaultProgressivePromise<T> progressPromise) {
         this.progressPromise = progressPromise;
     }
-    public static boolean isEmpty(Object[] content){
-        if(content==null){
-            return true;
-        }
-        for(Object o:content){
-            if(o!=null){
-                return false;
-            }
-        }
-        return true;
-    }
 
     @Override
     public void processResult(ISession session, T result) {

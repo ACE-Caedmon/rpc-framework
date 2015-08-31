@@ -4,7 +4,7 @@ package com.xl.rpc.annotation;
  * Created by Caedmon on 2015/7/11.
  */
 public enum MsgType {
-    JSON(1),ProtoBuf(2),Binary(3);
+    JSON(1),ProtoBuf(2), JavaSerialization(3),CustomParam(4);
     public int value;
     MsgType(int value){
         this.value=value;
@@ -17,7 +17,9 @@ public enum MsgType {
             case 2:
                 return ProtoBuf;
             case 3:
-                return Binary;
+                return JavaSerialization;
+            case 4:
+                return CustomParam;
             default:
                 return JSON;
         }

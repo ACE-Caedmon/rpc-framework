@@ -1,16 +1,11 @@
 package com.xl.rpc.codec.rpc;
 
 import com.xl.rpc.annotation.MsgType;
+import com.xl.rpc.codec.BinaryPacket;
 import com.xl.rpc.codec.DefaultPracticalBuffer;
 import com.xl.rpc.codec.PracticalBuffer;
 import com.xl.rpc.codec.RpcPacket;
-import com.xl.rpc.codec.BinaryPacket;
-import com.xl.rpc.dispatch.method.ControlMethod;
-import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
-import com.xl.rpc.dispatch.message.MessageProxy;
-import com.xl.rpc.dispatch.message.MessageProxyFactory;
-import com.xl.session.Session;
-import com.xl.utils.CommonUtils;
+import com.xl.rpc.codec.CodecKit;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import org.slf4j.Logger;
@@ -20,10 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
  public class RpcDecoder extends MessageToMessageDecoder<BinaryPacket> {
 	private static final Logger log =LoggerFactory.getLogger(RpcDecoder.class);
-    private RpcMethodDispatcher rpcMethodDispatcher;
-    public RpcDecoder(RpcMethodDispatcher rpcMethodDispatcher){
-        this.rpcMethodDispatcher = rpcMethodDispatcher;
-    }
 	/**
      * 负责对数据包进行解码
 	 * @param ctx 对应Channel的上下文
@@ -46,50 +37,38 @@ import java.util.List;
         boolean isException=buffer.readBoolean();
         //消息类型
         MsgType msgType=MsgType.valueOf(buffer.readInt());
-        //类名
-        String[] classNameArray=buffer.readString().split(",");
+        int paramsLength=buffer.readInt();
         //解码
-        List<Object> content=new ArrayList<>();
-        for(String className:classNameArray){
-            if(className==null||className.equals("null")){
-                content.add(null);
-                continue;
-            }
-            Object param=null;
-            Class clazz=Class.forName(className);
-            if(Throwable.class.isAssignableFrom(clazz)){
-                int exceptionLen=buffer.readInt();
-                byte[] bytes=new byte[exceptionLen];
-                buffer.getByteBuf().readBytes(bytes);
-                param=CommonUtils.derialize(bytes,Throwable.class);
+        List<Object> params=new ArrayList<>(paramsLength);
+        List<String> classNameList=new ArrayList<>(paramsLength);
+        for(int i=0;i<paramsLength;i++){
+            boolean isNull=buffer.readBoolean();
+            if(!isNull){
+                String className=buffer.readString();
+                Class clazz=Class.forName(className);
+                Object param=CodecKit.decode(msgType, clazz, buffer);
+                classNameList.add(className);
+                params.add(param);
             }else{
-                MessageProxy messageProxy= MessageProxyFactory.ONLY_INSTANCE.getMessageProxy(msgType, clazz);
-                if(messageProxy!=null){
-                    param=messageProxy.decode(buffer);
-                }
+                classNameList.add(null);
+                params.add(null);
             }
-            content.add(param);
-
         }
-        RpcPacket rpcPacket =new RpcPacket(cmd,content.toArray());
+
+        RpcPacket rpcPacket =new RpcPacket(cmd,params.toArray());
         rpcPacket.setFromCall(fromCall);
         rpcPacket.setSync(sync);
         rpcPacket.setUuid(uuid);
         rpcPacket.setException(isException);
+        String[] classNameArray=new String[classNameList.size()];
+        classNameList.toArray(classNameArray);
         rpcPacket.setClassNameArray(classNameArray);
-        log.debug("Rpc decode :packet = {},time = {}",rpcPacket.toString(),System.currentTimeMillis());
-        try {
-            ControlMethod methodProxy= rpcMethodDispatcher.newControlMethodProxy(rpcPacket);
-            if(methodProxy!=null){
-                out.add(methodProxy);
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-            rpcPacket.setException(true);
-            rpcPacket.setClassNameArray(new String[]{e.getClass().getName()});
-            rpcPacket.setParams(e);
-            ctx.channel().attr(Session.SESSION_KEY).get().writeAndFlush(rpcPacket);
-        }
-
+        log.debug("Rpc decode :{}",rpcPacket.toString());
+        out.add(rpcPacket);
     }
-}
+
+     @Override
+     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+         super.exceptionCaught(ctx, cause);
+     }
+ }

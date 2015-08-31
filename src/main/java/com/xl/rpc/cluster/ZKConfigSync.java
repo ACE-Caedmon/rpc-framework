@@ -87,11 +87,12 @@ public class ZKConfigSync {
         String oldConfig = config;
         update();
         monitor();
-        log.info("cluster {} oldConfig {} newConfig {}",clusterName,oldConfig,config);
+
         if (config == null && oldConfig == null ||
                 config.equals(oldConfig)) {
 
         } else {
+            log.info("cluster {} oldConfig {} newConfig {}",clusterName,oldConfig,config);
             if (listener != null) {
                 listener.onConfigChanged(config);
             }

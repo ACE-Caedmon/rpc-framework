@@ -4,9 +4,7 @@
  * */
 package com.xl.session;
 
-import com.xl.rpc.annotation.MsgType;
 import com.xl.rpc.codec.RpcPacket;
-import com.xl.rpc.dispatch.SocketPacket;
 import com.xl.rpc.dispatch.method.RpcCallback;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
@@ -40,7 +38,7 @@ public interface ISession {
 	 * */
 	Future<?> disconnect(boolean immediately);
 
-	Future<?> disconnect(boolean immediately, SocketPacket packet);
+	Future<?> disconnect(boolean immediately, RpcPacket packet);
 	/**
 	 * @return session最后活动时间
 	 * */
@@ -83,7 +81,7 @@ public interface ISession {
 	 * 清除Session相关信息
 	 * */
 	void clear();
-	Future<?> writeAndFlush(SocketPacket packet);
+	Future<?> writeAndFlush(RpcPacket packet);
 	void asyncRpcSend(RpcPacket packet,RpcCallback callback) ;
 	/**
 	 * 发送同步消息，并等待结果返回

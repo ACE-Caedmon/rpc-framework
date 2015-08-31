@@ -5,10 +5,10 @@
  * */
 package com.xl.rpc.dispatch.tcp;
 
+import com.xl.rpc.codec.RpcPacket;
 import com.xl.rpc.dispatch.method.RpcCallback;
-import com.xl.rpc.dispatch.method.SyncRpcCallBack;
-import com.xl.rpc.dispatch.method.ControlMethod;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
+import com.xl.rpc.dispatch.method.SyncRpcCallBack;
 import com.xl.session.ISession;
 import com.xl.session.Session;
 import com.xl.session.SessionFire;
@@ -22,16 +22,14 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 
 @Sharable
-public class TCPInboundHandler extends SimpleChannelInboundHandler<ControlMethod>{
+public class TCPInboundHandler extends SimpleChannelInboundHandler<RpcPacket>{
 	private static final Logger log = LoggerFactory.getLogger(TCPInboundHandler.class);
 	private RpcMethodDispatcher rpcMethodDispatcher;
-	private DefaultChannelProgressivePromise activePromise;
 	public TCPInboundHandler(RpcMethodDispatcher rpcMethodDispatcher){
 		this(rpcMethodDispatcher,null);
 	}
 	public TCPInboundHandler(RpcMethodDispatcher rpcMethodDispatcher, DefaultChannelProgressivePromise activePromise){
 		this.rpcMethodDispatcher=rpcMethodDispatcher;
-		this.activePromise=activePromise;
 	}
     /**
      * 连接断开是会调用此方法，方法会将Session相关信息移除，并且从Channel删除保存的Session对象
@@ -48,13 +46,12 @@ public class TCPInboundHandler extends SimpleChannelInboundHandler<ControlMethod
     /**
      * 有客户端数据发送到服务端时会调用此方法，提交给自定义线程池处理业务逻辑。
      * @param  ctx
-     * @param control
      * */
 	@Override
-	protected void channelRead0(ChannelHandlerContext ctx,final ControlMethod control)
+	protected void channelRead0(ChannelHandlerContext ctx,final RpcPacket rpcPacket)
 			throws Exception {
 		final ISession session=ctx.channel().attr(Session.SESSION_KEY).get();
-		rpcMethodDispatcher.dispatch(control, session);
+		rpcMethodDispatcher.dispatch(session,rpcPacket);
 	}
     /**
      * 连接创建时会调用此方法，此时会负责创建ISession,并且为ISession分配一个Actor

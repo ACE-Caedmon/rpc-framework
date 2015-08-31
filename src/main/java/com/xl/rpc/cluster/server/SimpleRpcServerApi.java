@@ -8,19 +8,16 @@ import com.xl.rpc.cluster.ZKConfigSync.ConfigSyncListener;
 import com.xl.rpc.cluster.ZkServiceDiscovery;
 import com.xl.rpc.dispatch.method.BeanAccess;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
-import com.xl.rpc.dispatch.method.JavassitRpcMethodDispatcher;
+import com.xl.rpc.dispatch.method.ReflectRpcMethodDispatcher;
 import com.xl.rpc.exception.ClusterException;
 import com.xl.rpc.exception.EngineException;
 import com.xl.rpc.internal.PrototypeBeanAccess;
-import com.xl.utils.EngineParams;
 import com.xl.utils.PropertyKit;
-import io.netty.util.internal.SystemPropertyUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -117,7 +114,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
         }catch (Exception e){
             throw new EngineException("BeanAccess init error",e);
         }
-        RpcMethodDispatcher dispatcher=new JavassitRpcMethodDispatcher(beanAccess,cmdThreadSize);
+        RpcMethodDispatcher dispatcher=new ReflectRpcMethodDispatcher(beanAccess,cmdThreadSize);
         socketEngine=new ServerSocketEngine(settings,dispatcher);
         socketEngine.start();
         zkServiceDiscovery =new ZkServiceDiscovery(this.zkServer);

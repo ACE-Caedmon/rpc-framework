@@ -1,12 +1,10 @@
 package com.xl.rpc.codec.rpc;
 
 
+import com.xl.rpc.codec.BinaryPacket;
 import com.xl.rpc.codec.DefaultPracticalBuffer;
 import com.xl.rpc.codec.RpcPacket;
-import com.xl.rpc.codec.BinaryPacket;
-import com.xl.rpc.dispatch.message.MessageProxy;
-import com.xl.rpc.dispatch.message.MessageProxyFactory;
-import com.xl.utils.CommonUtils;
+import com.xl.rpc.codec.CodecKit;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -24,6 +22,7 @@ public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
 	protected void encode(ChannelHandlerContext ctx, RpcPacket packet, List<Object> out)
 			throws Exception {
         try{
+
             ByteBuf buf=PooledByteBufAllocator.DEFAULT.buffer();
             DefaultPracticalBuffer data=new DefaultPracticalBuffer(buf);
             data.writeString(packet.getCmd());
@@ -33,44 +32,19 @@ public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
             data.writeBoolean(packet.isException());
             data.writeInt(packet.getMsgType().value);
             Object[] params=packet.getParams();
-            StringBuilder classNameArray=new StringBuilder();
-            String classNameResult;
-            if(packet.getClassNameArray()!=null&&params!=null){
-                int i=0;
-                for(String paramType:packet.getClassNameArray()){
-                    if(paramType==null||params[i]==null){
-                        classNameArray.append(",null");
-                    }else{
-                        classNameArray.append(",").append(paramType);
-                    }
-                    i++;
-                }
-                classNameResult=classNameArray.substring(1);
-            }else{
-                classNameResult="null";
-            }
-            packet.setClassNameArray(classNameResult.split(","));
-            data.writeString(classNameResult);
-            if(params!=null){
-                for(Object e:params){
-                    if(e!=null){
-                        //如果是异常，则采用Java序列化方式
-                        if(packet.isException()&&e instanceof Throwable){
-                            byte[] bytes= CommonUtils.serialize(e);
-                            data.writeInt(bytes.length);
-                            data.writeBytes(bytes);
-                        }else{
-                            MessageProxy proxy= MessageProxyFactory.ONLY_INSTANCE.getMessageProxy(packet.getMsgType(), e.getClass());
-                            data.writeBytes(proxy.encode(e));
-
-                        }
-
-                    }
+            data.writeInt(params.length);
+            for(int i=0;i<params.length;i++){
+                Object e=params[i];
+                boolean isNull=e==null;
+                data.writeBoolean(isNull);
+                if(!isNull){
+                    data.writeString(e.getClass().getName());
+                    data.writeBytes(CodecKit.encode(packet.getMsgType(),e));
                 }
             }
             BinaryPacket nextPacket=new BinaryPacket(buf);
             out.add(nextPacket);
-            log.debug("Rpc encode :packet = {},time = {}",packet.toString(),System.currentTimeMillis());
+            log.debug("Rpc encode :{}",packet.toString());
         }catch (Exception e){
             e.printStackTrace();
             log.error("Rpc encode error ",e);
