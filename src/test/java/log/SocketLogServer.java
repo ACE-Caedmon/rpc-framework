@@ -13,7 +13,7 @@ public class SocketLogServer {
     public static void main(String[] args) throws Exception{
         PatternLayout.defaultConverterMap.put("serviceName",RpcLogConverter.ServiceNameConvert.class.getName());
         PatternLayout.defaultConverterMap.put("address", RpcLogConverter.AddressConvert.class.getName());
-        URL url=Thread.currentThread().getContextClassLoader().getResource("logback.xml");
+        URL url=Thread.currentThread().getContextClassLoader().getResource("logback-server.xml");
         SimpleSocketServer.main(new String[]{"8082", url.getFile()});
     }
 }

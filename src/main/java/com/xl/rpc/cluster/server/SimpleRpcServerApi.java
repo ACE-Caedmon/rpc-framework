@@ -36,6 +36,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
     private String[] scanPackage=new String[]{""};
     private String zkServer;
     private String[] clusterNames;
+    private volatile boolean started;
     private ServerSocketEngine socketEngine;
     private static final Logger log= LoggerFactory.getLogger(SimpleRpcServerApi.class);
     private static final String RPC_SERVER_HOST_PROPERTY="rpc.server.host";
@@ -100,7 +101,6 @@ public class SimpleRpcServerApi implements RpcServerApi {
     }
     @Override
     public void bind() {
-        log.info("SimpleRpcServer init");
         ServerSettings settings=new ServerSettings();
         settings.port=this.port;
         settings.protocol= SocketEngine.TCP_PROTOCOL;
@@ -133,7 +133,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
                 System.out.println(properties.size());
             }
         });
-
+        setStarted(true);
     }
 
     @Override
@@ -154,5 +154,14 @@ public class SimpleRpcServerApi implements RpcServerApi {
     @Override
     public String getZKServerAddr() {
         return this.zkServer;
+    }
+
+    @Override
+    public boolean isStarted() {
+        return started;
+    }
+
+    public void setStarted(boolean started) {
+        this.started = started;
     }
 }

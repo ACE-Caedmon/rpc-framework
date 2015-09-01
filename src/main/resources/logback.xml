@@ -1,22 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <appender name="console" class="ch.qos.logback.core.ConsoleAppender" >
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <!--<pattern>[%serviceName-%address-%t] %date{HH:mm:ss.SSS} %-5level %logger{50} - %msg %X{1}%n </pattern>-->
-            <pattern>%date{HH:mm:ss.SSS} %-5level %logger{50} - %msg %X{1}%n </pattern>
-        </encoder>
-    </appender>
-    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/rpc-framework.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/rpc-framework.%d{yyyy-MM-dd}.log</fileNamePattern>
-        </rollingPolicy>
-        <encoder>
-            <pattern>[%serviceName-%address-%t] %date{HH:mm:ss.SSS} %-5level %logger{50} - %msg%n </pattern>
+            <pattern>%date{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
+    <appender name="socket" class="com.xl.rpc.log.RpcAppender">
+        <remoteHost>localhost</remoteHost>
+        <port>8082</port>
+        <includeCallerData>true</includeCallerData>
+        <reconnectionDelay>10000</reconnectionDelay>
+        <encoder>
+            %serviceName %address %date{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n
+        </encoder>
+    </appender>
+    <logger name="org.apache.zookeeper.ClientCnxn" level="WARN"/>
+    <appender name="rollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/pms.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>./logs/pms.%d{yyyy-MM-dd}.log</fileNamePattern>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%date{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
     <root level="DEBUG">
         <appender-ref ref="console"/>
+        <appender-ref ref="socket"/>
     </root>
+
 </configuration>

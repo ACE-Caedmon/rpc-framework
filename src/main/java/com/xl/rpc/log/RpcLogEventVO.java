@@ -50,17 +50,17 @@ public class RpcLogEventVO implements ILoggingEvent,Serializable{
         ledo.timeStamp = le.getTimeStamp();
         ledo.throwableProxy = ThrowableProxyVO.build(le.getThrowableProxy());
         RpcServerApi rpcServerApi=InternalContainer.getInstance().getRpcServerApi();
-        if(rpcServerApi!=null){
+        if(rpcServerApi!=null&&rpcServerApi.isStarted()){
             ledo.serviceName=rpcServerApi.getSelfClusterName();
         }else{
             String systemServiceName=System.getProperty("rpc.log.serviceName");
-            ledo.serviceName=systemServiceName==null?"ServiceName not specify":systemServiceName;
+            ledo.serviceName=systemServiceName==null?"Not specify":systemServiceName;
         }
-        if(rpcServerApi!=null){
+        if(rpcServerApi!=null&&rpcServerApi.isStarted()){
             ledo.address=rpcServerApi.getHost()+":"+rpcServerApi.getPort();
         }else{
             String systemAddress=System.getProperty("rpc.log.address");
-            ledo.address=systemAddress==null?"Address not specify":systemAddress;
+            ledo.address=systemAddress==null?"Not specify":systemAddress;
         }
         if(le.hasCallerData()) {
             ledo.callerDataArray = le.getCallerData();

@@ -9,4 +9,5 @@ public interface RpcServerApi {
     int getPort();
     String getSelfClusterName();
     String getZKServerAddr();
+    boolean isStarted();
 }

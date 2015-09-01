@@ -4,7 +4,11 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEventVO;
 import ch.qos.logback.core.spi.PreSerializationTransformer;
+import com.xl.rpc.codec.CodecKit;
 
+import java.io.BufferedInputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 /**
@@ -17,8 +21,9 @@ public class RpcSerializationTransformer implements PreSerializationTransformer<
             return null;
         }
         if(event instanceof LoggingEvent){
+            System.out.println("Println:"+event);
             RpcLogEventVO rpcLogEventVO = RpcLogEventVO.build(event);
-            return rpcLogEventVO.build(event);
+            return rpcLogEventVO;
         } else if (event instanceof RpcLogEventVO) {
             return (RpcLogEventVO)  event;
         } else {
