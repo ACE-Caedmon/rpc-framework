@@ -4,6 +4,7 @@ import com.xl.rpc.cluster.client.RpcClientApi;
 import com.xl.rpc.cluster.client.SimpleRpcClientApi;
 import com.xl.rpc.cluster.server.RpcServerApi;
 import com.xl.rpc.cluster.server.SimpleRpcServerApi;
+import com.xl.rpc.dispatch.method.BeanAccess;
 import com.xl.utils.PropertyKit;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -83,5 +84,8 @@ public class InternalContainer {
     }
     public <T> T getAsyncRemoteCallProxy(Class<T> clazz){
         return this.rpcClientApi.getAsyncRemoteCallProxy(clazz);
+    }
+    public BeanAccess getRpcServerBeanAccess(){
+        return this.rpcServerApi.getBeanAccess();
     }
 }

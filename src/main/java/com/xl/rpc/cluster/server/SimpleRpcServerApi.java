@@ -38,6 +38,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
     private String[] clusterNames;
     private volatile boolean started;
     private ServerSocketEngine socketEngine;
+    private BeanAccess beanAccess;
     private static final Logger log= LoggerFactory.getLogger(SimpleRpcServerApi.class);
     private static final String RPC_SERVER_HOST_PROPERTY="rpc.server.host";
     private static final String RPC_SERVER_PORT_PROPERTY="rpc.server.port";
@@ -108,9 +109,8 @@ public class SimpleRpcServerApi implements RpcServerApi {
         settings.workerThreadSize=this.workerThreadSize;
         settings.scanPackage=this.scanPackage;
         settings.cmdThreadSize=this.cmdThreadSize;
-        BeanAccess beanAccess=null;
         try{
-            beanAccess=(BeanAccess)(Class.forName(beanAccessClass).newInstance());
+            this.beanAccess=(BeanAccess)(Class.forName(beanAccessClass).newInstance());
         }catch (Exception e){
             throw new EngineException("BeanAccess init error",e);
         }
@@ -163,5 +163,10 @@ public class SimpleRpcServerApi implements RpcServerApi {
 
     public void setStarted(boolean started) {
         this.started = started;
+    }
+
+    @Override
+    public BeanAccess getBeanAccess() {
+        return this.beanAccess;
     }
 }

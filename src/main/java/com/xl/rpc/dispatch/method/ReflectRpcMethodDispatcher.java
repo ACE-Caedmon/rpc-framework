@@ -104,7 +104,6 @@ public class ReflectRpcMethodDispatcher extends RpcMethodDispatcher {
             }
 
         }catch (Throwable e){
-            e.printStackTrace();
             log.error("Process client request:cmd = {}", cmd, e);
             notifyError(session, packet, e);
             response=e;
