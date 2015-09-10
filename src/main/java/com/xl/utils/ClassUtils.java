@@ -22,6 +22,8 @@ public class ClassUtils {
     public static final Map<Class,Class> PRIMITIVE_CLASS_CACHE =new HashMap<>();
     public static final Map<Class,Class> PACKING_CLASS_CACHE=new HashMap<>();
     public static final Set<String> INVAILD_PACKAGE_NAMES=new HashSet<>();
+    public static ClassLoader scanClassLoader =ClassUtils.class.getClassLoader();
+    public static String scanClassPath =null;
     static {
         PRIMITIVE_CLASS_CACHE.put(Boolean.TYPE, Boolean.class);
         PRIMITIVE_CLASS_CACHE.put(Byte.TYPE, Byte.class);
@@ -50,7 +52,10 @@ public class ClassUtils {
         if(osName.toLowerCase().startsWith("windows")){
             split=";";
         }
-        String[] classPaths=System.getProperty("java.class.path").split(split);
+        if(scanClassPath==null){
+            scanClassPath=System.getProperty("java.class.path");
+        }
+        String[] classPaths=scanClassPath.split(split);
         for(String classpath:classPaths){
             File cpf=new File(classpath);
             listDirectory(cpf, allFiles);
@@ -68,7 +73,7 @@ public class ClassUtils {
                         String className = f.getAbsolutePath().substring(classPath.length()+1);
                         className = className.replace(File.separatorChar, '.').replaceAll(".class","");
                         try{
-                            Class c=Thread.currentThread().getContextClassLoader().loadClass(className);
+                            Class c= scanClassLoader.loadClass(className);
                             for(String pkg:packageNames){
                                 Package classPackage=c.getPackage();
                                 if(classPackage!=null){
@@ -93,7 +98,7 @@ public class ClassUtils {
                 if(!find){
                     String className = f.getAbsolutePath().substring(0, f.getName().length() - 6);
                     log.info(className);
-                    Class c=Thread.currentThread().getContextClassLoader().loadClass(className);
+                    Class c= scanClassLoader.loadClass(className);
                     for(String pkg:packageNames){
                         if(c.getPackage().getName().startsWith(pkg)){
                             classes.add(c);
@@ -164,7 +169,7 @@ public class ClassUtils {
             String className = entry.getName().replace('/', '.');
             className = className.substring(0, className.length() - 6);
             try {
-                classes.add(Thread.currentThread().getContextClassLoader().loadClass(className));
+                classes.add(scanClassLoader.loadClass(className));
             } catch (Throwable e) {
                 e.printStackTrace();
             }
@@ -244,7 +249,7 @@ public class ClassUtils {
             } else {
                 String className = file.getName().substring(0, file.getName().length() - 6);
                 try {
-                    clazzs.add(Thread.currentThread().getContextClassLoader().loadClass(packageName + "." + className));
+                    clazzs.add(scanClassLoader.loadClass(packageName + "." + className));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -351,5 +356,19 @@ public class ClassUtils {
             return PACKING_CLASS_CACHE.get(type);
         }
         return type;
+    }
+    public static String appendClassPath(String classpath){
+        if(scanClassPath==null){
+            scanClassPath=System.getProperty("java.class.path");
+        }
+        StringBuilder builder=new StringBuilder(scanClassPath);
+        String osName = System.getProperty("os.name");
+        String split = ":";
+        if(osName.toLowerCase().startsWith("windows")) {
+            split = ";";
+        }
+        builder.append(split).append(classpath);
+        scanClassPath=builder.toString();
+        return scanClassPath;
     }
 }
