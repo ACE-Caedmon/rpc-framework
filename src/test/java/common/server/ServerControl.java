@@ -79,6 +79,7 @@ public class ServerControl implements IServerControl{
         UserInfo userInfo=new UserInfo();
         userInfo.setUsername(userName);
         userInfo.setPassword(password);
+        log.info("Test_MultipleParam:{},{}",userName,password);
         return userInfo;
     }
 

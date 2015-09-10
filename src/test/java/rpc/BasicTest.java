@@ -2,6 +2,7 @@ package rpc;
 
 import com.xl.rpc.internal.InternalContainer;
 import common.server.IServerControl;
+import org.junit.After;
 import org.junit.Before;
 
 /**
@@ -19,4 +20,5 @@ public class BasicTest {
         syncServerControl =container.getSyncRemoteCallProxy(IServerControl.class);
         asyncServerControl=container.getAsyncRemoteCallProxy(IServerControl.class);
     }
+
 }

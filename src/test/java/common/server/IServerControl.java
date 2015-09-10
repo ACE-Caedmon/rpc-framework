@@ -18,23 +18,23 @@ import java.util.Map;
 @RpcControl("test")
 public interface IServerControl {
     @RpcMethod(Command.Test_Protobuf)
-    LoginProtoBuffer.Login.Builder testProtobuf(@RpcRequest LoginProtoBuffer.Login.Builder login);
+    LoginProtoBuffer.Login.Builder testProtobuf(LoginProtoBuffer.Login.Builder login);
     @RpcMethod(Command.Test_Enum)
-    Name testEnum(@RpcRequest Name name);
+    Name testEnum(Name name);
     @RpcMethod(Command.Test_List)
-    List<UserInfo> testList(@RpcRequest List<Integer> params);
+    List<UserInfo> testList(List<Integer> params);
     @RpcMethod(Command.Test_Map)
-    Map<Integer,UserInfo> testMap(@RpcRequest Map<Integer,UserInfo> params);
+    Map<Integer,UserInfo> testMap(Map<Integer,UserInfo> params);
     @RpcMethod(Command.Test_Null)
-    String testNull(@RpcRequest String param);
+    String testNull(String param);
     @RpcMethod(Command.Test_Primitive)
-    long testPrimitive(@RpcRequest int param);
+    long testPrimitive(int param);
     @RpcMethod(Command.Test_RpcSession)
-    void testRpcSession(@RpcSession ISession session,@RpcRequest String param);
+    void testRpcSession(ISession session,String param);
     @RpcMethod(Command.Test_Throwable)
     void testThrowable();
     @RpcMethod(Command.Test_MultipleParam)
-    UserInfo testMultipleParam(@RpcRequest String userName,@RpcRequest String password);
+    UserInfo testMultipleParam(String userName,@RpcRequest String password);
     @RpcMethod(Command.Test_NoParam)
     String testNoParam();
 

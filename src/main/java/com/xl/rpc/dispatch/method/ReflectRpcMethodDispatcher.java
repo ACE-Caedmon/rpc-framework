@@ -73,26 +73,20 @@ public class ReflectRpcMethodDispatcher extends RpcMethodDispatcher {
         Object[] requestParams=packet.getParams();
         Method method=invoker.getMethod();
         Annotation[][] paramterAnnotations=method.getParameterAnnotations();
-        Class[] methodParameters=method.getParameterTypes();
-        Object[] invokeParams=new Object[methodParameters.length];
-        int invokeParamIndex=0;
-        int requestParamIndex=0;
+        Class[] methodParamTypes=method.getParameterTypes();
+        Object[] invokeParams=new Object[methodParamTypes.length];
+        int requestParamPos=0;
         Object response=null;
         Class responseType=method.getReturnType();
-        for(Annotation[] paramAnnotation:paramterAnnotations){
-            for(Annotation a:paramAnnotation){
-                Class at=a.annotationType();
-                if(at== RpcSession.class){
-                    invokeParams[invokeParamIndex]=session;
-                    break;
-                }
-                if(at== RpcRequest.class){
-                    invokeParams[invokeParamIndex]=requestParams[requestParamIndex];
-                    requestParamIndex++;
-                    break;
-                }
+        for(int invokeParamPos=0;invokeParamPos<methodParamTypes.length;invokeParamPos++){
+            if(ISession.class.isAssignableFrom(methodParamTypes[invokeParamPos])){
+                invokeParams[invokeParamPos]=session;
+                continue;
+            }else{
+                invokeParams[invokeParamPos]=requestParams[requestParamPos];
+                requestParamPos++;
             }
-            invokeParamIndex++;
+
         }
         try{
             Object reason=before(session,packet);

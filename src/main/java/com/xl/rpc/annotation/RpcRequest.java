@@ -8,6 +8,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 @Documented
+@Deprecated
 public @interface RpcRequest {
     MsgType value() default MsgType.JSON;
 }
