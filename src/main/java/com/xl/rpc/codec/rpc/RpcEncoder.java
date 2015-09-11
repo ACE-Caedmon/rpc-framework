@@ -1,6 +1,7 @@
 package com.xl.rpc.codec.rpc;
 
 
+import com.xl.rpc.boot.EngineSettings;
 import com.xl.rpc.codec.BinaryPacket;
 import com.xl.rpc.codec.DefaultPracticalBuffer;
 import com.xl.rpc.codec.RpcPacket;
@@ -25,6 +26,7 @@ public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
 
             ByteBuf buf=PooledByteBufAllocator.DEFAULT.buffer();
             DefaultPracticalBuffer data=new DefaultPracticalBuffer(buf);
+            data.writeFloat(EngineSettings.VERSION);
             data.writeString(packet.getCmd());
             data.writeBoolean(packet.isFromCall());
             data.writeBoolean(packet.getSync());

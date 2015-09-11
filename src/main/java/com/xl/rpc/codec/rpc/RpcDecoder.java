@@ -1,11 +1,9 @@
 package com.xl.rpc.codec.rpc;
 
 import com.xl.rpc.annotation.MsgType;
-import com.xl.rpc.codec.BinaryPacket;
-import com.xl.rpc.codec.DefaultPracticalBuffer;
-import com.xl.rpc.codec.PracticalBuffer;
-import com.xl.rpc.codec.RpcPacket;
-import com.xl.rpc.codec.CodecKit;
+import com.xl.rpc.boot.EngineSettings;
+import com.xl.rpc.codec.*;
+import com.xl.rpc.exception.VersionMisMatchException;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import org.slf4j.Logger;
@@ -25,6 +23,11 @@ import java.util.List;
 	protected void decode(ChannelHandlerContext ctx, BinaryPacket packet,
 			List<Object> out) throws Exception {
         PracticalBuffer buffer=new DefaultPracticalBuffer(packet.getContent());
+        //版本号
+        float version=buffer.readFloat();
+        if(version!= EngineSettings.VERSION){
+            throw new VersionMisMatchException("The sender version is "+version+", the receiver is "+EngineSettings.VERSION);
+        }
         //命令ID
         String cmd=buffer.readString();
         //是否来自客户端

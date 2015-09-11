@@ -16,4 +16,6 @@ public class EngineSettings {
     public String[] scanPackage;
 
     public String secretKey="ng-socket";
+
+    public static final float VERSION=1.2f;
 }
