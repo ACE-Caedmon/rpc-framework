@@ -28,7 +28,7 @@ public interface IServerControl {
     @RpcMethod(Command.Test_Null)
     String testNull(String param);
     @RpcMethod(Command.Test_Primitive)
-    long testPrimitive(int param);
+    long testPrimitive(Long param);
     @RpcMethod(Command.Test_RpcSession)
     void testRpcSession(ISession session,String param);
     @RpcMethod(Command.Test_Throwable)

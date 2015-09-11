@@ -59,7 +59,7 @@ public class RemoteCallTest extends BasicTest{
     }
     @Test
     public void testPrimitive(){
-        int param=100;
+        long param=100;
         long result= syncServerControl.testPrimitive(param);
         Assert.assertEquals(param,result);
     }

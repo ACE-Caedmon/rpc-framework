@@ -59,7 +59,7 @@ public class ServerControl implements IServerControl{
     }
 
     @Override
-    public long testPrimitive(int param) {
+    public long testPrimitive(Long param) {
         log.info("Test_Primitive:{}",param);
         return Long.valueOf(param);
     }
