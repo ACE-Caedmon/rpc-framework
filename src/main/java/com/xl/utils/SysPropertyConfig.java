@@ -12,6 +12,9 @@ public class SysPropertyConfig {
     public static final void doConfig(Properties properties){
         sysProperties=properties;
     }
+    public static final Properties getProperties(){
+        return sysProperties;
+    }
     public static final String get(String key){
         return sysProperties.getProperty(key);
     }

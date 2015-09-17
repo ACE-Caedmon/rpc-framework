@@ -23,8 +23,6 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ZKConfigSync {
     private static final Logger log = LoggerFactory.getLogger(ZKConfigSync.class);
-
-    private ZooKeeper zkc;
     ConfigSyncListener listener;
 
     private String clusterName;
@@ -52,7 +50,6 @@ public class ZKConfigSync {
         this.clusterName = clusterName;
         this.zkServerAddr = zkServer;
         this.configWatcher= new ZkConfigWatcher(this);
-        zkc = ZKClient.getInstance().getZookeeper(zkServer);
         ZKClient.getInstance().registerConnectedWatcher(watcher);
         pullConfigTimer.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -106,8 +103,8 @@ public class ZKConfigSync {
     private void update() {
         byte[] data = null;
         try {
-            if (zkc.exists(getPath(),null) != null) {
-                data = zkc.getData(getPath(), null, null);
+            if (getZookeeper().exists(getPath(), null) != null) {
+                data = getZookeeper().getData(getPath(), null, null);
             } else {
                 this.config = null;
                 return;
@@ -128,11 +125,14 @@ public class ZKConfigSync {
 
     public void monitor() {
         try {
-            zkc.exists(getPath(),configWatcher);
+            getZookeeper().exists(getPath(), configWatcher);
         } catch (Exception e) {
             log.warn("monitor fail",e);
         }
     }
 
+    public ZooKeeper getZookeeper(){
+        return ZKClient.getInstance().getZookeeper(zkServerAddr);
+    }
 
 }

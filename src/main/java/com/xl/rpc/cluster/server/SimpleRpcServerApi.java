@@ -18,7 +18,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -98,7 +100,16 @@ public class SimpleRpcServerApi implements RpcServerApi {
         }else{
             throw new NullPointerException(ZK_SERVER_ADDRESS+" not specified");
         }
-
+        int length=scanPackage.length;
+        String[] rpcScanPackage=new String[length+1];
+        System.arraycopy(scanPackage,0,rpcScanPackage,0,length);
+        rpcScanPackage[length]="com.xl.rpc.internal";
+        scanPackage=rpcScanPackage;
+        int clusterNamesLength=clusterNames.length;
+        String[] rpcClusterNames=new String[clusterNamesLength+1];
+        System.arraycopy(clusterNames,0,rpcClusterNames,0,clusterNamesLength);
+        rpcClusterNames[clusterNamesLength]="rpc";
+        clusterNames=rpcClusterNames;
     }
     @Override
     public void bind() {
@@ -115,6 +126,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
             throw new EngineException("BeanAccess init error",e);
         }
         RpcMethodDispatcher dispatcher=new ReflectRpcMethodDispatcher(beanAccess,cmdThreadSize);
+
         socketEngine=new ServerSocketEngine(settings,dispatcher);
         socketEngine.start();
         zkServiceDiscovery =new ZkServiceDiscovery(this.zkServer);
@@ -125,14 +137,13 @@ public class SimpleRpcServerApi implements RpcServerApi {
         }catch (Exception e){
             throw new ClusterException("Register cluster service error: clusterNames = "+ Arrays.toString(clusterNames),e);
         }
-        zkConfigSync = new ZKConfigSync(zkServer, clusterNames[0], new ConfigSyncListener() {
-            @Override
-            public void onConfigChanged(String config) {
-                InputStream input=new ByteArrayInputStream(config.getBytes());
-                Properties properties=PropertyKit.loadProperties(input);
-                System.out.println(properties.size());
-            }
-        });
+//        zkConfigSync = new ZKConfigSync(zkServer, clusterNames[0], new ConfigSyncListener() {
+//            @Override
+//            public void onConfigChanged(String config) {
+//                InputStream input=new ByteArrayInputStream(config.getBytes());
+//                PropertyKit.loadProperties(input);
+//            }
+//        });
         setStarted(true);
     }
 
@@ -147,8 +158,8 @@ public class SimpleRpcServerApi implements RpcServerApi {
     }
 
     @Override
-    public String getSelfClusterName() {
-        return this.clusterNames[0];
+    public List<String> getClusterNames() {
+        return Arrays.asList(this.clusterNames);
     }
 
     @Override
@@ -169,4 +180,5 @@ public class SimpleRpcServerApi implements RpcServerApi {
     public BeanAccess getBeanAccess() {
         return this.beanAccess;
     }
+    
 }

@@ -27,14 +27,13 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ZkServiceDiscovery {
     private static final Logger log= LoggerFactory.getLogger(ZkServiceDiscovery.class);
-    private ZooKeeper zkc;
     ServerDiscoveryListener listener;
     private String clusterName;
     private String host;
     private List<String> monitorList = new ArrayList<>();
     public static final String ServerStore = "/server";
     private ZkPathWatcher rootPathWather = new ZkPathWatcher(this,ServerStore);
-
+    private String zkAddress;
     private Map<String,ZkPathWatcher> providerWatchers = new HashMap<String, ZkPathWatcher>();
 
     List<InetSocketAddress> zookeeperAddressList = new ArrayList<>();
@@ -79,7 +78,8 @@ public class ZkServiceDiscovery {
         }
         zookeeperAddressList.add(0,new InetSocketAddress("www.baidu.com",80));
         zookeeperAddressList.add(1,new InetSocketAddress("www.qq.com",80));
-        zkc = ZKClient.getInstance().getZookeeper(zookeeperAddress);
+        this.zkAddress=zookeeperAddress;
+        ZKClient.getInstance().getZookeeper(zookeeperAddress);
         ZKClient.getInstance().registerConnectedWatcher(watcher);
         pullServerTimer.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -139,6 +139,7 @@ public class ZkServiceDiscovery {
             }
         }
         String path = ServerStore + "/" + clusterName + "/" + host+":"+port;
+        ZooKeeper zkc=ZKClient.getInstance().getZookeeper(zkAddress);
         Stat stat = zkc.exists(path,false);
         // 说明程序挂了，立马又被拉起，这时候需要等zk服务器超时了再注册
         if (stat != null){
@@ -172,7 +173,7 @@ public class ZkServiceDiscovery {
 
 
     void update() throws ClusterException{
-        if (zkc == null)
+        if (ZKClient.getInstance().getZookeeper(zkAddress) == null)
             return;
         try{
             rootPathWather.monitor();
@@ -205,14 +206,10 @@ public class ZkServiceDiscovery {
     }
 
 
-    public void close() throws InterruptedException{
-        zkc.close();
-    }
-
-
     public List<String> getServerListByPath(String path) {
         List<String> children = null;
         try {
+            ZooKeeper zkc=ZKClient.getInstance().getZookeeper(zkAddress);
             children = zkc.getChildren(path,false);
         } catch (Exception e) {
             e.printStackTrace();
@@ -224,6 +221,7 @@ public class ZkServiceDiscovery {
 
     public void createPath(String path){
         try {
+            ZooKeeper zkc=ZKClient.getInstance().getZookeeper(zkAddress);
             Stat stat = zkc.exists(path, false);
             if (stat == null) {
                 zkc.create(path, "".getBytes(),
@@ -255,7 +253,8 @@ public class ZkServiceDiscovery {
         }
     }
     public ZooKeeper getZookeeper(){
-        return zkc;
+        ZooKeeper keeper=ZKClient.getInstance().getZookeeper(zkAddress);
+        return keeper;
     }
 
     public void dumpServers() {

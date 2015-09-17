@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -51,7 +52,7 @@ public class RpcLogEventVO implements ILoggingEvent,Serializable{
         ledo.throwableProxy = ThrowableProxyVO.build(le.getThrowableProxy());
         RpcServerApi rpcServerApi=InternalContainer.getInstance().getRpcServerApi();
         if(rpcServerApi!=null&&rpcServerApi.isStarted()){
-            ledo.serviceName=rpcServerApi.getSelfClusterName();
+            ledo.serviceName= Arrays.toString(rpcServerApi.getClusterNames().toArray());
         }else{
             String systemServiceName=System.getProperty("rpc.log.serviceName");
             ledo.serviceName=systemServiceName==null?"Not specify":systemServiceName;

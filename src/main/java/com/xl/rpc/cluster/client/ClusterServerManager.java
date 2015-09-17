@@ -116,7 +116,7 @@ public class ClusterServerManager implements IClusterServerManager {
         callCount++;
         ClusterGroup clusterGroup=clusterGroupMap.get(clusterName);
         if(clusterGroup==null){
-            addClusterGroup(clusterName);
+            clusterGroup=addClusterGroup(clusterName);
         }
         if(clusterGroup.getNodeList().isEmpty()){
             refreshClusterServers(clusterName);

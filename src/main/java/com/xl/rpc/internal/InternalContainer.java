@@ -13,7 +13,7 @@ import org.springframework.core.env.StandardEnvironment;
 import java.util.Properties;
 
 /**
- * Created by Administrator on 2015/8/5.
+ * Created by Caedmon on 2015/8/5.
  */
 public class InternalContainer {
     private static final InternalContainer instance=new InternalContainer();

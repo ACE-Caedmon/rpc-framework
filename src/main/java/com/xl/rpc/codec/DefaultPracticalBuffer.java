@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.Charset;
 
 /**
- * @author Chenlong
+ * @author Caedmon
  * ByteBuf 封装类，提供基本对象读取写入缓冲流的方法
  * */
 public class DefaultPracticalBuffer implements PracticalBuffer {

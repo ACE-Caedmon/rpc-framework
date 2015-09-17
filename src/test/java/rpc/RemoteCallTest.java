@@ -1,5 +1,6 @@
 package rpc;
 
+import com.xl.rpc.internal.MonitorInformation;
 import message.LoginProtoBuffer;
 import common.Command;
 import common.UserInfo;
@@ -65,7 +66,7 @@ public class RemoteCallTest extends BasicTest{
     }
     @Test
     public void testRpcSession() throws Exception{
-        container.getRpcClientApi().asyncRpcCall("test","192.168.1.9:8003",Command.Test_RpcSession, "Test_RpcSession");
+        container.getRpcClientApi().asyncRpcCall("test", "192.168.1.9:8003", Command.Test_RpcSession, "Test_RpcSession");
     }
     @Test
     public void testThrowable(){
@@ -84,5 +85,11 @@ public class RemoteCallTest extends BasicTest{
     @Test
     public void testNoParam(){
         Assert.assertEquals("success", syncServerControl.testNoParam());
+    }
+
+    @Test
+    public void testMonitor(){
+        MonitorInformation information= IMonitorControl.getMonitorInformation();
+        Assert.assertEquals(true,container.getRpcServerApi().getClusterNames().contains(information.getClusterName()) );
     }
 }

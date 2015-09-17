@@ -2,6 +2,8 @@ package com.xl.rpc.cluster.server;
 
 import com.xl.rpc.dispatch.method.BeanAccess;
 
+import java.util.List;
+
 /**
  * Created by Administrator on 2015/7/15.
  */
@@ -9,7 +11,7 @@ public interface RpcServerApi {
     void bind();
     String getHost();
     int getPort();
-    String getSelfClusterName();
+    List<String> getClusterNames();
     String getZKServerAddr();
     boolean isStarted();
     BeanAccess getBeanAccess();

@@ -2,15 +2,19 @@ package com.xl.rpc.cluster;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.*;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -24,7 +28,16 @@ public class ZKClient {
     private Lock lock = new ReentrantLock();
     private List<Watcher> connectedWacther = new ArrayList<>();
     private static final ZKClient instance=new ZKClient();
+    private static Set<KeeperException.Code> needNewKeeperCodeSet=new HashSet<>();
 
+    static {
+        needNewKeeperCodeSet.add(KeeperException.Code.CONNECTIONLOSS);
+        needNewKeeperCodeSet.add(KeeperException.Code.OPERATIONTIMEOUT);
+        needNewKeeperCodeSet.add(KeeperException.Code.SESSIONEXPIRED);
+        needNewKeeperCodeSet.add(KeeperException.Code.INVALIDACL);
+        needNewKeeperCodeSet.add(KeeperException.Code.AUTHFAILED);
+        needNewKeeperCodeSet.add(KeeperException.Code.SESSIONMOVED);
+    }
     private ZKClient(){
 
     }
@@ -59,17 +72,44 @@ public class ZKClient {
     }
 
     public ZooKeeper getZookeeper(String zookeeperAddress) {
-        if (zkc == null) {
-            try {
-                zkc = new ZooKeeper(zookeeperAddress, Session_Timeout, watcher);
-            } catch (IOException e) {
-                log.warn("can not connect to zookeeper",e);
+        try{
+            if (zkc == null) {
+                zkc=createZookeeper(zookeeperAddress);
+            }else{
+                if(!zkc.getState().isAlive()||!zkc.getState().isConnected()){
+                    try {
+                        zkc.close();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    zkc=createZookeeper(zookeeperAddress);
+                }else{
+                    try{
+                        zkc.exists("/server", false);
+                    }catch (KeeperException e){
+                        e.printStackTrace();
+                        KeeperException.Code code=e.code();
+                        if(needNewKeeperCodeSet.contains(code)){
+                            log.warn("Zookeeper need to create new one:{}",zookeeperAddress);
+                            zkc=createZookeeper(zookeeperAddress);
+                        }else{
+                            throw e;
+                        }
+                    }
+                }
+
             }
-        } else {
-            if (!zookeeperAddress.equals(zookeeperAddress)) {
-                throw  new RuntimeException("zookeeper server addr must unique");
-            }
+        }catch (Exception e){
+            e.printStackTrace();
+            log.error("Get zookeeper error:" + zookeeperAddress, e);
+            zkc=null;
         }
+
         return zkc;
+    }
+    public ZooKeeper createZookeeper(String address) throws Exception{
+        ZooKeeper zooKeeper=new ZooKeeper(address,Session_Timeout,watcher);
+        log.info("Create new zookeeper:{}",address);
+        return zooKeeper;
     }
 }

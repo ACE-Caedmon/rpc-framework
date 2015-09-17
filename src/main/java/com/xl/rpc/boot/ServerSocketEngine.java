@@ -40,9 +40,6 @@ public class ServerSocketEngine extends SocketEngine{
                 case TCP_PROTOCOL:
                     initializer=new TCPServerInitializer(rpcMethodDispatcher);
                     break;
-//                case WEBSOCKET_PROTOCOL:
-//                    initializer=new WsServerInitalizer(rpcMethodDispatcher);
-//                    break;
                 default:
                     throw new IllegalArgumentException("Unsupport protocol:protocol = "+settings.protocol);
             }
