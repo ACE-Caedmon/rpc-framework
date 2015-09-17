@@ -42,7 +42,7 @@ public class ClusterServerManager implements IClusterServerManager {
             }
         }
     }
-    public void refreshClusterServers(String clusterName){
+    public synchronized void refreshClusterServers(String clusterName){
         List<String> newServerAddressList= zkServiceDiscovery.getServerList(clusterName);
         ClusterGroup group=getGroupByName(clusterName);
         if(group==null){
@@ -91,7 +91,7 @@ public class ClusterServerManager implements IClusterServerManager {
         }
 
     }
-    public ServerNode newServerNode(String clusterName,String remoteHost,int remotePort) throws Exception{
+    public ServerNode  newServerNode(String clusterName,String remoteHost,int remotePort) throws Exception{
         TCPClientSettings settings=this.rpcClientTemplate.createClientSettings(remoteHost, remotePort);
         BeanAccess beanAccess=null;
         try{
@@ -103,6 +103,7 @@ public class ClusterServerManager implements IClusterServerManager {
         RpcClientSocketEngine clientSocketEngine=new RpcClientSocketEngine(settings,dispatcher,rpcClientTemplate.getLoopGroup());
         clientSocketEngine.start();
         ServerNode serverNode=new ServerNode(clientSocketEngine);
+        serverNode.setSyncCallTimeout(this.rpcClientTemplate.getCallTimeout());
         serverNode.setHost(remoteHost);
         serverNode.setPort(remotePort);
         serverNode.setSyncCallTimeout(settings.syncTimeout);
@@ -115,7 +116,7 @@ public class ClusterServerManager implements IClusterServerManager {
         callCount++;
         ClusterGroup clusterGroup=clusterGroupMap.get(clusterName);
         if(clusterGroup==null){
-            throw new ClusterNotExistsException("Cluster not exists  '"+clusterName+"'");
+            addClusterGroup(clusterName);
         }
         if(clusterGroup.getNodeList().isEmpty()){
             refreshClusterServers(clusterName);
@@ -169,7 +170,7 @@ public class ClusterServerManager implements IClusterServerManager {
         String clusterName=key.split("-")[0];
         ClusterGroup clusterGroup=clusterGroupMap.get(clusterName);
         if(clusterGroup==null){
-            throw new ClusterNotExistsException("Cluster not exists  '"+clusterName+"'");
+            addClusterGroup(clusterName);
         }
         if(clusterGroup.getNodeList().isEmpty()){
             refreshClusterServers(clusterName);

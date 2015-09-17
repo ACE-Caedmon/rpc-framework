@@ -101,9 +101,11 @@ public class SimpleRpcClientApi implements RpcClientApi {
     public <T> T syncRpcCall(String clusterName, String cmd, Class<T> resultType,Object... params) throws TimeoutException{
         ServerNode node=serverManager.getOptimalServerNode(clusterName);
         try{
+            log.debug("ServerNode timeout={}",node.getSyncCallTimeout());
             T result=node.syncCall(cmd, resultType, params);
             return result;
         }catch (Exception e){
+            e.printStackTrace();
             if(e instanceof TimeoutException){
                 throw new TimeoutException("Sync rpc call error:server = "+node.getKey()+",cmd = "+cmd);
             }

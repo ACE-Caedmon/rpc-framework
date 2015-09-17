@@ -19,7 +19,7 @@ public class ServerNode implements Comparable<ServerNode>{
     private String host;
     private int port;
     private int syncCallNumber;
-    private int syncCallTimeout;
+    private int syncCallTimeout=3;
     private int weight=DEFAULT_WEIGHT;
     public static final int DEFAULT_WEIGHT = 1;
     public long averageResponseTime;
