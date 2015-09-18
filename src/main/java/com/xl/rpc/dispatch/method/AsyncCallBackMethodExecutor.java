@@ -17,7 +17,7 @@ public class AsyncCallBackMethodExecutor extends NoOpMethodExecutor {
 
     @Override
     public void execute(ISession session, RpcPacket packet) {
-        log.debug("AsyncCallBackMethodExecutor execute:cmd = {}",packet.getCmd());
+        //log.debug("AsyncCallBackMethodExecutor execute:cmd = {}",packet.getCmd());
         //根据消息ID查找Callback
         Map<String,RpcCallback> callbackMap=session.getAttribute(Session.ASYNC_CALLBACK_MAP);
         RpcCallback callBack=callbackMap.get(packet.getUuid());

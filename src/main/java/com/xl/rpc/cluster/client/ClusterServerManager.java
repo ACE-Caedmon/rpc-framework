@@ -3,6 +3,7 @@ package com.xl.rpc.cluster.client;
 import com.xl.rpc.boot.RpcClientSocketEngine;
 import com.xl.rpc.boot.TCPClientSettings;
 import com.xl.rpc.cluster.ZkServiceDiscovery;
+import com.xl.rpc.dispatch.RpcMethodInterceptor;
 import com.xl.rpc.dispatch.method.BeanAccess;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xl.rpc.dispatch.method.ReflectRpcMethodDispatcher;
@@ -26,7 +27,8 @@ public class ClusterServerManager implements IClusterServerManager {
     private int callCount;
     private RpcClientTemplate rpcClientTemplate;
     private static final Logger log= LoggerFactory.getLogger(ClusterServerManager.class);
-    public ClusterServerManager(RpcClientTemplate rpcClientTemplate){
+    private List<RpcMethodInterceptor> interceptors;
+    public ClusterServerManager(RpcClientTemplate rpcClientTemplate,List<RpcMethodInterceptor> interceptors){
         this.rpcClientTemplate=rpcClientTemplate;
         zkServiceDiscovery =new ZkServiceDiscovery(rpcClientTemplate.getZookeeperAddress());
         zkServiceDiscovery.setListener(new ZkServiceDiscovery.ServerDiscoveryListener() {
@@ -41,6 +43,7 @@ public class ClusterServerManager implements IClusterServerManager {
                 addClusterGroup(clusterName);
             }
         }
+        this.interceptors=interceptors;
     }
     public synchronized void refreshClusterServers(String clusterName){
         List<String> newServerAddressList= zkServiceDiscovery.getServerList(clusterName);
@@ -101,6 +104,9 @@ public class ClusterServerManager implements IClusterServerManager {
         }
         RpcMethodDispatcher dispatcher=new ReflectRpcMethodDispatcher(beanAccess,rpcClientTemplate.getCmdThreadSize());
         RpcClientSocketEngine clientSocketEngine=new RpcClientSocketEngine(settings,dispatcher,rpcClientTemplate.getLoopGroup());
+        for(RpcMethodInterceptor interceptor:interceptors){
+            clientSocketEngine.addCmdMethodInterceptor(interceptor);
+        }
         clientSocketEngine.start();
         ServerNode serverNode=new ServerNode(clientSocketEngine);
         serverNode.setSyncCallTimeout(this.rpcClientTemplate.getCallTimeout());

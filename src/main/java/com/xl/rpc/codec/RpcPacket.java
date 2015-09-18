@@ -94,8 +94,7 @@ public class RpcPacket{
         sb.append("fromCall=").append(fromCall);
         sb.append(", cmd=").append(cmd);
         sb.append(", uuid='").append(uuid).append('\'');
-        sb.append(", params=").append(Arrays.toString(params));
-        sb.append(", classNameArray=").append(Arrays.toString(classNameArray));
+        //sb.append(", params=").append(Arrays.toString(params));
         sb.append('}');
         return sb.toString();
     }

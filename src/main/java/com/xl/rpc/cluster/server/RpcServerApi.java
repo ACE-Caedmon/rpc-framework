@@ -1,5 +1,6 @@
 package com.xl.rpc.cluster.server;
 
+import com.xl.rpc.dispatch.RpcMethodInterceptor;
 import com.xl.rpc.dispatch.method.BeanAccess;
 
 import java.util.List;
@@ -15,4 +16,5 @@ public interface RpcServerApi {
     String getZKServerAddr();
     boolean isStarted();
     BeanAccess getBeanAccess();
+    void addInterceptor(RpcMethodInterceptor interceptor);
 }

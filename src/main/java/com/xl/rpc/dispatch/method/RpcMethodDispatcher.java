@@ -32,7 +32,7 @@ public abstract class RpcMethodDispatcher {
             @Override
             public Thread newThread(Runnable r) {
                 Thread thread = new Thread(r);
-                thread.setName("Method-Dispatcher-" + size.incrementAndGet());
+                thread.setName("Rpc-Dispatcher-" + size.incrementAndGet());
                 if (thread.isDaemon()) {
                     thread.setDaemon(false);
                 }
@@ -60,11 +60,13 @@ public abstract class RpcMethodDispatcher {
      * */
     public void processServerResponse(ISession session, RpcPacket packet){
         boolean sync=packet.getSync();
+        before(session,packet);
         if(sync){
             syncMethodExecutor.execute(session, packet);
         }else{
             asyncMethodExecutor.execute(session, packet);
         }
+        after(session,packet);
         log.debug("Process server response:cmd={}", packet.getCmd());
     }
     public void dispatch(final ISession session,final RpcPacket packet) {

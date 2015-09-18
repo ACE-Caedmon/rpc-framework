@@ -6,6 +6,7 @@ import com.xl.rpc.boot.SocketEngine;
 import com.xl.rpc.cluster.ZKConfigSync;
 import com.xl.rpc.cluster.ZKConfigSync.ConfigSyncListener;
 import com.xl.rpc.cluster.ZkServiceDiscovery;
+import com.xl.rpc.dispatch.RpcMethodInterceptor;
 import com.xl.rpc.dispatch.method.BeanAccess;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xl.rpc.dispatch.method.ReflectRpcMethodDispatcher;
@@ -180,5 +181,9 @@ public class SimpleRpcServerApi implements RpcServerApi {
     public BeanAccess getBeanAccess() {
         return this.beanAccess;
     }
-    
+
+    @Override
+    public void addInterceptor(RpcMethodInterceptor interceptor) {
+        socketEngine.addCmdMethodInterceptor(interceptor);
+    }
 }

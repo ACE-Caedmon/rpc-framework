@@ -72,7 +72,6 @@ public class ReflectRpcMethodDispatcher extends RpcMethodDispatcher {
         }
         Object[] requestParams=packet.getParams();
         Method method=invoker.getMethod();
-        Annotation[][] paramterAnnotations=method.getParameterAnnotations();
         Class[] methodParamTypes=method.getParameterTypes();
         Object[] invokeParams=new Object[methodParamTypes.length];
         int requestParamPos=0;

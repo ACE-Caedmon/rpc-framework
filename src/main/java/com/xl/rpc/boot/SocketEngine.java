@@ -78,7 +78,4 @@ public abstract class SocketEngine {
     public RpcMethodDispatcher getRpcMethodDispatcher() {
         return rpcMethodDispatcher;
     }
-    public void addRpcMethodInterceptor(RpcMethodInterceptor interceptor){
-        this.rpcMethodDispatcher.addMethodInterceptor(interceptor);
-    }
 }

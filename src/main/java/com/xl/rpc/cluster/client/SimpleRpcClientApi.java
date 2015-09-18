@@ -2,8 +2,10 @@ package com.xl.rpc.cluster.client;
 
 import com.xl.rpc.annotation.RpcControl;
 import com.xl.rpc.boot.RpcClientSocketEngine;
+import com.xl.rpc.codec.RpcPacket;
 import com.xl.rpc.dispatch.RpcMethodInterceptor;
 import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
+import com.xl.rpc.dispatch.method.RpcCallback;
 import com.xl.utils.ClassUtils;
 import com.xl.utils.PropertyKit;
 import io.netty.util.internal.StringUtil;
@@ -21,6 +23,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private IClusterServerManager serverManager;
     private RpcClientTemplate template;
     private RpcCallProxyFactory rpcCallProxyFactory;
+    private List<RpcMethodInterceptor> interceptors=new ArrayList<>();
     private static SimpleRpcClientApi instance=new SimpleRpcClientApi();
     private SimpleRpcClientApi(){
     }
@@ -63,7 +66,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
     @Override
     public void bind() {
-        serverManager=new ClusterServerManager(template);
+        serverManager=new ClusterServerManager(template,interceptors);
         List<String> clusterNames=new ArrayList<>();
         if(template.getMonitorService()!=null){
             for(String s:template.getMonitorService()){
@@ -101,7 +104,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     public <T> T syncRpcCall(String clusterName, String cmd, Class<T> resultType,Object... params) throws TimeoutException{
         ServerNode node=serverManager.getOptimalServerNode(clusterName);
         try{
-            log.debug("ServerNode timeout={}",node.getSyncCallTimeout());
+            log.debug("ServerNode timeout={}", node.getSyncCallTimeout());
             T result=node.syncCall(cmd, resultType, params);
             return result;
         }catch (Exception e){
@@ -180,7 +183,12 @@ public class SimpleRpcClientApi implements RpcClientApi {
         ServerNode node=serverManager.getOptimalServerNode(clusterName);
         node.asyncCall(cmd,callback,params);
     }
-
+    public void asyncRpcCall4Fuse(String clusterName,String cmd, RpcCallback callback,Object[] logParams,Object... params){
+        ServerNode node=serverManager.getOptimalServerNode(clusterName);
+        String logMessage="Fuse_RpcCall:address="+node.getKey()+",seq={},cmd={},ret ={},uin={},imei={},bsize={}";
+        log.debug(logMessage,logParams);
+        node.asyncCall(cmd, callback, params);
+    }
     public IClusterServerManager getServerManager() {
         return serverManager;
     }
@@ -212,10 +220,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
     @Override
     public void addRpcMethodInterceptor(RpcMethodInterceptor interceptor) {
-        for(Map.Entry<String,ServerNode> entry:serverManager.getAllServerNodes().entrySet()){
-            RpcClientSocketEngine socketEngine=entry.getValue().getSocketEngine();
-            socketEngine.addRpcMethodInterceptor(interceptor);
-        }
+        interceptors.add(interceptor);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.xl.rpc.cluster.client;
 
 import com.xl.rpc.dispatch.RpcMethodInterceptor;
 import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
+import com.xl.rpc.dispatch.method.RpcCallback;
 
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -54,6 +55,7 @@ public interface RpcClientApi {
      *@params params 消息参数
      * */
     void asyncRpcCall(String clusterName,String address,String cmd,Object...params) throws Exception;
+    void asyncRpcCall4Fuse(String clusterName,String cmd, RpcCallback callback,Object[] logParams,Object... params);
     void asyncRpcCall(String clusterName,String address,String cmd,AsyncRpcCallBack callback,Object...params) throws Exception;
     /**
      * 一致性hash选择节点发送消息，当节点存活时，同一个key绝对是发送给同一个服务器节点

@@ -90,7 +90,8 @@ public class ZKClient {
                         e.printStackTrace();
                         KeeperException.Code code=e.code();
                         if(needNewKeeperCodeSet.contains(code)){
-                            log.warn("Zookeeper need to create new one:{}",zookeeperAddress);
+                            zkc.close();
+                            log.warn("Zookeeper need to create new one:code={},address={}",code,zookeeperAddress);
                             zkc=createZookeeper(zookeeperAddress);
                         }else{
                             throw e;
