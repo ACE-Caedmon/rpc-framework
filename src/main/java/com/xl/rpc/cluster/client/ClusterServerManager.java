@@ -47,6 +47,9 @@ public class ClusterServerManager implements IClusterServerManager {
     }
     public synchronized void refreshClusterServers(String clusterName){
         List<String> newServerAddressList= zkServiceDiscovery.getServerList(clusterName);
+        if(newServerAddressList==null){
+            return;
+        }
         ClusterGroup group=getGroupByName(clusterName);
         if(group==null){
             log.debug("Skip refresh cluster:{}",clusterName);

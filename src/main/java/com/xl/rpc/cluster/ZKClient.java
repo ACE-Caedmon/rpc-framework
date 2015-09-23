@@ -2,10 +2,9 @@ package com.xl.rpc.cluster;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.*;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,12 +30,12 @@ public class ZKClient {
     private static Set<KeeperException.Code> needNewKeeperCodeSet=new HashSet<>();
 
     static {
-        needNewKeeperCodeSet.add(KeeperException.Code.CONNECTIONLOSS);
-        needNewKeeperCodeSet.add(KeeperException.Code.OPERATIONTIMEOUT);
+//        needNewKeeperCodeSet.add(KeeperException.Code.CONNECTIONLOSS);
+//        needNewKeeperCodeSet.add(KeeperException.Code.OPERATIONTIMEOUT);
         needNewKeeperCodeSet.add(KeeperException.Code.SESSIONEXPIRED);
-        needNewKeeperCodeSet.add(KeeperException.Code.INVALIDACL);
-        needNewKeeperCodeSet.add(KeeperException.Code.AUTHFAILED);
-        needNewKeeperCodeSet.add(KeeperException.Code.SESSIONMOVED);
+//        needNewKeeperCodeSet.add(KeeperException.Code.INVALIDACL);
+//        needNewKeeperCodeSet.add(KeeperException.Code.AUTHFAILED);
+//        needNewKeeperCodeSet.add(KeeperException.Code.SESSIONMOVED);
     }
     private ZKClient(){
 
@@ -75,27 +74,22 @@ public class ZKClient {
         try{
             if (zkc == null) {
                 zkc=createZookeeper(zookeeperAddress);
-            }else{
-                if(!zkc.getState().isAlive()||!zkc.getState().isConnected()){
-                    try {
-                        zkc.close();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+            }
+            else{
+                try{
+                    Stat stat=zkc.exists("/server", false);
+                    if(stat==null){
+                        zkc.create("/server","".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT);
                     }
-                    zkc=createZookeeper(zookeeperAddress);
-                }else{
-                    try{
-                        zkc.exists("/server", false);
-                    }catch (KeeperException e){
-                        e.printStackTrace();
-                        KeeperException.Code code=e.code();
-                        if(needNewKeeperCodeSet.contains(code)){
-                            zkc.close();
-                            log.warn("Zookeeper need to create new one:code={},address={}",code,zookeeperAddress);
-                            zkc=createZookeeper(zookeeperAddress);
-                        }else{
-                            throw e;
-                        }
+                }catch (KeeperException e){
+                    e.printStackTrace();
+                    KeeperException.Code code=e.code();
+                    if(needNewKeeperCodeSet.contains(code)){
+                        zkc.close();
+                        log.warn("Zookeeper need to create new one:code={},address={}",code,zookeeperAddress);
+                        zkc=createZookeeper(zookeeperAddress);
+                    }else{
+                        throw e;
                     }
                 }
 
@@ -112,5 +106,20 @@ public class ZKClient {
         ZooKeeper zooKeeper=new ZooKeeper(address,Session_Timeout,watcher);
         log.info("Create new zookeeper:{}",address);
         return zooKeeper;
+    }
+
+    public static void main(String[] args) throws Exception{
+        ZooKeeper zooKeeper=new ZooKeeper("192.168.1.168:2181", Session_Timeout, new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+
+            }
+        });
+        Id id = new Id("world", "anyone"); //放开权限
+
+        ACL acl = new ACL(ZooDefs.Perms.ALL, id);
+        List<ACL> list=new ArrayList<>();
+        list.add(acl);
+        zooKeeper.create("/server/msg/test", "".getBytes(), list, CreateMode.EPHEMERAL);
     }
 }
