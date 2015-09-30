@@ -3,23 +3,19 @@ package com.xl.rpc.cluster.server;
 import com.xl.rpc.boot.ServerSettings;
 import com.xl.rpc.boot.ServerSocketEngine;
 import com.xl.rpc.boot.SocketEngine;
-import com.xl.rpc.cluster.ZKConfigSync;
-import com.xl.rpc.cluster.ZKConfigSync.ConfigSyncListener;
-import com.xl.rpc.cluster.ZkServiceDiscovery;
+import com.xl.rpc.monitor.MonitorConstant;
+import com.xl.rpc.monitor.client.RpcMonitorClient;
+import com.xl.rpc.cluster.client.RpcClientTemplate;
 import com.xl.rpc.dispatch.RpcMethodInterceptor;
 import com.xl.rpc.dispatch.method.BeanAccess;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xl.rpc.dispatch.method.ReflectRpcMethodDispatcher;
-import com.xl.rpc.exception.ClusterException;
 import com.xl.rpc.exception.EngineException;
 import com.xl.rpc.internal.PrototypeBeanAccess;
 import com.xl.utils.PropertyKit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -28,8 +24,7 @@ import java.util.Properties;
  * Created by Administrator on 2015/7/15.
  */
 public class SimpleRpcServerApi implements RpcServerApi {
-    private ZkServiceDiscovery zkServiceDiscovery;
-    private ZKConfigSync zkConfigSync;
+    private RpcMonitorClient monitorClient;
     private String host;
     private int port=8001;
     private int bossThreadSize=Runtime.getRuntime().availableProcessors();
@@ -37,22 +32,22 @@ public class SimpleRpcServerApi implements RpcServerApi {
     private int cmdThreadSize=Runtime.getRuntime().availableProcessors();
     private String beanAccessClass= PrototypeBeanAccess.class.getName();
     private String[] scanPackage=new String[]{""};
-    private String zkServer;
+    private String monitorServerAddress;
     private String[] clusterNames;
     private volatile boolean started;
     private ServerSocketEngine socketEngine;
     private BeanAccess beanAccess;
     private static final Logger log= LoggerFactory.getLogger(SimpleRpcServerApi.class);
-    private static final String RPC_SERVER_HOST_PROPERTY="rpc.server.host";
-    private static final String RPC_SERVER_PORT_PROPERTY="rpc.server.port";
-    private static final String BOSS_THREAD_SIZE_PROPERTY="rpc.server.bossThreadSize";
-    private static final String WORKER_THREAD_SIZE_PROPERTY="rpc.server.workerThreadSize";
-    private static final String CMD_THREAD_SIZE_PROPERTY="rpc.server.cmdThreadSize";
-    private static final String RPC_SERVER_CLUSTER_NAMES="rpc.server.clusterNames";
-    private static final String SCAN_PACKAGE_NAME_PROPERTY="rpc.server.scanPackage";
-    private static final String BEAN_ACCESS_PROPERTY="rpc.server.beanAccessClass";
-    private static final String ZK_SERVER_ADDRESS="rpc.zookeeper.address";
-    private static final String JAVASSIT_WRITE_CLASS="javassit.writeClass";
+    public static final String RPC_SERVER_HOST_PROPERTY="rpc.server.host";
+    public static final String RPC_SERVER_PORT_PROPERTY="rpc.server.port";
+    public static final String BOSS_THREAD_SIZE_PROPERTY="rpc.server.bossThreadSize";
+    public static final String WORKER_THREAD_SIZE_PROPERTY="rpc.server.workerThreadSize";
+    public static final String CMD_THREAD_SIZE_PROPERTY="rpc.server.cmdThreadSize";
+    public static final String RPC_SERVER_CLUSTER_NAMES="rpc.server.clusterNames";
+    public static final String SCAN_PACKAGE_NAME_PROPERTY="rpc.server.scanPackage";
+    public static final String BEAN_ACCESS_PROPERTY="rpc.server.beanAccessClass";
+    public static final String MONITOR_SERVER_ADDRESS ="rpc.monitor.address";
+    public static final String JAVASSIT_WRITE_CLASS="javassit.writeClass";
     public SimpleRpcServerApi(String configPath){
         Properties properties= PropertyKit.loadProperties(configPath);
         init(properties);
@@ -96,21 +91,19 @@ public class SimpleRpcServerApi implements RpcServerApi {
         if(properties.containsKey(BEAN_ACCESS_PROPERTY)){
             this.beanAccessClass=properties.getProperty(BEAN_ACCESS_PROPERTY);
         }
-        if(properties.containsKey(ZK_SERVER_ADDRESS)){
-            this.zkServer=properties.getProperty(ZK_SERVER_ADDRESS);
-        }else{
-            throw new NullPointerException(ZK_SERVER_ADDRESS+" not specified");
+        if(properties.containsKey(MONITOR_SERVER_ADDRESS)){
+            this.monitorServerAddress =properties.getProperty(MONITOR_SERVER_ADDRESS);
+            int length=scanPackage.length;
+            String[] rpcScanPackage=new String[length+1];
+            System.arraycopy(scanPackage,0,rpcScanPackage,0,length);
+            rpcScanPackage[length]="com.xl.rpc.monitor.client";
+            scanPackage=rpcScanPackage;
+            int clusterNamesLength=clusterNames.length;
+            String[] rpcClusterNames=new String[clusterNamesLength+1];
+            System.arraycopy(clusterNames,0,rpcClusterNames,0,clusterNamesLength);
+            rpcClusterNames[clusterNamesLength]=MonitorConstant.MONITOR_CLIENT_SERVER;
+            clusterNames=rpcClusterNames;
         }
-        int length=scanPackage.length;
-        String[] rpcScanPackage=new String[length+1];
-        System.arraycopy(scanPackage,0,rpcScanPackage,0,length);
-        rpcScanPackage[length]="com.xl.rpc.internal";
-        scanPackage=rpcScanPackage;
-        int clusterNamesLength=clusterNames.length;
-        String[] rpcClusterNames=new String[clusterNamesLength+1];
-        System.arraycopy(clusterNames,0,rpcClusterNames,0,clusterNamesLength);
-        rpcClusterNames[clusterNamesLength]="rpc";
-        clusterNames=rpcClusterNames;
     }
     @Override
     public void bind() {
@@ -130,27 +123,27 @@ public class SimpleRpcServerApi implements RpcServerApi {
 
         socketEngine=new ServerSocketEngine(settings,dispatcher);
         socketEngine.start();
-        zkServiceDiscovery =new ZkServiceDiscovery(this.zkServer);
-        try{
-            for(String clusterName:clusterNames){
-                zkServiceDiscovery.registerService(clusterName,host,port);
-            }
-        }catch (Exception e){
-            throw new ClusterException("Register cluster service error: clusterNames = "+ Arrays.toString(clusterNames),e);
+        if(monitorServerAddress !=null&&!monitorServerAddress.trim().equals("")){
+            registerCenter();
         }
-//        zkConfigSync = new ZKConfigSync(zkServer, clusterNames[0], new ConfigSyncListener() {
-//            @Override
-//            public void onConfigChanged(String config) {
-//                InputStream input=new ByteArrayInputStream(config.getBytes());
-//                PropertyKit.loadProperties(input);
-//            }
-//        });
         setStarted(true);
     }
 
+    private void registerCenter(){
+        try{
+            monitorClient = RpcMonitorClient.getInstance();
+            monitorClient.connect(this.monitorServerAddress);
+            monitorClient.register(clusterNames, port);
+            monitorClient.getServerNode().syncCall(MonitorConstant.MonitorServerMethod.REGISTER,Void.class,new Object[]{this.clusterNames,this.port});
+            log.info("Register center success:clusterNames={},port={}", clusterNames, port);
+        }catch (Exception e){
+            e.printStackTrace();
+            log.error("Register rpc center error",e);
+        }
+    }
     @Override
     public String getHost() {
-        return this.zkServiceDiscovery.getHost();
+        return this.monitorClient.getHost();
     }
 
     @Override
@@ -164,8 +157,8 @@ public class SimpleRpcServerApi implements RpcServerApi {
     }
 
     @Override
-    public String getZKServerAddr() {
-        return this.zkServer;
+    public String getMonitorServerAddress() {
+        return this.monitorServerAddress;
     }
 
     @Override

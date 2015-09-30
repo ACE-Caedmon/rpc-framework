@@ -1,13 +1,20 @@
 package com.xl.rpc.cluster.client;
 
 import com.xl.rpc.boot.RpcClientSocketEngine;
+import com.xl.rpc.boot.TCPClientSettings;
 import com.xl.rpc.codec.RpcPacket;
+import com.xl.rpc.dispatch.RpcMethodInterceptor;
+import com.xl.rpc.dispatch.method.BeanAccess;
+import com.xl.rpc.dispatch.method.ReflectRpcMethodDispatcher;
 import com.xl.rpc.dispatch.method.RpcCallback;
+import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xl.rpc.exception.ClusterNodeException;
+import com.xl.rpc.exception.EngineException;
 import com.xl.session.ISession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,9 +51,7 @@ public class ServerNode implements Comparable<ServerNode>{
         return this.computeLoad()-o.computeLoad();
     }
     public void asyncCall(String cmd, RpcCallback callback,Object... params){
-        //RpcPacket.validate(paramTypes,params);
         RpcPacket packet=new RpcPacket(cmd,params);
-        //packet.setClassNameArray(buildClassNameArray(paramTypes));
         packet.setSync(false);
         getSession().asyncRpcSend(packet, callback);
         log.info("Async rpc call:server = {},cmd ={}",getKey(),cmd);
@@ -161,5 +166,35 @@ public class ServerNode implements Comparable<ServerNode>{
 
     public long getTotalResponseTime() {
         return totalResponseTime;
+    }
+
+    public int getSyncCallNumber() {
+        return syncCallNumber;
+    }
+
+    public static ServerNode  build(String clusterName,String remoteHost,int remotePort,RpcClientTemplate template,List<RpcMethodInterceptor> interceptors) throws Exception{
+        TCPClientSettings settings=template.createClientSettings(remoteHost, remotePort);
+        BeanAccess beanAccess=null;
+        try{
+            beanAccess=(BeanAccess)Class.forName(template.getBeanAccessClass()).newInstance();
+        }catch (Exception e){
+            throw new EngineException("BeanAccess init error",e);
+        }
+        RpcMethodDispatcher dispatcher=new ReflectRpcMethodDispatcher(beanAccess,template.getCmdThreadSize());
+        RpcClientSocketEngine clientSocketEngine=new RpcClientSocketEngine(settings,dispatcher,template.getLoopGroup());
+        if(interceptors!=null){
+            for(RpcMethodInterceptor interceptor:interceptors){
+                clientSocketEngine.addCmdMethodInterceptor(interceptor);
+            }
+        }
+        clientSocketEngine.start();
+        ServerNode serverNode=new ServerNode(clientSocketEngine);
+        serverNode.setSyncCallTimeout(template.getCallTimeout());
+        serverNode.setHost(remoteHost);
+        serverNode.setPort(remotePort);
+        serverNode.setSyncCallTimeout(settings.syncTimeout);
+        serverNode.setClusterName(clusterName);
+        log.info("Create new server:{}", serverNode.getKey());
+        return serverNode;
     }
 }

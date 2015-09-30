@@ -89,4 +89,5 @@ public interface RpcClientApi {
 
     boolean existsServerNode(String clusterName,String address);
 
+    IClusterServerManager getServerManager();
 }

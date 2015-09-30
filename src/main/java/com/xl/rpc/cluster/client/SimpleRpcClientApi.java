@@ -22,6 +22,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private static final Logger log= LoggerFactory.getLogger(SimpleRpcClientApi.class);
     private IClusterServerManager serverManager;
     private RpcClientTemplate template;
+    private String centerAddress;
     private RpcCallProxyFactory rpcCallProxyFactory;
     private List<RpcMethodInterceptor> interceptors=new ArrayList<>();
     private static SimpleRpcClientApi instance=new SimpleRpcClientApi();
@@ -34,6 +35,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     }
     public SimpleRpcClientApi load(Properties properties){
         this.template=new RpcClientTemplate(properties);
+        this.centerAddress=properties.getProperty("rpc.center.address");
         initComponents();
         return this;
     }
@@ -66,7 +68,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
     @Override
     public void bind() {
-        serverManager=new ClusterServerManager(template,interceptors);
+        serverManager=new ClusterServerManager(centerAddress,template,interceptors);
         List<String> clusterNames=new ArrayList<>();
         if(template.getMonitorService()!=null){
             for(String s:template.getMonitorService()){
@@ -209,7 +211,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
     @Override
     public void asyncHashRpcCall(String clusterName, String key, String cmd, AsyncRpcCallBack callBack, Object... params) {
-        ServerNode node=getShardNode(clusterName,key);
+        ServerNode node=getShardNode(clusterName, key);
         node.asyncCall(cmd,callBack,params);
     }
     private ServerNode getShardNode(String clusterName,String key){

@@ -6,16 +6,17 @@
         </encoder>
     </appender>
 
-    <appender name="socket" class="com.xl.rpc.log.RpcAppender">
-        <remoteHost>localhost</remoteHost>
-        <port>8082</port>
-        <includeCallerData>true</includeCallerData>
-        <reconnectionDelay>10000</reconnectionDelay>
-        <encoder>
-            %serviceName %address %date{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n
-        </encoder>
-    </appender>
+    <!--<appender name="socket" class="com.xl.rpc.log.RpcAppender">-->
+        <!--<remoteHost>localhost</remoteHost>-->
+        <!--<port>8082</port>-->
+        <!--<includeCallerData>true</includeCallerData>-->
+        <!--<reconnectionDelay>10000</reconnectionDelay>-->
+        <!--<encoder>-->
+            <!--%serviceName %address %date{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n-->
+        <!--</encoder>-->
+    <!--</appender>-->
     <logger name="org.apache.zookeeper.ClientCnxn" level="WARN"/>
+    <logger name="io.netty.util.internal" level="INFO"/>
     <appender name="rollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/pms.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">

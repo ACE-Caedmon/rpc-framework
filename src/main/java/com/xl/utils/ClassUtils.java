@@ -155,7 +155,7 @@ public class ClassUtils {
 
         Enumeration<JarEntry> ee = jarFile.entries();
         while (ee.hasMoreElements()) {
-            JarEntry entry = (JarEntry) ee.nextElement();
+            JarEntry entry = ee.nextElement();
             // 过滤我们出满足我们需求的东西
             for(String packageName:packageNames){
                 packageName=packageName.replace('.','/');
@@ -169,6 +169,9 @@ public class ClassUtils {
             String className = entry.getName().replace('/', '.');
             className = className.substring(0, className.length() - 6);
             try {
+                if(className.equals("org.eclipsswt.dnd.ByteArrayTransfer")){
+                    System.out.println("!!!!!!!!!!!!!!!!!!!!");
+                }
                 classes.add(scanClassLoader.loadClass(className));
             } catch (Throwable e) {
                 e.printStackTrace();

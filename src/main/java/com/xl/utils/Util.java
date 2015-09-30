@@ -3,9 +3,7 @@ package com.xl.utils;
 import com.xl.rpc.exception.BaseException;
 import com.xl.rpc.internal.InternalContainer;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -20,34 +18,27 @@ public class Util {
         return s == null || s.length() == 0;
     }
 
-    public static String getFileData(String path) {
+    public static String loadFromDisk(String path) throws IOException{
         byte[] encoded = null;
-        try {
             encoded = Files.readAllBytes(Paths.get(path));
-            if (encoded != null)
-                return new String(encoded);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        if (encoded != null)
+            return new String(encoded);
         return null;
     }
-    public static void saveFileData(String path,String data) {
-        try {
+    public static void saveToDisk(String data,String path) throws IOException{
             PrintWriter out = new PrintWriter(path);
             out.print(data);
             out.flush();
             out.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
     }
-
-    public static void  exceptionTest(){
-       // try{
-            InternalContainer.getInstance().startRpcClient(new String(""));
-       // }catch (Exception e){
-         //   throw new BaseException("test",e);
-        //}
-
+    public static boolean ifNotExistCreate(String path) throws IOException{
+        File file=new File(path);
+        if(!file.getParentFile().exists()){
+            file.getParentFile().mkdirs();
+        }
+        if(!file.exists()){
+            return file.createNewFile();
+        }
+        return true;
     }
 }

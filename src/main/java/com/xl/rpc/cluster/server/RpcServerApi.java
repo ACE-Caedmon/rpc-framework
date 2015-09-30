@@ -13,7 +13,7 @@ public interface RpcServerApi {
     String getHost();
     int getPort();
     List<String> getClusterNames();
-    String getZKServerAddr();
+    String getMonitorServerAddress();
     boolean isStarted();
     BeanAccess getBeanAccess();
     void addInterceptor(RpcMethodInterceptor interceptor);

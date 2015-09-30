@@ -14,15 +14,15 @@ public interface IClusterServerManager {
     /**
      * 添加服务器节点
      * */
-    void addServerNode(ServerNode node);
+    void addNode(ServerNode node);
     /**
      * 添加服务器节点
      * */
-    void addServerNode(List<ServerNode> nodeList);
+    void addNode(List<ServerNode> nodeList);
     /**
      * 刷新服务器节点状态
      * */
-    void updateServerNode(ServerNode serverNode);
+    void updateNode(ServerNode serverNode);
     /**
      * 根据集群名获取节点列表
      * */
@@ -30,7 +30,7 @@ public interface IClusterServerManager {
     /**
      * 移除节点
      * */
-    void removeServerNode(String key);
+    void deleteNode(String key);
     /**
      * 根据Id获取服务器节点
     * */
@@ -39,4 +39,6 @@ public interface IClusterServerManager {
     Map<String,ServerNode> getAllServerNodes();
 
     ClusterGroup addClusterGroup(String clusterName);
+
+    void addServerNode(String group,String host,int port);
 }

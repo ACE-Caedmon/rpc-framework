@@ -13,15 +13,13 @@ import java.util.Properties;
  * Created by Administrator on 2015/8/17.
  */
 public class RpcClientTemplate {
-    private int callTimeout=3;
+    private int callTimeout=10;
     private String beanAccessClass= PrototypeBeanAccess.class.getName();
     private int retryCount=3;
-
     private int workerThreadSize=Runtime.getRuntime().availableProcessors();
     private int cmdThreadSize= Runtime.getRuntime().availableProcessors();
     private String[] scanPackage=new String[]{""};
-    private String zookeeperAddress;
-    private String loadBalancing="responseTime";
+    private String lb ="responseTime";
     private EventLoopGroup loopGroup;
     private String[] monitorService;
     private static final String WORK_THREAD_SIZE_PROPERTY="rpc.client.workerThreadSize";
@@ -32,14 +30,14 @@ public class RpcClientTemplate {
     private static final String BEAN_ACCESS_PROPERTY="rpc.client.beanAccessClass";
     private static final String MONITOR_SERVICE_PROPERTY="rpc.client.monitorService";
     private static final String RPC_RETRY_COUNT_PROPERTY="rpc.client.retryCount";
-    private static final String ZK_SERVER_ADDRESS_PROPERTY ="rpc.zookeeper.address";
-    private static final String LOAD_BALANCING_PROPERTY="rpc.client.loadBalancing";
-    private static final String JAVASSIT_WRITE_CLASS="javassit.writeClass";
+    private static final String LB_PROPERTY ="rpc.client.lb";
+    private RpcClientTemplate(){
+
+    }
+    public static RpcClientTemplate newDefault(){
+        return new RpcClientTemplate();
+    }
     public RpcClientTemplate(Properties properties){
-        if(properties.containsKey(JAVASSIT_WRITE_CLASS)){
-            boolean writeClass=Boolean.valueOf(properties.getProperty(JAVASSIT_WRITE_CLASS));
-            System.setProperty(JAVASSIT_WRITE_CLASS,String.valueOf(writeClass));
-        }
         if(properties.containsKey(WORK_THREAD_SIZE_PROPERTY)){
             this.workerThreadSize=Integer.parseInt(properties.getProperty(WORK_THREAD_SIZE_PROPERTY));
         }
@@ -67,13 +65,8 @@ public class RpcClientTemplate {
         if(properties.containsKey(RPC_RETRY_COUNT_PROPERTY)){
             this.retryCount=Integer.parseInt(properties.getProperty(RPC_RETRY_COUNT_PROPERTY));
         }
-        if(properties.containsKey(ZK_SERVER_ADDRESS_PROPERTY)){
-            this.zookeeperAddress=properties.getProperty(ZK_SERVER_ADDRESS_PROPERTY);
-        }else{
-            throw new NullPointerException(ZK_SERVER_ADDRESS_PROPERTY +"not specified");
-        }
-        if(properties.containsKey(LOAD_BALANCING_PROPERTY)){
-            this.loadBalancing=properties.getProperty(LOAD_BALANCING_PROPERTY);
+        if(properties.containsKey(LB_PROPERTY)){
+            this.lb =properties.getProperty(LB_PROPERTY);
         }
     }
     public int getCallTimeout() {
@@ -125,20 +118,12 @@ public class RpcClientTemplate {
         this.scanPackage = scanPackage;
     }
 
-    public String getZookeeperAddress() {
-        return zookeeperAddress;
+    public String getLb() {
+        return lb;
     }
 
-    public void setZookeeperAddress(String zookeeperAddress) {
-        this.zookeeperAddress = zookeeperAddress;
-    }
-
-    public String getLoadBalancing() {
-        return loadBalancing;
-    }
-
-    public void setLoadBalancing(String loadBalancing) {
-        this.loadBalancing = loadBalancing;
+    public void setLb(String lb) {
+        this.lb = lb;
     }
 
     public EventLoopGroup getLoopGroup() {
@@ -170,4 +155,5 @@ public class RpcClientTemplate {
         settings.syncTimeout= callTimeout;
         return settings;
     }
+
 }

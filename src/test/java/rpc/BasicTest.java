@@ -1,7 +1,7 @@
 package rpc;
 
 import com.xl.rpc.internal.InternalContainer;
-import com.xl.rpc.internal.IMonitorControl;
+import com.xl.rpc.monitor.client.IRpcMonitorClientService;
 import com.xl.utils.PropertyKit;
 import com.xl.utils.SysPropertyConfig;
 import common.server.IServerControl;
@@ -14,7 +14,7 @@ public class BasicTest {
     protected static final InternalContainer container=InternalContainer.getInstance();
     protected static IServerControl syncServerControl;
     protected static IServerControl asyncServerControl;
-    protected static IMonitorControl IMonitorControl;
+    protected static IRpcMonitorClientService IRpcMonitorClientService;
     @Before
     public void init(){
         SysPropertyConfig.doConfig(PropertyKit.getProperties("rpc.properties"));
@@ -23,7 +23,7 @@ public class BasicTest {
         container.startRpcClient(SysPropertyConfig.getProperties());
         syncServerControl =container.getSyncRemoteCallProxy(IServerControl.class);
         asyncServerControl=container.getAsyncRemoteCallProxy(IServerControl.class);
-        IMonitorControl =container.getSyncRemoteCallProxy(IMonitorControl.class);
+        IRpcMonitorClientService =container.getSyncRemoteCallProxy(IRpcMonitorClientService.class);
     }
 
 }

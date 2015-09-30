@@ -58,7 +58,8 @@ public class ReflectRpcMethodDispatcher extends RpcMethodDispatcher {
             }
             MethodInvoker invoker=new MethodInvoker(beanAccess,method,controlClass);
             if(methodInvokerMap.containsKey(cmd)){
-                log.warn("Rpc method has exists:cmd={}",cmd);
+                //log.warn("Rpc method has exists:cmd={}",cmd);
+                return;
             }
             methodInvokerMap.put(cmd, invoker);
             log.info("Register rpc method: {}->{}.{}()",cmd,controlClass.getName(),method.getName());

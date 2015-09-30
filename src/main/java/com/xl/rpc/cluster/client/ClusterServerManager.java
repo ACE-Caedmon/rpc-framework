@@ -1,18 +1,11 @@
 package com.xl.rpc.cluster.client;
 
-import com.xl.rpc.boot.RpcClientSocketEngine;
-import com.xl.rpc.boot.TCPClientSettings;
-import com.xl.rpc.cluster.ZkServiceDiscovery;
+import com.xl.rpc.monitor.MonitorNode;
+import com.xl.rpc.monitor.client.RpcMonitorClient;
 import com.xl.rpc.dispatch.RpcMethodInterceptor;
-import com.xl.rpc.dispatch.method.BeanAccess;
-import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
-import com.xl.rpc.dispatch.method.ReflectRpcMethodDispatcher;
-import com.xl.rpc.exception.ClusterNotExistsException;
-import com.xl.rpc.exception.EngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,102 +16,44 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ClusterServerManager implements IClusterServerManager {
     private Map<String,ClusterGroup> clusterGroupMap =new ConcurrentHashMap<>();
     private Map<String,ServerNode> allServersMap =new ConcurrentHashMap<>();
-    private ZkServiceDiscovery zkServiceDiscovery;
+    private RpcMonitorClient rpcMonitorClient;
     private int callCount;
     private RpcClientTemplate rpcClientTemplate;
+    private String centerAddress;
     private static final Logger log= LoggerFactory.getLogger(ClusterServerManager.class);
     private List<RpcMethodInterceptor> interceptors;
-    public ClusterServerManager(RpcClientTemplate rpcClientTemplate,List<RpcMethodInterceptor> interceptors){
+    public ClusterServerManager(String centerAddress,RpcClientTemplate rpcClientTemplate,List<RpcMethodInterceptor> interceptors){
+        this.centerAddress=centerAddress;
         this.rpcClientTemplate=rpcClientTemplate;
-        zkServiceDiscovery =new ZkServiceDiscovery(rpcClientTemplate.getZookeeperAddress());
-        zkServiceDiscovery.setListener(new ZkServiceDiscovery.ServerDiscoveryListener() {
-            @Override
-            public void onServerListChanged(String s) {
-                refreshClusterServers(s);
+        rpcMonitorClient = RpcMonitorClient.getInstance();
+        try{
+            rpcMonitorClient.connect(centerAddress);
+            Map<String,MonitorNode> allNodes= rpcMonitorClient.getAllNodeMap();
+            for(MonitorNode n:allNodes.values()){
+                ClusterGroup group=getGroupByName(n.getGroup());
+                if(group==null){
+                    addClusterGroup(n.getGroup());
+                }
+                addServerNode(n.getGroup(), n.getHost(), n.getPort());
             }
-        });
-        for(String clusterName: zkServiceDiscovery.getAllServerMap().keySet()){
-            ClusterGroup group=getGroupByName(clusterName);
-            if(group==null){
-                addClusterGroup(clusterName);
-            }
+        }catch (Exception e){
+            e.printStackTrace();
+            log.error("Register to center error",e);
+            return;
         }
+
         this.interceptors=interceptors;
     }
-    public synchronized void refreshClusterServers(String clusterName){
-        List<String> newServerAddressList= zkServiceDiscovery.getServerList(clusterName);
-        if(newServerAddressList==null){
-            return;
-        }
-        ClusterGroup group=getGroupByName(clusterName);
-        if(group==null){
-            log.debug("Skip refresh cluster:{}",clusterName);
-            return;
-        }
-        Map<String,ServerNode> oldServers=getAllServerNodes();
-        //遍历新数据
-        for(String address:newServerAddressList){
-            String[] hostAndPort=address.split(":");
-            String remoteHost=hostAndPort[0];
-            int remotePort=Integer.parseInt(hostAndPort[1]);
-            //如果节点存在于新数据,而老数据中没有，则是一个新的节点，需要新建连接
-            if(!oldServers.containsKey(clusterName+"-"+address)){
-                try{
-                    ServerNode serverNode=newServerNode(clusterName,remoteHost, remotePort);
-                    serverNode.setClusterName(clusterName);
-                    addServerNode(serverNode);
-                }catch (Exception e){
-                    e.printStackTrace();
-                    log.error("Update server node error: {}",address,e);
-                }
-                continue;
-            }
-        }
-
-        List<ServerNode> oldServerNodes=group.getNodeList();
-        if(oldServerNodes!=null){
-            Iterator<ServerNode> it=oldServerNodes.iterator();
-            while(it.hasNext()){
-                ServerNode oldNode=it.next();
-                //如果节点存在于旧数据,而新数据中没有，则节点需要移除，需要销毁
-                boolean needRemove=true;
-                for(String address:newServerAddressList){
-                    if(oldNode.getKey().equals(clusterName+"-"+address)){
-                        needRemove=false;
-                        break;
-                    }
-                }
-                if(needRemove){
-                    it.remove();
-                    removeServerNode(oldNode.getKey());
-                    log.info("Remove server node :server = {}",oldNode.getKey());
-                }
-            }
-        }
-
-    }
-    public ServerNode  newServerNode(String clusterName,String remoteHost,int remotePort) throws Exception{
-        TCPClientSettings settings=this.rpcClientTemplate.createClientSettings(remoteHost, remotePort);
-        BeanAccess beanAccess=null;
+    public void addServerNode(String group,String host,int port){
+        ServerNode serverNode=null;
         try{
-            beanAccess=(BeanAccess)Class.forName(rpcClientTemplate.getBeanAccessClass()).newInstance();
+            serverNode=ServerNode.build(group, host, port, this.rpcClientTemplate, interceptors);
+            log.error("Add server node success:address={}",serverNode.toString());
         }catch (Exception e){
-            throw new EngineException("BeanAccess init error",e);
+            e.printStackTrace();
+            log.error("Add server node error:address={}",serverNode.toString(),e);
         }
-        RpcMethodDispatcher dispatcher=new ReflectRpcMethodDispatcher(beanAccess,rpcClientTemplate.getCmdThreadSize());
-        RpcClientSocketEngine clientSocketEngine=new RpcClientSocketEngine(settings,dispatcher,rpcClientTemplate.getLoopGroup());
-        for(RpcMethodInterceptor interceptor:interceptors){
-            clientSocketEngine.addCmdMethodInterceptor(interceptor);
-        }
-        clientSocketEngine.start();
-        ServerNode serverNode=new ServerNode(clientSocketEngine);
-        serverNode.setSyncCallTimeout(this.rpcClientTemplate.getCallTimeout());
-        serverNode.setHost(remoteHost);
-        serverNode.setPort(remotePort);
-        serverNode.setSyncCallTimeout(settings.syncTimeout);
-        serverNode.setClusterName(clusterName);
-        log.info("Create new server:{}", serverNode.getKey());
-        return serverNode;
+        addNode(serverNode);
     }
     @Override
     public ServerNode getOptimalServerNode(String clusterName) {
@@ -127,34 +62,30 @@ public class ClusterServerManager implements IClusterServerManager {
         if(clusterGroup==null){
             clusterGroup=addClusterGroup(clusterName);
         }
-        if(clusterGroup.getNodeList().isEmpty()){
-            refreshClusterServers(clusterName);
-        }
         return clusterGroup.getOptimalServerNode();
     }
 
     @Override
-    public void addServerNode(ServerNode node) {
-        removeServerNode(node.getKey());
+    public void addNode(ServerNode node) {
+        deleteNode(node.getKey());
         allServersMap.put(node.getKey(), node);
         ClusterGroup group=clusterGroupMap.get(node.getClusterName());
         if(group==null){
             group=new ClusterGroup(node.getClusterName());
         }
         group.addNode(node);
-        log.debug("Add server node:{}",node.getKey());
+        log.debug("Add server:address={}",node.getKey());
     }
 
     @Override
-    public void addServerNode(List<ServerNode> nodeList) {
+    public void addNode(List<ServerNode> nodeList) {
         for(ServerNode node:nodeList){
-            addServerNode(node);
+            addNode(node);
         }
-
     }
 
     @Override
-    public void updateServerNode(ServerNode serverNode) {
+    public void updateNode(ServerNode serverNode) {
         String serverKey=serverNode.getKey();
         ServerNode node= allServersMap.put(serverKey, serverNode);
     }
@@ -166,7 +97,7 @@ public class ClusterServerManager implements IClusterServerManager {
     }
 
     @Override
-    public void removeServerNode(String key) {
+    public void deleteNode(String key) {
         ServerNode result= allServersMap.remove(key);
         if(result!=null){
             ClusterGroup group=clusterGroupMap.get(result.getClusterName());
@@ -181,9 +112,6 @@ public class ClusterServerManager implements IClusterServerManager {
         if(clusterGroup==null){
             addClusterGroup(clusterName);
         }
-        if(clusterGroup.getNodeList().isEmpty()){
-            refreshClusterServers(clusterName);
-        }
         ServerNode node=allServersMap.get(key);
         return node;
     }
@@ -194,10 +122,10 @@ public class ClusterServerManager implements IClusterServerManager {
     }
 
     @Override
-    public ClusterGroup addClusterGroup(String clusterName) {
-        ClusterGroup group=new ClusterGroup(clusterName);
-        clusterGroupMap.put(clusterName,group);
-        log.info("Add cluster group:{}",clusterName);
+    public ClusterGroup addClusterGroup(String groupName) {
+        ClusterGroup group=new ClusterGroup(groupName);
+        clusterGroupMap.put(groupName,group);
+        log.info("Add group:{}",groupName);
         return group;
     }
 }

@@ -28,6 +28,8 @@ public interface ISession {
 	 * @return 得到客户端远程IP地址
 	 * */
 	String getClientAddress();
+
+	String getClientHost();
 	/**
 	 * @return 客户端远程端口
 	 * */

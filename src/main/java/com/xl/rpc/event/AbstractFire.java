@@ -25,12 +25,12 @@ public class AbstractFire<T> implements Fire<T>{
 		// TODO Auto-generated method stub
 		List<IEventHandler<T>> handlers=firesMap.get(name);
 		if(handlers==null){
-			handlers=new LinkedList<IEventHandler<T>>();
+			handlers=new LinkedList<>();
 			firesMap.put(name, handlers);
 		}
 		for(IEventHandler<T> h:handlers){
 			if(h.getClass()==handler.getClass()){
-				log.warn("重复添加相同的监听事件处理器:handlerClass={}",handler.getClass().getName());
+				log.warn("EventHandler has exists:handlerClass={}",handler.getClass().getName());
 				return;
 			}
 		}

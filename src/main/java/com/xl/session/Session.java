@@ -72,6 +72,9 @@ public class Session implements ISession{
 		// TODO Auto-generated method stub
 		return channel.remoteAddress().toString();
 	}
+	public String getClientHost(){
+		return channel.remoteAddress().toString().split(":")[0].replaceAll("/","");
+	}
 	@Override
 	public int getClientPort() {
 		// TODO Auto-generated method stub
