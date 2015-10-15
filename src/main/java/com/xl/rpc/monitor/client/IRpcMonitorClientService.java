@@ -3,8 +3,7 @@ package com.xl.rpc.monitor.client;
 import com.xl.rpc.annotation.RpcControl;
 import com.xl.rpc.annotation.RpcMethod;
 import com.xl.rpc.monitor.MonitorConstant;
-import com.xl.rpc.monitor.MonitorInformation;
-import com.xl.rpc.monitor.event.NodeEvent;
+import com.xl.rpc.monitor.event.MonitorEvent;
 
 /**
  * Created by Caedmon on 2015/9/17.
@@ -12,6 +11,6 @@ import com.xl.rpc.monitor.event.NodeEvent;
 @RpcControl(MonitorConstant.MONITOR_CLIENT_SERVER)
 public interface IRpcMonitorClientService {
     @RpcMethod(MonitorConstant.MonitorClientMethod.MONITOR_EVENT)
-    void handleNodeEvent(NodeEvent event);
+    void handleNodeEvent(MonitorEvent event);
 
 }

@@ -3,7 +3,7 @@ package com.xl.rpc.monitor;
 import com.xl.rpc.cluster.client.RpcClientTemplate;
 import com.xl.rpc.cluster.client.ServerNode;
 import com.xl.rpc.monitor.event.ConfigEvent;
-import com.xl.rpc.monitor.event.NodeEvent;
+import com.xl.rpc.monitor.event.MonitorEvent;
 import com.xl.rpc.monitor.server.MonitorManager;
 import com.xl.session.ISession;
 import io.netty.util.AttributeKey;
@@ -24,10 +24,10 @@ public class MonitorNode {
     private long lastActiveTime;
     private MonitorInformation monitorInformation;
     private String key;
-    private Set<String> bindConfigKeySet;
-    //RpcServer作为RpcCenter的客户端连接
+    private Set<String> bindConfigKeySet=new HashSet<>();
+    //RpcServer调用MonitorServer的客户端连接
     private transient ISession session;
-    //RpcCenter作为RpcServer的客户端连接
+    //MonitorServerr作为RpcServer的客户端连接
     private transient ServerNode notifyNode;
     private static RpcClientTemplate shareClientTemplate=RpcClientTemplate.newDefault();
     private static final Logger log= LoggerFactory.getLogger(MonitorNode.class);
@@ -39,16 +39,28 @@ public class MonitorNode {
     public MonitorNode(){
 
     }
+    public void reconnect(ISession session) throws Exception{
+        this.key=getKey();
+        this.session=session;
+        session.setAttribute(MonitorNode.RPC_NODE_KEY, getKey());
+        renewNotifyNode();
+        this.active=true;
+        log.info("Monitor client reconnect:{}",this.key);
+    }
     public MonitorNode(ISession session, String group, String host, int port) throws Exception{
         this.session=session;
         this.group=group;
         this.host=host;
         this.port=port;
         this.key=group+"-"+host+":"+port;
-        this.bindConfigKeySet =new HashSet<>();
         this.active=true;
         this.lastActiveTime=System.currentTimeMillis();
-        this.notifyNode =ServerNode.build("rpc", host, port,shareClientTemplate,null );
+        session.setAttribute(MonitorNode.RPC_NODE_KEY, getKey());
+        renewNotifyNode();
+
+    }
+    public void renewNotifyNode() throws Exception{
+        this.notifyNode =ServerNode.build(this.getGroup(), host, port,shareClientTemplate,null );
     }
     public String getGroup() {
         return group;
@@ -101,16 +113,12 @@ public class MonitorNode {
     public Set<String> getBindConfigKeySet() {
         return bindConfigKeySet;
     }
-    public void addBindConfigKey(String configKey){
-        bindConfigKeySet.add(configKey);
-        ConfigEvent configEvent=new ConfigEvent();
-        String configValue= MonitorManager.getInstance().getConfig(configKey);
-        configEvent.setConfigKey(configKey);
-        configEvent.setConfigValue(configValue);
-        notifyEvent(configEvent);
-    }
     public String getKey() {
         return group+"-"+host+":"+port;
+    }
+
+    public void setNotifyNode(ServerNode notifyNode) {
+        this.notifyNode = notifyNode;
     }
 
     @Override
@@ -133,19 +141,34 @@ public class MonitorNode {
     }
 
     public void disconnect(){
-
+        if(session!=null){
+            session.disconnect(true);
+        }
+        if(notifyNode==null){
+            log.warn("Notify node is null:{}",this.getKey());
+        }else{
+            notifyNode.destory();
+        }
+        log.info("Disconnect monitor node success:{}",key);
     }
     public static MonitorNode build(ISession session,String group,String host,int port) throws Exception{
         MonitorNode node=new MonitorNode(session,group,host,port);
-        session.setAttribute(RPC_NODE_KEY,node.getKey());
+
         return node;
     }
-    public void notifyEvent(NodeEvent event){
-        notifyNode.asyncCall(MonitorConstant.MonitorClientMethod.MONITOR_EVENT, null, event);
-                log.info("Notify event to node:address={},event={}", key, event.getType());
+    public void notifyEvent(MonitorEvent event){
+        if(notifyNode!=null&&notifyNode.isActive()){
+            notifyNode.asyncCall(MonitorConstant.MonitorClientMethod.MONITOR_EVENT, null, event);
+            log.info("Notify event to node:address={},event={}", key, event.getType());
+        }
+
     }
 
     public ServerNode getNotifyNode() {
         return notifyNode;
+    }
+    public void setBindConfigKeySet(Set<String> bindConfigKeySet) {
+        this.bindConfigKeySet = bindConfigKeySet;
+
     }
 }

@@ -62,7 +62,7 @@ public class ReflectRpcMethodDispatcher extends RpcMethodDispatcher {
                 return;
             }
             methodInvokerMap.put(cmd, invoker);
-            log.info("Register rpc method: {}->{}.{}()",cmd,controlClass.getName(),method.getName());
+            log.info("Register rpc method: {}=>{}.{}()",cmd,controlClass.getName(),method.getName());
         }
     }
     public void processClientRequest(ISession session, RpcPacket packet){

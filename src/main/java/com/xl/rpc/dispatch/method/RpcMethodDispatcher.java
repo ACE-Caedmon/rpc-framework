@@ -1,8 +1,11 @@
 package com.xl.rpc.dispatch.method;
 
+import com.xl.rpc.cluster.server.SimpleRpcServerApi;
 import com.xl.rpc.codec.RpcPacket;
 import com.xl.rpc.dispatch.RpcMethodInterceptor;
 import com.xl.rpc.exception.MethodInterceptException;
+import com.xl.rpc.internal.InternalContainer;
+import com.xl.rpc.monitor.client.RpcMonitorClient;
 import com.xl.session.ISession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +77,11 @@ public abstract class RpcMethodDispatcher {
             @Override
             public void run() {
                 if(packet.isFromCall()){
+                    //判断是否需要记录,并且上报给monitor
+                    long processStart=System.currentTimeMillis();
                     processClientRequest(session, packet);
+                    long processEnd=System.currentTimeMillis();
+                    RpcMonitorClient.getInstance().addRpcCallRecord(packet.getCmd(),processEnd-processStart);
                 }else{
                     processServerResponse(session, packet);
                 }

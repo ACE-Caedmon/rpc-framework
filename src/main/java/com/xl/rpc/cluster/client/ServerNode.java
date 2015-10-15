@@ -54,7 +54,7 @@ public class ServerNode implements Comparable<ServerNode>{
         RpcPacket packet=new RpcPacket(cmd,params);
         packet.setSync(false);
         getSession().asyncRpcSend(packet, callback);
-        log.info("Async rpc call:server = {},cmd ={}",getKey(),cmd);
+        log.info("Rpc async call:server = {},cmd ={}",getKey(),cmd);
     }
     public String getKey(){
         return clusterName+"-"+host+":"+port;
@@ -68,7 +68,7 @@ public class ServerNode implements Comparable<ServerNode>{
     }
     public <T> T syncCall(String cmd, Class<T> resultType, Object... params) throws Exception{
         if(!isActive()){
-            throw new ClusterNodeException("Server node is not active:clusterName = "+clusterName+",server = "+host+":"+port);
+            throw new ClusterNodeException("Rpc node is not active:clusterName = "+clusterName+",server = "+host+":"+port);
         }
         //RpcPacket.validate(paramTypes, params);
         RpcPacket packet=new RpcPacket(cmd,params);
@@ -79,7 +79,7 @@ public class ServerNode implements Comparable<ServerNode>{
         long after=System.currentTimeMillis();
         syncCallNumber++;
         this.averageResponseTime=(totalResponseTime+(after-before))/syncCallNumber;
-        log.info("Sync rpc call:server = {},cmd ={},responseTime = {}",getKey(),cmd,this.averageResponseTime);
+        log.info("Rpc sync call:server = {},cmd ={},responseTime = {}",getKey(),cmd,this.averageResponseTime);
         return result;
     }
     public boolean isActive(){
@@ -194,7 +194,7 @@ public class ServerNode implements Comparable<ServerNode>{
         serverNode.setPort(remotePort);
         serverNode.setSyncCallTimeout(settings.syncTimeout);
         serverNode.setClusterName(clusterName);
-        log.info("Create new server:{}", serverNode.getKey());
+        log.info("Rpc create new node:{}", serverNode.getKey());
         return serverNode;
     }
 }

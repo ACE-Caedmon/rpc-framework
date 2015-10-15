@@ -34,7 +34,9 @@ public class ClusterServerManager implements IClusterServerManager {
                 if(group==null){
                     addClusterGroup(n.getGroup());
                 }
-                addServerNode(n.getGroup(), n.getHost(), n.getPort());
+                if(n.isActive()){
+                    addServerNode(n.getGroup(), n.getHost(), n.getPort());
+                }
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -51,7 +53,7 @@ public class ClusterServerManager implements IClusterServerManager {
             log.error("Add server node success:address={}",serverNode.toString());
         }catch (Exception e){
             e.printStackTrace();
-            log.error("Add server node error:address={}",serverNode.toString(),e);
+            log.error("Add server node error:address={}-{}:{}",group,host,port,e);
         }
         addNode(serverNode);
     }

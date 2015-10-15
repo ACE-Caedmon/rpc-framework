@@ -15,4 +15,8 @@ public class SpringBeanAccess implements BeanAccess {
         }
         return context.getBean(clazz);
     }
+    public ApplicationContext getSpringContext(){
+        ApplicationContext context=InternalContainer.getInstance().getSpringContext();
+        return context;
+    }
 }

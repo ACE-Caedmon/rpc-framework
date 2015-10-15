@@ -47,15 +47,17 @@ public class RpcMonitorServerService implements IRpcMonitorServerService {
 
     @Override
     public String heartBeat(ISession session,MonitorInformation information) {
-        String nodeKey=session.getAttribute(MonitorManager.RPC_NODE_ATTR_KEY);
+        String nodeKey=session.getAttribute(MonitorNode.RPC_NODE_KEY);
         MonitorNode node= monitorManager.getRpcNode(nodeKey);
+        node.setActive(true);
         node.setLastActiveTime(System.currentTimeMillis());
+        node.setMonitorInformation(information);
         return null;
     }
 
     @Override
     public String bindNodeConfig(String nodeKey, String configKey) {
-        monitorManager.updateConfigBind(nodeKey, configKey);
+        //monitorManager.updateConfigBind(nodeKey, configKey);
         log.info("Bind config:address={},configKey={}", nodeKey, configKey);
         return monitorManager.getConfig(configKey);
     }

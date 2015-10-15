@@ -41,6 +41,7 @@ public class TCPInboundHandler extends SimpleChannelInboundHandler<RpcPacket>{
 		final ISession session=ctx.channel().attr(Session.SESSION_KEY).get();
 		SessionFire.getInstance().fireEvent(SessionFire.SessionEvent.SESSION_DISCONNECT, session);
 		session.clear();
+		log.debug("Channel inActive:{}",ctx.channel());
 
 	}
     /**

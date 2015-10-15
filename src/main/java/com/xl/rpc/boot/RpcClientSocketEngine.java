@@ -48,7 +48,7 @@ public class RpcClientSocketEngine extends SocketEngine{
             log.debug("Worker thread : {}",settings.workerThreadSize);
             log.debug("Logic thread:{}",settings.cmdThreadSize);
         } catch (Exception e) {
-            throw new RuntimeException("RpcClientSocketEngine start error:address="+((TCPClientSettings) settings).host+":"+settings.port);
+            throw new IllegalStateException("RpcClientSocketEngine start error:address="+((TCPClientSettings) settings).host+":"+settings.port,e);
         }
         log.info("ClientSocketEngine connect to {} success!",((TCPClientSettings) settings).host+":"+settings.port);
     }

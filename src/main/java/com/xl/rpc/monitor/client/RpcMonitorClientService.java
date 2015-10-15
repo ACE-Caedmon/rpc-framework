@@ -4,16 +4,20 @@ import com.xl.rpc.cluster.client.IClusterServerManager;
 import com.xl.rpc.cluster.client.SimpleRpcClientApi;
 import com.xl.rpc.monitor.event.ConfigEvent;
 import com.xl.rpc.monitor.event.NodeActiveEvent;
-import com.xl.rpc.monitor.event.NodeEvent;
+import com.xl.rpc.monitor.event.MonitorEvent;
 import com.xl.rpc.monitor.event.NodeInActiveEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by Caedmon on 2015/9/17.
  */
 public class RpcMonitorClientService implements IRpcMonitorClientService {
+    private static final Logger log= LoggerFactory.getLogger(RpcMonitorClientService.class);
     @Override
-    public void handleNodeEvent(NodeEvent event) {
+    public void handleNodeEvent(MonitorEvent event) {
         SimpleRpcClientApi clientApi=SimpleRpcClientApi.getInstance();
+        log.info("Handle monitor event:type={},event={}",event.getType(),event);
         IClusterServerManager serverManager=clientApi.getServerManager();
         if(serverManager==null){
             return;
@@ -29,8 +33,10 @@ public class RpcMonitorClientService implements IRpcMonitorClientService {
                 break;
             case CONFIG_UPDATED:
                 ConfigEvent configEvent=(ConfigEvent)event;
-                RpcMonitorClient.getInstance().getConfigMap().put(configEvent.getConfigKey(),configEvent.getConfigValue());
+
+                RpcMonitorClient.getInstance().setConfigMap(configEvent.getConfigMap());
                 break;
         }
+        RpcMonitorClient.getInstance().dispatchEvent(event);
     }
 }

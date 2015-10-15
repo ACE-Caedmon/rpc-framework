@@ -26,7 +26,7 @@ public class RemoteCallTest extends BasicTest{
         boolean nameOK=message.getUsername().equals(result.getUsername());
         boolean passwordOk=message.getPassword().equals(result.getPassword());
         Assert.assertEquals(true,nameOK&&passwordOk);
-        Thread.sleep(100000);
+        Thread.sleep(1000000);
     }
     @Test
     public void testEnum(){

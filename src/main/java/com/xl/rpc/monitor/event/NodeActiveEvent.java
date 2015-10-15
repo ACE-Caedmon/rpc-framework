@@ -3,7 +3,7 @@ package com.xl.rpc.monitor.event;
 /**
  * Created by Administrator on 2015/9/24.
  */
-public class NodeActiveEvent extends NodeEvent{
+public class NodeActiveEvent extends MonitorEvent {
     private String nodeKey;
     private String group;
     private String host;
@@ -42,5 +42,13 @@ public class NodeActiveEvent extends NodeEvent{
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("NodeActiveEvent{");
+        sb.append("nodeKey='").append(nodeKey).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }
