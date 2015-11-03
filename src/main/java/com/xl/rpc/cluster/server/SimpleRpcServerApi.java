@@ -131,13 +131,13 @@ public class SimpleRpcServerApi implements RpcServerApi {
     private void registerCenter(){
         try{
             monitorClient = RpcMonitorClient.getInstance();
-            monitorClient.setRecordRpcCall(true);
+            monitorClient.setRecordRpcCall(recordRpcCall);
             monitorClient.connect(this.monitorServerAddress);
             monitorClient.register(clusterNames, port);
-            log.info("Register center success:clusterNames={},port={}", clusterNames, port);
+            log.info("Rpc register to center success:clusterNames={},port={}", clusterNames, port);
         }catch (Exception e){
             e.printStackTrace();
-            log.error("Register rpc center error",e);
+            log.error("Rpc register to center error",e);
         }
     }
     @Override

@@ -40,7 +40,7 @@ public class ClusterServerManager implements IClusterServerManager {
             }
         }catch (Exception e){
             e.printStackTrace();
-            log.error("Register to center error",e);
+            log.error("Register to monitor error",e);
             return;
         }
 
@@ -50,7 +50,7 @@ public class ClusterServerManager implements IClusterServerManager {
         ServerNode serverNode=null;
         try{
             serverNode=ServerNode.build(group, host, port, this.rpcClientTemplate, interceptors);
-            log.error("Add server node success:address={}",serverNode.toString());
+            log.error("Add server node success:address={}",serverNode.getKey());
         }catch (Exception e){
             e.printStackTrace();
             log.error("Add server node error:address={}-{}:{}",group,host,port,e);
@@ -103,6 +103,9 @@ public class ClusterServerManager implements IClusterServerManager {
         ServerNode result= allServersMap.remove(key);
         if(result!=null){
             ClusterGroup group=clusterGroupMap.get(result.getClusterName());
+            if(group==null){
+                return;
+            }
             group.removeNode(key);
         }
     }

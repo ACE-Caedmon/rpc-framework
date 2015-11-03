@@ -29,7 +29,7 @@ public interface RpcClientApi {
      * @param params 消息内容
      * @return 返回的消息内容
      * */
-    <T> T syncRpcCall(String clusterName, String cmd, Class<T> resultType, Object... params) throws TimeoutException;
+    <T> T syncRpcCall(String clusterName, String cmd, Class<T> resultType, Object... params) throws Exception;
     /**
      * 远程调用,此方式一定是同步调用的
      * */

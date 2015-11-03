@@ -2,6 +2,7 @@ package com.xl.rpc.monitor.client;
 
 import com.xl.rpc.cluster.client.RpcClientTemplate;
 import com.xl.rpc.cluster.client.ServerNode;
+import com.xl.rpc.dispatch.RpcCallInfo;
 import com.xl.rpc.monitor.MonitorConstant;
 import com.xl.rpc.monitor.MonitorInformation;
 import com.xl.rpc.monitor.MonitorNode;
@@ -11,6 +12,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.ConnectException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -29,10 +31,11 @@ public class RpcMonitorClient {
     private static RpcMonitorClient instance=new RpcMonitorClient();
     private static final Logger log= LoggerFactory.getLogger(RpcMonitorClient.class);
     private volatile boolean connected;
-    private Map<String,List<Long>> callRecordMap=new HashMap<>();
+    private RpcCallInfo rpcCallInfo=new RpcCallInfo();
     private boolean recordRpcCall =false;
     private List<MonitorEventWatcher> watchers =new ArrayList<>();
-    private ScheduledExecutorService threadPool= Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+    private static final long RECONNECT_PERIOD=10000;
+    private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
             Thread t=new Thread(r);
@@ -75,14 +78,14 @@ public class RpcMonitorClient {
         return watchers;
     }
     public void dispatchEvent(MonitorEvent event){
-        log.debug("Dispatch event:type={},value={}",event.getType(),event);
+        log.debug("Rpc monitor client dispatch event:type={},value={}", event.getType(), event);
         for(MonitorEventWatcher watcher:watchers){
             watcher.process(event);
         }
     }
     public synchronized void connect(String monitorAddress) throws Exception{
         if(monitorAddress==null){
-            throw new NullPointerException("Monitor address not specified");
+            throw new NullPointerException("Monitor server address not specified");
         }
         if(!connected){
             this.monitorAddress =monitorAddress;
@@ -95,30 +98,50 @@ public class RpcMonitorClient {
             this.serverNode.getSession().setAttribute(MonitorNode.RPC_MONITOR_CLIENT,true);
             this.connected=true;
             if(this.heatBeatFuture==null||this.heatBeatFuture.isCancelled()){
-                this.heatBeatFuture=this.threadPool.scheduleAtFixedRate(new Runnable() {
+                this.heatBeatFuture=this.executorService.scheduleWithFixedDelay(new Runnable() {
                     @Override
                     public void run() {
-                        try{
-                            if(RpcMonitorClient.this.connected){
-                                MonitorInformation information=new MonitorInformation();
-                                information.setRentlyCallRecordMap(callRecordMap);
+                        if (!connected || !RpcMonitorClient.this.serverNode.isActive()) {
+                            do {
+                                try {
+                                    RpcMonitorClient.getInstance().reconnect();
+                                } catch (Exception e) {
+                                    if (e.getCause() instanceof ConnectException) {
+                                        log.error("Can not connect to monitor server {},may be monitor server is shutdown", RpcMonitorClient.getInstance().getMonitorAddress());
+                                    } else {
+                                        e.printStackTrace();
+                                    }
+                                } finally {
+                                    try {
+                                        Thread.sleep(RECONNECT_PERIOD);
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                        log.error("Thread Sleep error", e);
+                                    }
+                                }
+                            } while (!RpcMonitorClient.getInstance().isConnected());
+                        }
+                        try {
+                            if (RpcMonitorClient.this.connected) {
+                                MonitorInformation information = new MonitorInformation();
+                                information.setRpcCallInfo(RpcMonitorClient.this.rpcCallInfo);
                                 RpcMonitorClient.this.heartBeat(information);
                             }
-                        }catch (Exception e){
+                        } catch (Exception e) {
                             e.printStackTrace();
-                            log.error("Schedule heart beat task error",e);
+                            log.error("Rpc monitor client heart beat task error", e);
                         }
 
                     }
-                },1,10, TimeUnit.SECONDS);
-                log.info("Start schedule heat beat thread");
+                }, 1, 10, TimeUnit.SECONDS);
+                log.info("Rpc monitor start schedule heat beat thread");
             }
 
         }
 
     }
     public synchronized void reconnect() throws Exception{
-        log.info("Reconnect to monitor server {}",this.monitorAddress);
+        log.info("Rpc monitor client reconnect to monitor server {}",this.monitorAddress);
         connect(this.monitorAddress);
         if(this.groups!=null){
             register(this.groups, this.selfPort);
@@ -184,23 +207,18 @@ public class RpcMonitorClient {
     public void setConnected(boolean connected) {
         this.connected = connected;
     }
-
-    public Map<String, List<Long>> getCallRecordMap() {
-        return callRecordMap;
-    }
-
-    public void setCallRecordMap(Map<String, List<Long>> callRecordMap) {
-        this.callRecordMap = callRecordMap;
-    }
-    public void addRpcCallRecord(String cmd,long cost){
+    public void addRpcCallRecord(String cmd,long callTime,long cost){
         if(isRecordRpcCall()){
-            List<Long> costList=callRecordMap.get(cmd);
-            if(costList==null){
-                costList=new ArrayList<>();
-                callRecordMap.put(cmd,costList);
-            }
-            costList.add(cost);
+            rpcCallInfo.addRecord(cmd,callTime,cost);
         }
 
+    }
+
+    public String getMonitorAddress() {
+        return monitorAddress;
+    }
+
+    public ScheduledExecutorService getExecutorService() {
+        return executorService;
     }
 }

@@ -1,5 +1,8 @@
 package com.xl.rpc.monitor;
 
+import com.xl.rpc.dispatch.RpcCallInfo;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,21 +11,13 @@ import java.util.Map;
  * Created by Caedmon on 2015/9/17.
  */
 public class MonitorInformation {
-    private long callTimes;
-    private Map<String,List<Long>> rentlyCallRecordMap=new HashMap<>();
-    public long getCallTimes() {
-        return callTimes;
+    private RpcCallInfo rpcCallInfo;
+
+    public RpcCallInfo getRpcCallInfo() {
+        return rpcCallInfo;
     }
 
-    public void setCallTimes(long callTimes) {
-        this.callTimes = callTimes;
-    }
-
-    public Map<String, List<Long>> getRentlyCallRecordMap() {
-        return rentlyCallRecordMap;
-    }
-
-    public void setRentlyCallRecordMap(Map<String, List<Long>> rentlyCallRecordMap) {
-        this.rentlyCallRecordMap = rentlyCallRecordMap;
+    public void setRpcCallInfo(RpcCallInfo rpcCallInfo) {
+        this.rpcCallInfo = rpcCallInfo;
     }
 }

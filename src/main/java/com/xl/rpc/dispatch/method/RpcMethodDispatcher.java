@@ -81,7 +81,7 @@ public abstract class RpcMethodDispatcher {
                     long processStart=System.currentTimeMillis();
                     processClientRequest(session, packet);
                     long processEnd=System.currentTimeMillis();
-                    RpcMonitorClient.getInstance().addRpcCallRecord(packet.getCmd(),processEnd-processStart);
+                    RpcMonitorClient.getInstance().addRpcCallRecord(packet.getCmd(),System.currentTimeMillis(),processEnd-processStart);
                 }else{
                     processServerResponse(session, packet);
                 }

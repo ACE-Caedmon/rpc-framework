@@ -44,18 +44,17 @@ public class SimpleRpcClientApi implements RpcClientApi {
         //扫描接口，预加载生成接口代理
         try{
             List<Class> allClasses=ClassUtils.getClasssFromPackage(template.getScanPackage());
-            log.info("Scan all classes {}",allClasses.size());
             for(Class clazz:allClasses){
                 RpcControl rpcControl= ClassUtils.getAnnotation(clazz,RpcControl.class);
                 if(rpcControl!=null&&clazz.isInterface()){
                     String clusterName=rpcControl.value();
                     rpcCallProxyFactory.getRpcCallProxy(true, clazz);
-                    log.info("Create rpcCallProxy : clusterName = {},class = {}", clusterName,StringUtil.simpleClassName(clazz));
+                    log.info("Rpc create call proxy : clusterName = {},class = {}", clusterName,StringUtil.simpleClassName(clazz));
                 }
             }
         }catch (Exception e){
             e.printStackTrace();
-            log.error("Scan classes error:",e);
+            log.error("Rpc scan classes error:",e);
         }
     }
 
@@ -85,51 +84,14 @@ public class SimpleRpcClientApi implements RpcClientApi {
     @Override
     public void asyncRpcCall(String clusterName,String cmd,Object... content) {
         ServerNode node=serverManager.getOptimalServerNode(clusterName);
-        try{
-            node.asyncCall(cmd, null,content);
-        }catch (Exception e){
-            log.error("AsyncRpcCall error:server = {},cmd = {}",node.getKey(),cmd,e);
-            //重新选择节点重传
-            List<ServerNode> nodes=serverManager.getGroupByName(clusterName).getNodeList();
-            for(ServerNode activeNode:nodes){
-                try{
-                    activeNode.asyncCall(cmd,null, content);
-                }catch (Exception e1){
-                    log.error("AsyncRpcCall retry call error:clusterName = {},server = {},cmd = {}",clusterName,node.getKey(),cmd,e1);
-                    continue;
-                }
-            }
-        }
+        node.asyncCall(cmd, null,content);
     }
 
     @Override
-    public <T> T syncRpcCall(String clusterName, String cmd, Class<T> resultType,Object... params) throws TimeoutException{
+    public <T> T syncRpcCall(String clusterName, String cmd, Class<T> resultType,Object... params) throws Exception{
         ServerNode node=serverManager.getOptimalServerNode(clusterName);
-        try{
-            log.debug("ServerNode timeout={}", node.getSyncCallTimeout());
-            T result=node.syncCall(cmd, resultType, params);
-            return result;
-        }catch (Exception e){
-            e.printStackTrace();
-            if(e instanceof TimeoutException){
-                throw new TimeoutException("Sync rpc call error:server = "+node.getKey()+",cmd = "+cmd);
-            }
-            log.error("Sync rpc call error:clusterName = {},server = {},cmd = {}",clusterName,node.getKey(),cmd,e);
-            //重新选择节点重传,重试次数
-            List<ServerNode> nodes=serverManager.getGroupByName(clusterName).getNodeList();
-            final int retry=nodes.size()>=template.getRetryCount()?template.getRetryCount():nodes.size();
-            for(int i=0;i<retry;i++){
-                try{
-                    ServerNode activeNode=nodes.get(i);
-                    return activeNode.syncCall(cmd, resultType, params);
-                }catch (Exception e1){
-                    log.error("Sync rpc retry call error:clusterName = {},server = {},cmd = {}",clusterName,node.getKey(),cmd,e1);
-                    continue;
-                }
-            }
-
-        }
-        return null;
+        T result=node.syncCall(cmd, resultType, params);
+        return result;
     }
 
     @Override
@@ -165,7 +127,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         ServerNode node=serverManager.getServerNode(serverKey);
         if(node==null){
 
-            throw new NullPointerException("No server node exists:server = "+serverKey);
+            throw new NullPointerException("Rpc server node not exists:server = "+serverKey);
         }
         return node.syncCall(cmd, resultType, params);
     }
@@ -175,7 +137,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         String serverKey=clusterName+"-"+address;
         ServerNode node=serverManager.getServerNode(serverKey);
         if(node==null){
-            throw new NullPointerException("No server node exists:server = "+serverKey);
+            throw new NullPointerException("Rpc server node not exists:server = "+serverKey);
         }
         node.asyncCall(cmd,null, params);
     }
