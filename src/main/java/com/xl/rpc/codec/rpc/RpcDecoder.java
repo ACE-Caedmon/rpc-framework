@@ -26,7 +26,7 @@ import java.util.List;
         //版本号
         float version=buffer.readFloat();
         if(version!= EngineSettings.VERSION){
-            throw new VersionMisMatchException("The sender version is "+version+", the receiver is "+EngineSettings.VERSION);
+            throw new VersionMisMatchException("The sender version is "+version+", the receiver is "+EngineSettings.VERSION+","+ctx.channel());
         }
         //命令ID
         String cmd=buffer.readString();

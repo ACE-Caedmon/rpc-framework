@@ -1,6 +1,7 @@
 package com.xl.rpc.cluster.client;
 
 import com.xl.rpc.annotation.RpcControl;
+import com.xl.rpc.boot.EngineSettings;
 import com.xl.rpc.boot.RpcClientSocketEngine;
 import com.xl.rpc.codec.RpcPacket;
 import com.xl.rpc.dispatch.RpcMethodInterceptor;
@@ -77,7 +78,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
             }
         }
 
-        log.info("SimpleRpcClient bind OK !");
+        log.info("Rpc client bind success:version={}", EngineSettings.VERSION);
     }
 
 

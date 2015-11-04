@@ -17,5 +17,5 @@ public class EngineSettings {
 
     public String secretKey="ng-socket";
 
-    public static final float VERSION=1.2f;
+    public static final float VERSION=2.0f;
 }

@@ -1,5 +1,6 @@
 package com.xl.rpc.cluster.server;
 
+import com.xl.rpc.boot.EngineSettings;
 import com.xl.rpc.boot.ServerSettings;
 import com.xl.rpc.boot.ServerSocketEngine;
 import com.xl.rpc.boot.SocketEngine;
@@ -126,6 +127,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
             registerCenter();
         }
         setStarted(true);
+        log.info("Rpc server bind success:version={}", EngineSettings.VERSION);
     }
 
     private void registerCenter(){
