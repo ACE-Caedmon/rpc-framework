@@ -48,6 +48,9 @@ public class RpcMonitorServerService implements IRpcMonitorServerService {
     @Override
     public String heartBeat(ISession session,MonitorInformation information) {
         String nodeKey=session.getAttribute(MonitorNode.RPC_NODE_KEY);
+        if(nodeKey==null){
+            throw new IllegalStateException("Client must register first");
+        }
         MonitorNode node= monitorManager.getRpcNode(nodeKey);
         node.setActive(true);
         node.setLastActiveTime(System.currentTimeMillis());
