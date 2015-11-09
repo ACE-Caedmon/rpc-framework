@@ -153,7 +153,7 @@ public class DefaultPracticalBuffer implements PracticalBuffer {
 
 	@Override
 	public void writeJSON(Object bean) {
-		String json= JSONArray.toJSONString(bean, FEATURES);
+		String json= JSON.toJSONString(bean, FEATURES);
 		writeString(json);
 	}
 

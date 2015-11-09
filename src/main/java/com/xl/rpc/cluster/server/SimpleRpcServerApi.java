@@ -4,8 +4,7 @@ import com.xl.rpc.boot.EngineSettings;
 import com.xl.rpc.boot.ServerSettings;
 import com.xl.rpc.boot.ServerSocketEngine;
 import com.xl.rpc.boot.SocketEngine;
-import com.xl.rpc.monitor.MonitorConstant;
-import com.xl.rpc.monitor.client.RpcMonitorClient;
+import com.xl.rpc.monitor.client.SimpleRpcMonitorApi;
 import com.xl.rpc.dispatch.RpcMethodInterceptor;
 import com.xl.rpc.dispatch.method.BeanAccess;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
@@ -16,6 +15,7 @@ import com.xl.utils.PropertyKit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -24,20 +24,18 @@ import java.util.Properties;
  * Created by Administrator on 2015/7/15.
  */
 public class SimpleRpcServerApi implements RpcServerApi {
-    private RpcMonitorClient monitorClient;
     private String host;
     private int port=8001;
     private int bossThreadSize=Runtime.getRuntime().availableProcessors();
     private int workerThreadSize=Runtime.getRuntime().availableProcessors();
     private int cmdThreadSize=Runtime.getRuntime().availableProcessors();
     private String beanAccessClass= PrototypeBeanAccess.class.getName();
-    private String[] scanPackage=new String[]{""};
+    private List<String> scanPackage=new ArrayList<>();
     private String monitorServerAddress;
     private String[] clusterNames;
     private volatile boolean started;
     private ServerSocketEngine socketEngine;
     private BeanAccess beanAccess;
-    private boolean recordRpcCall;
     private static final Logger log= LoggerFactory.getLogger(SimpleRpcServerApi.class);
     public static final String RPC_SERVER_HOST_PROPERTY="rpc.server.host";
     public static final String RPC_SERVER_PORT_PROPERTY="rpc.server.port";
@@ -47,9 +45,8 @@ public class SimpleRpcServerApi implements RpcServerApi {
     public static final String RPC_SERVER_CLUSTER_NAMES="rpc.server.clusterNames";
     public static final String SCAN_PACKAGE_NAME_PROPERTY="rpc.server.scanPackage";
     public static final String BEAN_ACCESS_PROPERTY="rpc.server.beanAccessClass";
-    public static final String MONITOR_SERVER_ADDRESS ="rpc.monitor.address";
     public static final String JAVASSIT_WRITE_CLASS="javassit.writeClass";
-    public static final String MONITOR_RECORD_RPC_CALL= "rpc.monitor.recordRpcCall";
+
     public SimpleRpcServerApi(String configPath){
         Properties properties= PropertyKit.loadProperties(configPath);
         init(properties);
@@ -86,23 +83,15 @@ public class SimpleRpcServerApi implements RpcServerApi {
             throw new NullPointerException(RPC_SERVER_CLUSTER_NAMES+" not specified");
         }
         if(properties.containsKey(SCAN_PACKAGE_NAME_PROPERTY)){
-            this.scanPackage=properties.getProperty(SCAN_PACKAGE_NAME_PROPERTY).split(",");
+            String[] array=properties.getProperty(SCAN_PACKAGE_NAME_PROPERTY).split(",");
+            for(String pack:array){
+                this.scanPackage.add(pack);
+            }
         }else{
             throw new NullPointerException(SCAN_PACKAGE_NAME_PROPERTY+" not specified");
         }
         if(properties.containsKey(BEAN_ACCESS_PROPERTY)){
             this.beanAccessClass=properties.getProperty(BEAN_ACCESS_PROPERTY);
-        }
-        if(properties.containsKey(MONITOR_RECORD_RPC_CALL)){
-            this.recordRpcCall=Boolean.valueOf(properties.getProperty(MONITOR_RECORD_RPC_CALL));
-        }
-        if(properties.containsKey(MONITOR_SERVER_ADDRESS)){
-            this.monitorServerAddress =properties.getProperty(MONITOR_SERVER_ADDRESS);
-            int length=scanPackage.length;
-            String[] rpcScanPackage=new String[length+1];
-            System.arraycopy(scanPackage,0,rpcScanPackage,0,length);
-            rpcScanPackage[length]="com.xl.rpc.monitor.client";
-            scanPackage=rpcScanPackage;
         }
     }
     @Override
@@ -112,7 +101,9 @@ public class SimpleRpcServerApi implements RpcServerApi {
         settings.protocol= SocketEngine.TCP_PROTOCOL;
         settings.bossThreadSize=this.bossThreadSize;
         settings.workerThreadSize=this.workerThreadSize;
-        settings.scanPackage=this.scanPackage;
+        settings.scanPackage=new String[this.scanPackage.size()];
+        this.scanPackage.toArray(settings.scanPackage);
+        log.info("SimpleRpcServer scan package {}",Arrays.toString(settings.scanPackage));
         settings.cmdThreadSize=this.cmdThreadSize;
         try{
             this.beanAccess=(BeanAccess)(Class.forName(beanAccessClass).newInstance());
@@ -120,31 +111,16 @@ public class SimpleRpcServerApi implements RpcServerApi {
             throw new EngineException("BeanAccess init error",e);
         }
         RpcMethodDispatcher dispatcher=new ReflectRpcMethodDispatcher(beanAccess,cmdThreadSize);
-
         socketEngine=new ServerSocketEngine(settings,dispatcher);
-        socketEngine.start();
-        if(monitorServerAddress !=null&&!monitorServerAddress.trim().equals("")){
-            registerCenter();
-        }
-        setStarted(true);
-        log.info("Rpc server bind success:version={}", EngineSettings.VERSION);
-    }
-
-    private void registerCenter(){
         try{
-            monitorClient = RpcMonitorClient.getInstance();
-            monitorClient.setRecordRpcCall(recordRpcCall);
-            monitorClient.connect(this.monitorServerAddress);
-            monitorClient.register(clusterNames, port);
-            log.info("Rpc register to center success:clusterNames={},port={}", clusterNames, port);
+            socketEngine.start();
         }catch (Exception e){
             e.printStackTrace();
-            log.error("Rpc register to center error",e);
+            log.error("SimpleRpcServer socket engine start error",e);
         }
-    }
-    @Override
-    public String getHost() {
-        return this.monitorClient.getMonitorHost();
+
+        setStarted(true);
+        log.info("Rpc server bind success:version={}", EngineSettings.VERSION);
     }
 
     @Override
@@ -160,10 +136,6 @@ public class SimpleRpcServerApi implements RpcServerApi {
     @Override
     public String getMonitorServerAddress() {
         return this.monitorServerAddress;
-    }
-
-    public RpcMonitorClient getMonitorClient() {
-        return monitorClient;
     }
 
     @Override
@@ -183,5 +155,10 @@ public class SimpleRpcServerApi implements RpcServerApi {
     @Override
     public void addInterceptor(RpcMethodInterceptor interceptor) {
         socketEngine.addCmdMethodInterceptor(interceptor);
+    }
+
+    @Override
+    public void addScanPackage(String packageName) {
+        this.scanPackage.add(packageName);
     }
 }

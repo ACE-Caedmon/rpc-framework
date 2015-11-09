@@ -2,6 +2,7 @@ package com.xl.rpc.monitor.client;
 
 import com.xl.rpc.cluster.client.RpcClientTemplate;
 import com.xl.rpc.cluster.client.ServerNode;
+import com.xl.rpc.cluster.server.SimpleRpcServerApi;
 import com.xl.rpc.dispatch.RpcCallInfo;
 import com.xl.rpc.monitor.MonitorConstant;
 import com.xl.rpc.monitor.MonitorInformation;
@@ -19,22 +20,24 @@ import java.util.concurrent.*;
 /**
  * Created by Caedmon on 2015/9/24.
  */
-public class RpcMonitorClient {
+public class SimpleRpcMonitorApi {
     private String monitorAddress;
     private static RpcClientTemplate template;
     private ServerNode serverNode;
     private String monitorHost;
     private int monitorPort;
+    private String selfHost;
     private String[] groups;
     private int selfPort;
     private Map<String,String> configMap=new HashMap<>();
-    private static RpcMonitorClient instance=new RpcMonitorClient();
-    private static final Logger log= LoggerFactory.getLogger(RpcMonitorClient.class);
+    private static SimpleRpcMonitorApi instance=new SimpleRpcMonitorApi();
+    private static final Logger log= LoggerFactory.getLogger(SimpleRpcMonitorApi.class);
     private volatile boolean connected;
+    private volatile boolean registed;
     private RpcCallInfo rpcCallInfo=new RpcCallInfo();
-    private boolean recordRpcCall =false;
     private List<MonitorEventWatcher> watchers =new ArrayList<>();
     private static final long RECONNECT_PERIOD=10000;
+    public static final String MONITOR_SERVER_ADDRESS ="rpc.monitor.address";
     private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
@@ -56,19 +59,14 @@ public class RpcMonitorClient {
             }
         }));
     }
-    private RpcMonitorClient(){
+    private SimpleRpcMonitorApi(){
 
     }
-    public static RpcMonitorClient getInstance(){
+    public boolean isCompleted(){
+        return connected&&registed;
+    }
+    public static SimpleRpcMonitorApi getInstance(){
         return instance;
-    }
-
-    public boolean isRecordRpcCall() {
-        return recordRpcCall;
-    }
-
-    public void setRecordRpcCall(boolean recordRpcCall) {
-        this.recordRpcCall = recordRpcCall;
     }
 
     public void addEventWatcher(MonitorEventWatcher watcher){
@@ -83,10 +81,24 @@ public class RpcMonitorClient {
             watcher.process(event);
         }
     }
-    public synchronized void connect(String monitorAddress) throws Exception{
+    private void load(Properties properties){
+        this.monitorAddress=properties.getProperty(MONITOR_SERVER_ADDRESS);
         if(monitorAddress==null){
             throw new NullPointerException("Monitor server address not specified");
         }
+        this.groups=properties.getProperty(SimpleRpcServerApi.RPC_SERVER_CLUSTER_NAMES).split(",");
+        this.selfPort=Integer.parseInt(properties.getProperty(SimpleRpcServerApi.RPC_SERVER_PORT_PROPERTY));
+    }
+    public void bind(Properties properties){
+        load(properties);
+        try{
+            connect(monitorAddress);
+            register();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+    public synchronized void connect(String monitorAddress) throws Exception{
         if(!connected){
             this.monitorAddress =monitorAddress;
             String[] arr=monitorAddress.split(":");
@@ -94,57 +106,22 @@ public class RpcMonitorClient {
             this.monitorPort =Integer.parseInt(arr[1]);
             template.setScanPackage(new String[]{"com.xl.rpc.monitor.client"});
             SessionFire.getInstance().registerEvent(SessionFire.SessionEvent.SESSION_DISCONNECT, new ClientSessionEventHandler());
-            this.serverNode=ServerNode.build(MonitorConstant.MONITOR_SERVER_NAME, monitorHost, this.monitorPort,template,null);
-            this.serverNode.getSession().setAttribute(MonitorNode.RPC_MONITOR_CLIENT,true);
-            this.connected=true;
-            if(this.heatBeatFuture==null||this.heatBeatFuture.isCancelled()){
-                this.heatBeatFuture=this.executorService.scheduleWithFixedDelay(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!connected || !RpcMonitorClient.this.serverNode.isActive()) {
-                            do {
-                                try {
-                                    RpcMonitorClient.getInstance().reconnect();
-                                } catch (Exception e) {
-                                    if (e.getCause() instanceof ConnectException) {
-                                        log.error("Can not connect to monitor server {},may be monitor server is shutdown", RpcMonitorClient.getInstance().getMonitorAddress());
-                                    } else {
-                                        e.printStackTrace();
-                                    }
-                                } finally {
-                                    try {
-                                        Thread.sleep(RECONNECT_PERIOD);
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                        log.error("Thread Sleep error", e);
-                                    }
-                                }
-                            } while (!RpcMonitorClient.getInstance().isConnected());
-                        }
-                        try {
-                            if (RpcMonitorClient.this.connected) {
-                                MonitorInformation information = new MonitorInformation();
-                                information.setRpcCallInfo(RpcMonitorClient.this.rpcCallInfo);
-                                RpcMonitorClient.this.heartBeat(information);
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            log.error("Rpc monitor client heart beat task error", e);
-                        }
-
-                    }
-                }, 1, 10, TimeUnit.SECONDS);
-                log.info("Rpc monitor start schedule heat beat thread");
+            if(serverNode==null){
+                this.serverNode=ServerNode.build(MonitorConstant.MONITOR_SERVER_NAME, monitorHost, this.monitorPort,template,null);
+            }else{
+                this.serverNode.connect();
             }
+            this.serverNode.getSession().setAttribute(MonitorNode.RPC_MONITOR_CLIENT, true);
+            this.connected=true;
 
         }
 
     }
     public synchronized void reconnect() throws Exception{
-        log.info("Rpc monitor client reconnect to monitor server {}",this.monitorAddress);
+        log.info("Rpc monitor client connect to monitor server {}",this.monitorAddress);
         connect(this.monitorAddress);
         if(this.groups!=null){
-            register(this.groups, this.selfPort);
+            register();
         }
     }
     public String getMonitorHost(){
@@ -161,10 +138,49 @@ public class RpcMonitorClient {
     }
 
     
-    public void register(String[] groups, int selfPort) throws Exception {
-        this.groups=groups;
-        this.selfPort =selfPort;
-        serverNode.syncCall(MonitorConstant.MonitorServerMethod.REGISTER,Void.class,new Object[]{groups,selfPort});
+    public void register() throws Exception {
+        this.selfHost=serverNode.syncCall(MonitorConstant.MonitorServerMethod.REGISTER,String.class,new Object[]{groups,selfPort});
+        this.registed=true;
+        //注册成功才能开始心跳
+        if(this.heatBeatFuture==null||this.heatBeatFuture.isCancelled()){
+            this.heatBeatFuture=this.executorService.scheduleWithFixedDelay(new Runnable() {
+                @Override
+                public void run() {
+                    if (!connected || !SimpleRpcMonitorApi.this.serverNode.isActive()) {
+                        do {
+                            try {
+                                SimpleRpcMonitorApi.this.reconnect();
+                            } catch (Exception e) {
+                                if (e instanceof ConnectException) {
+                                    log.error("Can not connect to monitor server {},may be monitor server is shutdown", SimpleRpcMonitorApi.getInstance().getMonitorAddress());
+                                } else {
+                                    e.printStackTrace();
+                                }
+                            } finally {
+                                try {
+                                    Thread.sleep(RECONNECT_PERIOD);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    log.error("Thread Sleep error", e);
+                                }
+                            }
+                        } while (!SimpleRpcMonitorApi.getInstance().isConnected());
+                    }
+                    try {
+                        if (SimpleRpcMonitorApi.this.connected) {
+                            MonitorInformation information = new MonitorInformation();
+                            information.setRpcCallInfo(SimpleRpcMonitorApi.this.rpcCallInfo);
+                            SimpleRpcMonitorApi.this.heartBeat(information);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        log.error("Rpc monitor client heart beat task error", e);
+                    }
+
+                }
+            }, 1, 10, TimeUnit.SECONDS);
+            log.info("Rpc monitor start schedule heat beat thread");
+        }
     }
 
     
@@ -208,10 +224,7 @@ public class RpcMonitorClient {
         this.connected = connected;
     }
     public void addRpcCallRecord(String cmd,long callTime,long cost){
-        if(isRecordRpcCall()){
-            rpcCallInfo.addRecord(cmd,callTime,cost);
-        }
-
+        rpcCallInfo.addRecord(cmd,callTime,cost);
     }
 
     public String getMonitorAddress() {
@@ -220,5 +233,9 @@ public class RpcMonitorClient {
 
     public ScheduledExecutorService getExecutorService() {
         return executorService;
+    }
+
+    public String getSelfHost() {
+        return selfHost;
     }
 }

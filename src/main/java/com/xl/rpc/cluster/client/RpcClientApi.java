@@ -5,6 +5,7 @@ import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
 import com.xl.rpc.dispatch.method.RpcCallback;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -90,4 +91,8 @@ public interface RpcClientApi {
     boolean existsServerNode(String clusterName,String address);
 
     IClusterServerManager getServerManager();
+
+    void setRouteTable(Map<String,String> routeTable);
+
+    Map<String,String> getRouteTable();
 }

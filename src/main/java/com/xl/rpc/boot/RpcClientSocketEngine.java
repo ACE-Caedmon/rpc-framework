@@ -13,12 +13,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Created by Administrator on 2015/4/25.
+ * Created by Caedmon on 2015/4/25.
  */
 public class RpcClientSocketEngine extends SocketEngine{
     private static final Logger log= LoggerFactory.getLogger(RpcClientSocketEngine.class);
     private EventLoopGroup eventExecutors;
     private Channel channel;
+    private Bootstrap bootstrap;
     public RpcClientSocketEngine(TCPClientSettings settings, RpcMethodDispatcher rpcMethodDispatcher) {
         super(settings, rpcMethodDispatcher);
     }
@@ -27,29 +28,33 @@ public class RpcClientSocketEngine extends SocketEngine{
         this.settings=settings;
         this.eventExecutors=eventExecutors;
     }
+    public void connect() throws Exception{
+        this.connect(((TCPClientSettings) settings).host, settings.port);
+    }
+    public void connect(String host, int port) throws Exception{
+        log.info("RpcClientSocketEngine connect to {}:{}",host,port);
+        ChannelFuture f =this.bootstrap.connect(host,port);
+        ChannelFuture future=f.sync();
+        future.get();
+        this.channel=f.channel();
+
+    }
     @Override
-    public void startSocket() {
+    public void startSocket() throws Exception{
         EventLoopGroup workerGroup=null;
         if(this.eventExecutors==null){
             workerGroup= new NioEventLoopGroup(settings.workerThreadSize);
         }else{
             workerGroup=this.eventExecutors;
         }
-        try {
             ChannelInitializer<SocketChannel> initializer=new TCPClientInitializer(this.rpcMethodDispatcher,(TCPClientSettings)settings);
-            Bootstrap b = new Bootstrap();
-            b.group(workerGroup)
+            this.bootstrap= new Bootstrap();
+            this.bootstrap.group(workerGroup)
                     .channel(NioSocketChannel.class)
                     .handler(initializer);
-            ChannelFuture f =b.connect(((TCPClientSettings)settings).host,settings.port);
-            ChannelFuture future=f.sync();
-            future.get();
-            this.channel=f.channel();
+            connect();
             log.debug("Worker thread : {}",settings.workerThreadSize);
             log.debug("Logic thread:{}",settings.cmdThreadSize);
-        } catch (Exception e) {
-            throw new IllegalStateException("RpcClientSocketEngine start error:address="+((TCPClientSettings) settings).host+":"+settings.port,e);
-        }
         log.info("ClientSocketEngine connect to {} success!",((TCPClientSettings) settings).host+":"+settings.port);
     }
     public Channel getChannel(){

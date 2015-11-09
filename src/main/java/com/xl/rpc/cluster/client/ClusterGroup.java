@@ -17,8 +17,6 @@ public class ClusterGroup{
     private int callCount;
     private TreeMap<Long, ServerNode> hashNodes=new TreeMap<>();
     private final MurmurHash algo=new MurmurHash();
-    private Pattern tagPattern;
-    public static final Pattern DEFAULT_KEY_TAG_PATTERN = Pattern.compile("\\{(.+?)\\}");
     public final static int VIRTUAL_NUM = 160;
     public ClusterGroup(String clusterName){
         this.clusterName=clusterName;

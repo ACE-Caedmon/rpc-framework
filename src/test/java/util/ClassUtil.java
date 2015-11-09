@@ -17,4 +17,9 @@ public class ClassUtil {
             System.out.println(c.getName());
         }
     }
+    @Test
+    public void testReg() throws Exception{
+        String reg="tenant.dlkjfldjslf";
+        System.out.println(reg.matches("tenant.dlkjfldjslf"));
+    }
 }

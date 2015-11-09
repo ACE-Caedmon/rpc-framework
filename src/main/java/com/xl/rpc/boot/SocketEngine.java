@@ -37,12 +37,12 @@ public abstract class SocketEngine {
         }
         extensions.clear();
     }
-    public void start(){
+    public void start() throws Exception{
         loadControls();
         startSocket();
 
     }
-    public abstract void startSocket();
+    public abstract void startSocket() throws Exception;
     public void loadControls(){
         //生成
         try{

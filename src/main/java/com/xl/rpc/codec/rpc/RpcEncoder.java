@@ -2,12 +2,9 @@ package com.xl.rpc.codec.rpc;
 
 
 import com.xl.rpc.boot.EngineSettings;
-import com.xl.rpc.codec.BinaryPacket;
-import com.xl.rpc.codec.DefaultPracticalBuffer;
-import com.xl.rpc.codec.RpcPacket;
-import com.xl.rpc.codec.CodecKit;
+import com.xl.rpc.codec.*;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
@@ -24,7 +21,7 @@ public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
 			throws Exception {
         try{
 
-            ByteBuf buf=PooledByteBufAllocator.DEFAULT.buffer();
+            ByteBuf buf= Unpooled.buffer();
             DefaultPracticalBuffer data=new DefaultPracticalBuffer(buf);
             data.writeFloat(EngineSettings.VERSION);
             data.writeString(packet.getCmd());
@@ -41,7 +38,8 @@ public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
                 data.writeBoolean(isNull);
                 if(!isNull){
                     data.writeString(e.getClass().getName());
-                    data.writeBytes(CodecKit.encode(packet.getMsgType(),e));
+                    PracticalBuffer elementBuf=CodecKit.encode(packet.getMsgType(), e);
+                    data.writeBytes(elementBuf);
                 }
             }
             BinaryPacket nextPacket=new BinaryPacket(buf);

@@ -31,6 +31,7 @@ public class RpcClientTemplate {
     private static final String MONITOR_SERVICE_PROPERTY="rpc.client.monitorService";
     private static final String RPC_RETRY_COUNT_PROPERTY="rpc.client.retryCount";
     private static final String LB_PROPERTY ="rpc.client.lb";
+    private static final String RPC_CLIENT_NAME="rpc.client.name";
     private RpcClientTemplate(){
 
     }

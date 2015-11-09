@@ -33,10 +33,9 @@ public class RpcMonitorClientService implements IRpcMonitorClientService {
                 break;
             case CONFIG_UPDATED:
                 ConfigEvent configEvent=(ConfigEvent)event;
-
-                RpcMonitorClient.getInstance().setConfigMap(configEvent.getConfigMap());
+                SimpleRpcMonitorApi.getInstance().setConfigMap(configEvent.getConfigMap());
                 break;
         }
-        RpcMonitorClient.getInstance().dispatchEvent(event);
+        SimpleRpcMonitorApi.getInstance().dispatchEvent(event);
     }
 }

@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.*;
 import com.xl.rpc.cluster.server.RpcServerApi;
 import com.xl.rpc.internal.InternalContainer;
+import com.xl.rpc.monitor.client.SimpleRpcMonitorApi;
 import org.slf4j.Marker;
 import org.slf4j.helpers.MessageFormatter;
 
@@ -58,7 +59,7 @@ public class RpcLogEventVO implements ILoggingEvent,Serializable{
             ledo.serviceName=systemServiceName==null?"Not specify":systemServiceName;
         }
         if(rpcServerApi!=null&&rpcServerApi.isStarted()){
-            ledo.address=rpcServerApi.getHost()+":"+rpcServerApi.getPort();
+            ledo.address= SimpleRpcMonitorApi.getInstance().getSelfHost()+":"+rpcServerApi.getPort();
         }else{
             String systemAddress=System.getProperty("rpc.log.address");
             ledo.address=systemAddress==null?"Not specify":systemAddress;

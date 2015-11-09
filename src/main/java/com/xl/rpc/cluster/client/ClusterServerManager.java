@@ -1,7 +1,7 @@
 package com.xl.rpc.cluster.client;
 
 import com.xl.rpc.monitor.MonitorNode;
-import com.xl.rpc.monitor.client.RpcMonitorClient;
+import com.xl.rpc.monitor.client.SimpleRpcMonitorApi;
 import com.xl.rpc.dispatch.RpcMethodInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,50 +16,49 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ClusterServerManager implements IClusterServerManager {
     private Map<String,ClusterGroup> clusterGroupMap =new ConcurrentHashMap<>();
     private Map<String,ServerNode> allServersMap =new ConcurrentHashMap<>();
-    private RpcMonitorClient rpcMonitorClient;
-    private int callCount;
+    private SimpleRpcMonitorApi simpleRpcMonitorApi;
     private RpcClientTemplate rpcClientTemplate;
-    private String centerAddress;
     private static final Logger log= LoggerFactory.getLogger(ClusterServerManager.class);
     private List<RpcMethodInterceptor> interceptors;
-    public ClusterServerManager(String centerAddress,RpcClientTemplate rpcClientTemplate,List<RpcMethodInterceptor> interceptors){
-        this.centerAddress=centerAddress;
+    public ClusterServerManager(RpcClientTemplate rpcClientTemplate,List<RpcMethodInterceptor> interceptors){
         this.rpcClientTemplate=rpcClientTemplate;
-        rpcMonitorClient = RpcMonitorClient.getInstance();
-        try{
-            rpcMonitorClient.connect(centerAddress);
-            Map<String,MonitorNode> allNodes= rpcMonitorClient.getAllNodeMap();
-            for(MonitorNode n:allNodes.values()){
-                ClusterGroup group=getGroupByName(n.getGroup());
-                if(group==null){
-                    addClusterGroup(n.getGroup());
-                }
-                if(n.isActive()){
-                    addServerNode(n.getGroup(), n.getHost(), n.getPort());
-                }
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-            log.error("Register to monitor error",e);
-            return;
-        }
-
         this.interceptors=interceptors;
+        try {
+            loadAllRpcNodes();
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("Load all rpc nodes error",e);
+        }
+    }
+    public void loadAllRpcNodes() throws Exception{
+        this.simpleRpcMonitorApi=SimpleRpcMonitorApi.getInstance();
+        if(!this.simpleRpcMonitorApi.isCompleted()){
+            throw new IllegalStateException("You must start SimpleRpcMonitorApi first,otherwise you will not get the server node information");
+        }
+        Map<String,MonitorNode> allNodes= simpleRpcMonitorApi.getAllNodeMap();
+        log.info("Load rpc nodes from monitor server:{}",allNodes);
+        for(MonitorNode n:allNodes.values()){
+            ClusterGroup group=getGroupByName(n.getGroup());
+            if(group==null){
+                addClusterGroup(n.getGroup());
+            }
+            if(n.isActive()){
+                addServerNode(n.getGroup(), n.getHost(), n.getPort());
+            }
+        }
     }
     public void addServerNode(String group,String host,int port){
         ServerNode serverNode=null;
         try{
             serverNode=ServerNode.build(group, host, port, this.rpcClientTemplate, interceptors);
-            log.error("Add server node success:address={}",serverNode.getKey());
         }catch (Exception e){
             e.printStackTrace();
-            log.error("Add server node error:address={}-{}:{}",group,host,port,e);
+            log.error("Server manager create node error {}-{}:{}",group,host,port,e);
         }
         addNode(serverNode);
     }
     @Override
     public ServerNode getOptimalServerNode(String clusterName) {
-        callCount++;
         ClusterGroup clusterGroup=clusterGroupMap.get(clusterName);
         if(clusterGroup==null){
             clusterGroup=addClusterGroup(clusterName);
@@ -76,7 +75,7 @@ public class ClusterServerManager implements IClusterServerManager {
             group=new ClusterGroup(node.getClusterName());
         }
         group.addNode(node);
-        log.debug("Add server:address={}",node.getKey());
+        log.debug("Server manager add node {}",node.getKey());
     }
 
     @Override
@@ -107,6 +106,7 @@ public class ClusterServerManager implements IClusterServerManager {
                 return;
             }
             group.removeNode(key);
+            log.debug("Server manager delete node {}",key);
         }
     }
 
@@ -130,7 +130,7 @@ public class ClusterServerManager implements IClusterServerManager {
     public ClusterGroup addClusterGroup(String groupName) {
         ClusterGroup group=new ClusterGroup(groupName);
         clusterGroupMap.put(groupName,group);
-        log.info("Add group:{}",groupName);
+        log.info("Server manager add  group '{}'",groupName);
         return group;
     }
 }

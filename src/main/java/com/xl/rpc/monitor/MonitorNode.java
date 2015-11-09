@@ -45,7 +45,7 @@ public class MonitorNode {
         session.setAttribute(MonitorNode.RPC_NODE_KEY, getKey());
         renewNotifyNode();
         this.active=true;
-        log.info("Monitor client reconnect:{}",this.key);
+        log.info("Monitor client connect:{}", this.key);
     }
     public MonitorNode(ISession session, String group, String host, int port) throws Exception{
         this.session=session;
@@ -60,7 +60,12 @@ public class MonitorNode {
 
     }
     public void renewNotifyNode() throws Exception{
-        this.notifyNode =ServerNode.build(this.getGroup(), host, port,shareClientTemplate,null );
+        if(this.notifyNode==null){
+            this.notifyNode =ServerNode.build(this.getGroup(), host, port,shareClientTemplate,null );
+        }else{
+            this.notifyNode.connect();
+        }
+
     }
     public String getGroup() {
         return group;

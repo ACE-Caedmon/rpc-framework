@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created by Administrator on 2015/7/14.
+ * Created by Caedmon on 2015/7/14.
  */
 public class ServerNode implements Comparable<ServerNode>{
     private RpcClientSocketEngine socketEngine;
@@ -45,6 +45,9 @@ public class ServerNode implements Comparable<ServerNode>{
 
     public RpcClientSocketEngine getSocketEngine(){
         return socketEngine;
+    }
+    public void connect() throws Exception{
+        socketEngine.connect();
     }
     @Override
     public int compareTo(ServerNode o) {

@@ -7,12 +7,15 @@ import com.xl.rpc.annotation.RpcSession;
 import com.xl.rpc.codec.RpcPacket;
 import com.xl.rpc.exception.MethodInterceptException;
 import com.xl.rpc.internal.PrototypeBeanAccess;
+import com.xl.rpc.monitor.MonitorNode;
+import com.xl.rpc.monitor.server.MonitorManager;
 import com.xl.session.ISession;
 import com.xl.utils.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -61,14 +64,14 @@ public class ReflectRpcMethodDispatcher extends RpcMethodDispatcher {
                 return;
             }
             methodInvokerMap.put(cmd, invoker);
-            log.info("Rpc register method : {}=>{}.{}()",cmd,controlClass.getName(),method.getName());
+            log.info("{} Rpc register method : {}=>{}.{}()",this,cmd,controlClass.getName(),method.getName());
         }
     }
     public void processClientRequest(ISession session, RpcPacket packet){
         String cmd=packet.getCmd();
         MethodInvoker invoker= methodInvokerMap.get(cmd);
         if(invoker==null){
-            throw new IllegalArgumentException("Rpc no method exists:method = "+cmd+"-"+packet.getClassNames());
+            throw new IllegalArgumentException(this.toString()+" Rpc no method exists:method = "+cmd+"-"+packet.getClassNames());
         }
         Object[] requestParams=packet.getParams();
         Method method=invoker.getMethod();
@@ -90,6 +93,15 @@ public class ReflectRpcMethodDispatcher extends RpcMethodDispatcher {
         try{
             Object reason=before(session,packet);
             if (reason==null) {
+                try{
+                    for(MonitorNode node:MonitorManager.getInstance().getAllNodeList()){
+                        if(node.getSession()==session){
+                            log.debug("Rpc process client request:source={},cmd = {}", node.getKey(), cmd);
+                        }
+                    }
+                }catch (Throwable e){
+                    log.error("Get rpc command error cmd={}",cmd,e);
+                }
                 response=invoker.invoke(invokeParams);
                 after(session,packet);
             }else{
@@ -99,9 +111,14 @@ public class ReflectRpcMethodDispatcher extends RpcMethodDispatcher {
         }catch (Throwable e){
             log.error("Rpc process client request error:cmd = {}", cmd, e);
             notifyError(session, packet, e);
-            response=e;
+            if(e instanceof InvocationTargetException&&e.getCause()!=null){
+                response=e.getCause();
+            }else{
+                response=e;
+            }
+
         }
-        log.info("Rpc process client request success:cmd={}",cmd);
+        //log.info("Rpc process client request success:cmd={}",cmd);
         packet.setParams(new Object[]{response});
         packet.setClassNameArray(new String[]{responseType.getName()});
         responseToClient(session, packet);

@@ -41,4 +41,6 @@ public interface IClusterServerManager {
     ClusterGroup addClusterGroup(String clusterName);
 
     void addServerNode(String group,String host,int port);
+
+    void loadAllRpcNodes() throws Exception;
 }

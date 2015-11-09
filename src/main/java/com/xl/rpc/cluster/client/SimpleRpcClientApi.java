@@ -23,10 +23,10 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private static final Logger log= LoggerFactory.getLogger(SimpleRpcClientApi.class);
     private IClusterServerManager serverManager;
     private RpcClientTemplate template;
-    private String monitorAddress;
     private RpcCallProxyFactory rpcCallProxyFactory;
     private List<RpcMethodInterceptor> interceptors=new ArrayList<>();
     private static SimpleRpcClientApi instance=new SimpleRpcClientApi();
+    private Map<String,String> routeTable=new HashMap<>();
     private SimpleRpcClientApi(){
     }
     public SimpleRpcClientApi load(String config){
@@ -36,7 +36,6 @@ public class SimpleRpcClientApi implements RpcClientApi {
     }
     public SimpleRpcClientApi load(Properties properties){
         this.template=new RpcClientTemplate(properties);
-        this.monitorAddress=properties.getProperty("rpc.monitor.address");
         initComponents();
         return this;
     }
@@ -68,7 +67,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
     @Override
     public void bind() {
-        serverManager=new ClusterServerManager(monitorAddress,template,interceptors);
+        serverManager=new ClusterServerManager(template,interceptors);
         List<String> clusterNames=new ArrayList<>();
         if(template.getMonitorService()!=null){
             for(String s:template.getMonitorService()){
@@ -84,13 +83,13 @@ public class SimpleRpcClientApi implements RpcClientApi {
 
     @Override
     public void asyncRpcCall(String clusterName,String cmd,Object... content) {
-        ServerNode node=serverManager.getOptimalServerNode(clusterName);
-        node.asyncCall(cmd, null,content);
+        ServerNode node=getRouteServer(clusterName,cmd);
+        node.asyncCall(cmd, null, content);
     }
 
     @Override
     public <T> T syncRpcCall(String clusterName, String cmd, Class<T> resultType,Object... params) throws Exception{
-        ServerNode node=serverManager.getOptimalServerNode(clusterName);
+        ServerNode node=getRouteServer(clusterName,cmd);
         T result=node.syncCall(cmd, resultType, params);
         return result;
     }
@@ -140,7 +139,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         if(node==null){
             throw new NullPointerException("Rpc server node not exists:server = "+serverKey);
         }
-        node.asyncCall(cmd,null, params);
+        node.asyncCall(cmd, null, params);
     }
 
     @Override
@@ -191,5 +190,30 @@ public class SimpleRpcClientApi implements RpcClientApi {
     @Override
     public boolean existsServerNode(String clusterName, String address) {
         return serverManager.getServerNode(clusterName+"-"+address)!=null;
+    }
+
+    @Override
+    public Map<String, String> getRouteTable() {
+        return routeTable;
+    }
+
+    @Override
+    public void setRouteTable(Map<String, String> routeTable) {
+        this.routeTable = routeTable;
+    }
+    public ServerNode getRouteServer(String clusterName,String cmd){
+        ServerNode node=null;
+        for(String cmdRegex:routeTable.keySet()){
+            if(cmd.matches(cmdRegex)){
+                String serverKey=routeTable.get(cmd);
+                node=serverManager.getServerNode(serverKey);
+                log.debug("Rpc client route:{}=>{}",cmd,serverKey);
+                break;
+            }
+        }
+        if(node==null){
+            node=serverManager.getOptimalServerNode(clusterName);
+        }
+        return node;
     }
 }

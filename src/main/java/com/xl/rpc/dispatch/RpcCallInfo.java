@@ -1,19 +1,23 @@
 package com.xl.rpc.dispatch;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by Caedmon on 2015/10/16.
  */
 public class RpcCallInfo {
-    private Map<String,LinkedList<RpcCallRecord>> rpcCallRecordMap =new HashMap<>();
+    private Map<String,LinkedBlockingQueue<RpcCallRecord>> rpcCallRecordMap =new ConcurrentHashMap<>();
     private int maxRecordSize=DEFAULT_MAX_RECORD_SIZE;
     private static final int DEFAULT_MAX_RECORD_SIZE=100;
     private Map<String,AtomicInteger> callTimesMap=new HashMap<>();
+    private static final Logger log= LoggerFactory.getLogger(RpcCallInfo.class);
     public RpcCallInfo(int maxRecordSize){
         this.maxRecordSize=maxRecordSize;
     }
@@ -34,22 +38,29 @@ public class RpcCallInfo {
         rpcCallRecord.setCmd(cmd);
         rpcCallRecord.setCost(cost);
         rpcCallRecord.setCallTime(callTime);
-        LinkedList<RpcCallRecord> records= rpcCallRecordMap.get(cmd);
+        LinkedBlockingQueue<RpcCallRecord> records= rpcCallRecordMap.get(cmd);
         if(records==null){
-            records=new LinkedList<>();
+            records=new LinkedBlockingQueue<>();
             rpcCallRecordMap.put(cmd, records);
         }
-        while(records.size()>=maxRecordSize){
-            records.removeFirst();
+        try{
+            log.error("Record Size {}", records.size());
+            while(records.size()>=maxRecordSize){
+                records.poll();
+            }
+        }catch (NoSuchElementException e){
+            e.printStackTrace();
+            log.error("Poll record error",e);
+
         }
         records.add(rpcCallRecord);
     }
 
-    public Map<String, LinkedList<RpcCallRecord>> getRpcCallRecordMap() {
+    public Map<String, LinkedBlockingQueue<RpcCallRecord>> getRpcCallRecordMap() {
         return rpcCallRecordMap;
     }
 
-    public void setRpcCallRecordMap(Map<String, LinkedList<RpcCallRecord>> rpcCallRecordMap) {
+    public void setRpcCallRecordMap(Map<String, LinkedBlockingQueue<RpcCallRecord>> rpcCallRecordMap) {
         this.rpcCallRecordMap = rpcCallRecordMap;
     }
 
@@ -110,5 +121,19 @@ public class RpcCallInfo {
         }
     }
 
+    public static void main(String[] args) {
+        List<RpcCallRecord> list=new LinkedList<>();
+        RpcCallRecord record=new RpcCallRecord();
+        record.setCmd("test");
+        RpcCallRecord record2=new RpcCallRecord();
+        record2.setCmd("test2");
+        list.add(record);
+        list.add(record2);
+        String text= JSON.toJSONString(list,new SerializerFeature[]{SerializerFeature.WriteClassName});
+        System.out.println(text);
+        LinkedBlockingQueue<RpcCallRecord> result=JSON.parseObject(text, LinkedBlockingQueue.class);
+        System.out.println(result.poll().getCmd());
+        System.out.println(result.poll().getCmd());
+    }
 }
 

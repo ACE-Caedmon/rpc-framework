@@ -2,12 +2,10 @@ package common.server;
 
 import com.xl.rpc.annotation.RpcControl;
 import com.xl.rpc.annotation.RpcMethod;
-import com.xl.rpc.annotation.RpcRequest;
-import com.xl.rpc.annotation.RpcSession;
-import message.LoginProtoBuffer;
 import com.xl.session.ISession;
 import common.Command;
 import common.UserInfo;
+import message.LoginProtoBuffer;
 
 import java.util.List;
 import java.util.Map;
@@ -34,7 +32,7 @@ public interface IServerControl {
     @RpcMethod(Command.Test_Throwable)
     void testThrowable();
     @RpcMethod(Command.Test_MultipleParam)
-    UserInfo testMultipleParam(String userName,@RpcRequest String password);
+    UserInfo testMultipleParam(String userName,String password);
     @RpcMethod(Command.Test_NoParam)
     String testNoParam();
 

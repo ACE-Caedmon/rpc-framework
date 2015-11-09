@@ -205,7 +205,7 @@ public class MonitorManager {
 
     public void updateConfig(String configKey, String configValue) {
         configMap.put(configKey, configValue);
-        log.info("Update config:key={},config={}", configKey, configValue);
+        log.info("Monitor server update config:key={},config={}", configKey, configValue);
         Set<String> nodes=configBindMap.get(configKey);
         if(nodes!=null&&!nodes.isEmpty()){
             for(String nodeKey:nodes){

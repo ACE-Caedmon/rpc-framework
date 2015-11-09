@@ -1,5 +1,7 @@
 package com.xl.utils;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -8,6 +10,7 @@ import java.util.regex.Pattern;
  */
 public class SysPropertyConfig {
     private static Properties sysProperties=null;
+    private static Map<String,Object> attributeMap=new HashMap<>();
     private static final Pattern INTEGER_PATTERN = Pattern.compile("-?[0-9]+");
     public static final void doConfig(Properties properties){
         sysProperties=properties;
@@ -82,5 +85,14 @@ public class SysPropertyConfig {
             return def;
         }
         return Float.valueOf(value);
+    }
+    public static void setAttribute(String key,Object attribute){
+        attributeMap.put(key,attribute);
+    }
+    public static Object getAttribute(String key){
+        return attributeMap.get(key);
+    }
+    public static <T> T getAttribute(String key,Class<T> clazz){
+        return (T)attributeMap.get(key);
     }
 }

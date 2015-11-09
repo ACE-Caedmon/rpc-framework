@@ -6,7 +6,7 @@ import com.google.protobuf.MessageOrBuilder;
 import com.xl.rpc.annotation.MsgType;
 import com.xl.rpc.exception.CodecException;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class CodecKit {
     }
     public static PracticalBuffer encode(MsgType msgType,Object bean) throws Exception{
         msgType=getSuitableMsgType(msgType,bean.getClass());
-        ByteBuf buf= PooledByteBufAllocator.DEFAULT.buffer();
+        ByteBuf buf= Unpooled.buffer();
         PracticalBuffer buffer=new DefaultPracticalBuffer(buf);
         switch (msgType){
             case JSON:

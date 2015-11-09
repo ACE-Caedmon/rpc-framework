@@ -17,7 +17,7 @@ public interface IRpcMonitorServerService {
     @RpcMethod(MonitorConstant.MonitorServerMethod.GET_ALL_NODE_MAP)
     Map<String,MonitorNode> getAllNodeMap();
     @RpcMethod(MonitorConstant.MonitorServerMethod.REGISTER)
-    void register(ISession session,String[] groups, int port) throws Exception;
+    String register(ISession session,String[] groups, int port) throws Exception;
     @RpcMethod(MonitorConstant.MonitorServerMethod.DELETE)
     void deleteNode(String key);
     @RpcMethod(MonitorConstant.MonitorServerMethod.UPDATE_CONFIG)

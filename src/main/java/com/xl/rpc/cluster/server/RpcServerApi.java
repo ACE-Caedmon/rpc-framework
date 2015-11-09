@@ -10,11 +10,11 @@ import java.util.List;
  */
 public interface RpcServerApi {
     void bind();
-    String getHost();
     int getPort();
     List<String> getClusterNames();
     String getMonitorServerAddress();
     boolean isStarted();
     BeanAccess getBeanAccess();
     void addInterceptor(RpcMethodInterceptor interceptor);
+    void addScanPackage(String packageName);
 }
