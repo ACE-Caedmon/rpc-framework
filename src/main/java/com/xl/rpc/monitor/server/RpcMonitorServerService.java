@@ -30,9 +30,9 @@ public class RpcMonitorServerService implements IRpcMonitorServerService {
     }
 
     @Override
-    public String register(ISession session, String[] groups,int port) throws Exception{
-        monitorManager.register(session, groups, session.getClientHost(), port);
-        return session.getClientHost();
+    public MonitorNode register(ISession session, String[] groups,int port) throws Exception{
+
+        return monitorManager.register(session, groups, session.getClientHost(), port);
     }
 
     @Override

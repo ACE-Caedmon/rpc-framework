@@ -66,12 +66,13 @@ import java.util.List;
         String[] classNameArray=new String[classNameList.size()];
         classNameList.toArray(classNameArray);
         rpcPacket.setClassNameArray(classNameArray);
-        log.debug("Rpc decode :{}",rpcPacket.toString());
+        log.debug("Rpc decode {}:{}",ctx.channel(),rpcPacket.toString());
         out.add(rpcPacket);
     }
 
      @Override
      public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
          super.exceptionCaught(ctx, cause);
+         log.error("Exception Caught {}",ctx.channel(),cause);
      }
  }

@@ -1,12 +1,16 @@
 package com.xl.rpc.monitor.client;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.xl.rpc.cluster.client.RpcClientTemplate;
 import com.xl.rpc.cluster.client.ServerNode;
+import com.xl.rpc.cluster.client.SimpleRpcClientApi;
 import com.xl.rpc.cluster.server.SimpleRpcServerApi;
 import com.xl.rpc.dispatch.RpcCallInfo;
 import com.xl.rpc.monitor.MonitorConstant;
 import com.xl.rpc.monitor.MonitorInformation;
 import com.xl.rpc.monitor.MonitorNode;
+import com.xl.rpc.monitor.event.ConfigEvent;
 import com.xl.rpc.monitor.event.MonitorEvent;
 import com.xl.session.SessionFire;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -139,7 +143,9 @@ public class SimpleRpcMonitorApi {
 
     
     public void register() throws Exception {
-        this.selfHost=serverNode.syncCall(MonitorConstant.MonitorServerMethod.REGISTER,String.class,new Object[]{groups,selfPort});
+        MonitorNode registerNode=serverNode.syncCall(MonitorConstant.MonitorServerMethod.REGISTER,MonitorNode.class,new Object[]{groups,selfPort});
+        this.selfHost=registerNode.getHost();
+        SimpleRpcClientApi.getInstance().setRouteTable(registerNode.getRouteTable());
         this.registed=true;
         //注册成功才能开始心跳
         if(this.heatBeatFuture==null||this.heatBeatFuture.isCancelled()){

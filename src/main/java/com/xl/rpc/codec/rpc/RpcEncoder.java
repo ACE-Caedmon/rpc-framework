@@ -44,10 +44,10 @@ public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
             }
             BinaryPacket nextPacket=new BinaryPacket(buf);
             out.add(nextPacket);
-            log.debug("Rpc encode :{}",packet.toString());
-        }catch (Exception e){
+            log.debug("Rpc encode {}:{}",ctx.channel(),packet.toString());
+        }catch (Error e){
             e.printStackTrace();
-            log.error("Rpc encode error ",e);
+            log.error("Rpc encode error {}",ctx.channel(),e);
         }
 	}
 }

@@ -34,6 +34,13 @@ public class PropertyKit {
         }
         return suitableProperties;
     }
+    public static Properties parseProperties(String content) throws IOException {
+        InputStream inputStream=new ByteArrayInputStream(content.getBytes());
+        Properties properties=new Properties();
+        properties.load(inputStream);
+        inputStream.close();
+        return properties;
+    }
     public static Properties[] loadProperties(String...configs){
         Properties[] propertiesArray=new Properties[configs.length];
         for(int i=0;i<propertiesArray.length;i++){

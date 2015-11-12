@@ -1,5 +1,7 @@
 package com.xl.rpc.cluster.client;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.xl.rpc.annotation.RpcControl;
 import com.xl.rpc.boot.EngineSettings;
 import com.xl.rpc.boot.RpcClientSocketEngine;
@@ -7,6 +9,11 @@ import com.xl.rpc.codec.RpcPacket;
 import com.xl.rpc.dispatch.RpcMethodInterceptor;
 import com.xl.rpc.dispatch.method.AsyncRpcCallBack;
 import com.xl.rpc.dispatch.method.RpcCallback;
+import com.xl.rpc.monitor.client.MonitorEventWatcher;
+import com.xl.rpc.monitor.client.SimpleRpcMonitorApi;
+import com.xl.rpc.monitor.event.ConfigEvent;
+import com.xl.rpc.monitor.event.MonitorEvent;
+import com.xl.rpc.monitor.event.RouteEvent;
 import com.xl.utils.ClassUtils;
 import com.xl.utils.PropertyKit;
 import io.netty.util.internal.StringUtil;
@@ -26,7 +33,8 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private RpcCallProxyFactory rpcCallProxyFactory;
     private List<RpcMethodInterceptor> interceptors=new ArrayList<>();
     private static SimpleRpcClientApi instance=new SimpleRpcClientApi();
-    private Map<String,String> routeTable=new HashMap<>();
+    private Properties routeTable=new Properties();
+    private MonitorEventWatcher monitorEventWatcher;
     private SimpleRpcClientApi(){
     }
     public SimpleRpcClientApi load(String config){
@@ -56,6 +64,20 @@ public class SimpleRpcClientApi implements RpcClientApi {
             e.printStackTrace();
             log.error("Rpc scan classes error:",e);
         }
+        //监听路由表变更
+        this.monitorEventWatcher=new MonitorEventWatcher() {
+            @Override
+            public void process(MonitorEvent event) {
+                switch (event.getType()) {
+                    case ROUTE_UPDATED:
+                        RouteEvent routeEvent=(RouteEvent)event;
+                        setRouteTable(routeEvent.getRouteTable());
+                        break;
+                }
+
+            }
+        };
+        SimpleRpcMonitorApi.getInstance().addEventWatcher(this.monitorEventWatcher);
     }
 
 
@@ -148,7 +170,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
         node.asyncCall(cmd,callback,params);
     }
     public void asyncRpcCall4Fuse(String clusterName,String cmd, RpcCallback callback,Object[] logParams,Object... params){
-        ServerNode node=serverManager.getOptimalServerNode(clusterName);
+        ServerNode node=getRouteServer(clusterName,cmd);
         String logMessage="Fuse_RpcCall:address="+node.getKey()+",seq={},cmd={},ret ={},uin={},imei={},bsize={}";
         log.debug(logMessage,logParams);
         node.asyncCall(cmd, callback, params);
@@ -193,25 +215,31 @@ public class SimpleRpcClientApi implements RpcClientApi {
     }
 
     @Override
-    public Map<String, String> getRouteTable() {
+    public Properties getRouteTable() {
         return routeTable;
     }
 
     @Override
-    public void setRouteTable(Map<String, String> routeTable) {
+    public void setRouteTable(Properties routeTable) {
         this.routeTable = routeTable;
+        log.info("Reset route table {}",routeTable);
     }
     public ServerNode getRouteServer(String clusterName,String cmd){
         ServerNode node=null;
-        for(String cmdRegex:routeTable.keySet()){
-            if(cmd.matches(cmdRegex)){
-                String serverKey=routeTable.get(cmd);
+        for(Object cmdRegex:routeTable.keySet()){
+            if(cmd.matches(cmdRegex.toString())){
+                String serverKey=routeTable.getProperty(cmdRegex.toString());
                 node=serverManager.getServerNode(serverKey);
-                log.debug("Rpc client route:{}=>{}",cmd,serverKey);
+                if(node==null){
+                    log.error("No matched server node:cmdRegex={}",cmdRegex.toString());
+                }else{
+                    log.debug("Rpc client route:{}=>{}",cmd,serverKey);
+                }
                 break;
             }
         }
         if(node==null){
+            log.warn("Routing node is null,will auto chose optimal server node:cmd={} ",cmd);
             node=serverManager.getOptimalServerNode(clusterName);
         }
         return node;

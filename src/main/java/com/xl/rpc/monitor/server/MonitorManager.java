@@ -3,12 +3,10 @@ package com.xl.rpc.monitor.server;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.xl.rpc.cluster.client.ServerNode;
+import com.xl.rpc.exception.CannotDelActiveNodeException;
 import com.xl.rpc.monitor.MonitorNode;
 import com.xl.rpc.monitor.MonitorGroup;
-import com.xl.rpc.monitor.event.ConfigEvent;
-import com.xl.rpc.monitor.event.NodeActiveEvent;
-import com.xl.rpc.monitor.event.MonitorEvent;
-import com.xl.rpc.monitor.event.NodeInActiveEvent;
+import com.xl.rpc.monitor.event.*;
 import com.xl.session.ISession;
 import com.xl.utils.Util;
 import io.netty.util.AttributeKey;
@@ -97,34 +95,35 @@ public class MonitorManager {
     public Map<String, Set<String>> getConfigBindMap() {
         return configBindMap;
     }
-    public void register(ISession session,String[] groups, String host, int port) throws Exception{
-        List<MonitorNode> newNodeList=new ArrayList<>();
-        for(String group:groups){
-            String key=group+"-"+host+":"+port;
-            MonitorNode node=allNodeMap.get(key);
-            if (node!=null) {
-                ISession currentSession=node.getSession();
-                if(currentSession!=null&&currentSession.isActive()){
-                    throw new IllegalStateException("Node exists " + key);
-                }else{
-                    //重连
-                    node.reconnect(session);
-                    newNodeList.add(node);
-                    continue;
-                }
+    public MonitorNode register(ISession session,String[] groups, String host, int port) throws Exception{
+        String group=groups[0];
+        String key=group+"-"+host+":"+port;
+        MonitorNode node=allNodeMap.get(key);
+        if (node!=null) {
+            ISession currentSession=node.getSession();
+            if(currentSession!=null&&currentSession.isActive()){
+                throw new IllegalStateException("Node exists " + key);
+            }else{
+                //重连
+                node.reconnect(session);
             }
+        }else{
             node= MonitorNode.build(session, group, host, port);
             node.setActive(true);
             allNodeMap.put(node.getKey(), node);
             MonitorGroup monitorGroup =groupMap.get(group);
             if(monitorGroup ==null){
-                monitorGroup =new MonitorGroup();
-                monitorGroup.setKey(group);
+                synchronized (lock){
+                    if(monitorGroup==null){
+                        monitorGroup =new MonitorGroup();
+                        monitorGroup.setKey(group);
+                    }
+                }
+
             }
             monitorGroup.add(node);
             groupMap.put(group, monitorGroup);
-            newNodeList.add(node);
-            log.info("Rpc node register success:{}",node.getKey());
+            log.info("Rpc node register success:{}", node.getKey());
         }
         for(MonitorNode n: allNodeMap.values()){
             //不通知自己
@@ -134,25 +133,28 @@ public class MonitorManager {
             if(!n.isActive()){
                 continue;
             }
-            for(MonitorNode newNode:newNodeList){
-                NodeActiveEvent event=new NodeActiveEvent();
-                event.setNodeKey(newNode.getKey());
-                event.setGroup(newNode.getGroup());
-                event.setHost(newNode.getHost());
-                event.setPort(newNode.getPort());
-                n.notifyEvent(event);
-            }
-
+            NodeActiveEvent event=new NodeActiveEvent();
+            event.setNodeKey(node.getKey());
+            event.setGroup(node.getGroup());
+            event.setHost(node.getHost());
+            event.setPort(node.getPort());
+            n.notifyEvent(event);
         }
         save(SaveType.NODES);
-
-
-
+        return node;
     }
 
-    public void delete(String nodeKey) {
+    public MonitorNode delete(String nodeKey) {
         log.info("Delete monitor node:"+nodeKey);
-        MonitorNode node=allNodeMap.remove(nodeKey);
+        MonitorNode node=allNodeMap.get(nodeKey);
+        if(node==null){
+            return null;
+        }
+        //节点为活动状态不能删除
+        if(node.isActive()){
+            throw new CannotDelActiveNodeException("The monitor node "+nodeKey+" is active");
+        }
+        allNodeMap.remove(nodeKey);
         if(node!=null){
             String group=node.getGroup();
             MonitorGroup monitorGroup=groupMap.get(group);
@@ -164,6 +166,7 @@ public class MonitorManager {
         event.setNodeKey(nodeKey);
         notifyEventToAll(event);
         save(SaveType.NODES);
+        return node;
     }
     public void notifyEventToAll(MonitorEvent event){
         for(MonitorNode n:allNodeMap.values()){
@@ -221,7 +224,7 @@ public class MonitorManager {
     }
 
     public void updateConfigBind(String nodeKey, Set<String> configKeySet) {
-        log.info("Update config bind:nodeKey={},configKeySet={}",nodeKey,configKeySet);
+        log.info("Update config bind:nodeKey={},configKeySet={}", nodeKey, configKeySet);
         for(String configKey:configKeySet){
             Set<String> bindNodes = configBindMap.get(configKey);
             if (bindNodes == null) {
@@ -276,10 +279,9 @@ public class MonitorManager {
         }
         save(SaveType.NODES);
     }
-
     public void deleteConfig(String configKey){
         if(configKey!=null){
-            log.info("Delete config:{}",configKey);
+            log.info("Delete config:{}", configKey);
             Set<String> bindSet=configBindMap.get(configKey);
             if(bindSet==null||bindSet.isEmpty()){
                 configMap.remove(configKey);
@@ -290,6 +292,30 @@ public class MonitorManager {
         }
 
 
+    }
+
+    public void updateRouteTable(String nodeKey,String routeTableString) throws Exception{
+        log.info("Update route table:node={},content={}", nodeKey, routeTableString);
+        InputStream inputStream=new ByteArrayInputStream(routeTableString.getBytes());
+        Properties properties=new Properties();
+        properties.load(inputStream);
+        inputStream.close();
+        MonitorNode node=allNodeMap.get(nodeKey);
+        node.setRouteTable(properties);
+        RouteEvent event=new RouteEvent();
+        event.setRouteTable(properties);
+        node.notifyEvent(event);
+        save(SaveType.NODES);
+
+    }
+    public String showRouteTable(String nodeKey){
+        log.info("Show route table:node={}",nodeKey);
+        StringBuilder properties=new StringBuilder();
+        Properties routeTable=allNodeMap.get(nodeKey).getRouteTable();
+        for(Map.Entry<Object,Object> entry:routeTable.entrySet()){
+            properties.append(entry.getKey()).append("=").append(entry.getValue()).append("\r\n");
+        }
+        return properties.toString();
     }
     public Map<String,MonitorGroup> getGroupMap(){
         return groupMap;

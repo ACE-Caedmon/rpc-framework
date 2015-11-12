@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -29,6 +30,7 @@ public class MonitorNode {
     private transient ISession session;
     //MonitorServerr作为RpcServer的客户端连接
     private transient ServerNode notifyNode;
+    private Properties routeTable=new Properties();
     private static RpcClientTemplate shareClientTemplate=RpcClientTemplate.newDefault();
     private static final Logger log= LoggerFactory.getLogger(MonitorNode.class);
     public static final AttributeKey<String> RPC_NODE_KEY=new AttributeKey<>("RPC_NODE_KEY");
@@ -175,5 +177,13 @@ public class MonitorNode {
     public void setBindConfigKeySet(Set<String> bindConfigKeySet) {
         this.bindConfigKeySet = bindConfigKeySet;
 
+    }
+
+    public Properties getRouteTable() {
+        return routeTable;
+    }
+
+    public void setRouteTable(Properties routeTable) {
+        this.routeTable = routeTable;
     }
 }
