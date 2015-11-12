@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.xl.rpc.cluster.client.ServerNode;
 import com.xl.rpc.exception.CannotDelActiveNodeException;
+import com.xl.rpc.exception.ConfigBindNotReleaseException;
 import com.xl.rpc.monitor.MonitorNode;
 import com.xl.rpc.monitor.MonitorGroup;
 import com.xl.rpc.monitor.event.*;
@@ -26,11 +27,9 @@ import java.util.concurrent.TimeUnit;
 public class MonitorManager {
     public static final String NODE_DATA_FILE_NAME = "node.data";
     public static final String CONFIG_DATA_FILE_NAME = "config.data";
-    public static final String CONFIG_BIND_DATA_FILE_NAME = "configBind.data";
     private static final Logger log = LoggerFactory.getLogger(MonitorManager.class);
     private Map<String, MonitorNode> allNodeMap = new ConcurrentHashMap<>();
     private Map<String, String> configMap = new ConcurrentHashMap<>();
-    private Map<String, Set<String>> configBindMap = new ConcurrentHashMap<>();
     private static final SerializerFeature[] JSON_SERIALIZERFEATURES=new SerializerFeature[]{SerializerFeature.WriteClassName};
     private static final   MonitorManager instance=new MonitorManager();
     private Map<String,MonitorGroup> groupMap=new ConcurrentHashMap<>();
@@ -39,7 +38,7 @@ public class MonitorManager {
     private final ScheduledExecutorService threadPool= Executors.newScheduledThreadPool(1);
     private static final Object lock=new Object();
     private enum SaveType{
-        NODES,CONFIG,CONFIG_BIND;
+        NODES,CONFIG;
     }
     public static MonitorManager getInstance(){
         return instance;
@@ -50,14 +49,11 @@ public class MonitorManager {
         }
         String nodesText=null;
         String configText=null;
-        String configBindText=null;
         try{
             Util.ifNotExistCreate(DATA_DIR+ File.separator + NODE_DATA_FILE_NAME);
             Util.ifNotExistCreate(DATA_DIR + File.separator + CONFIG_DATA_FILE_NAME);
-            Util.ifNotExistCreate(DATA_DIR + File.separator + CONFIG_BIND_DATA_FILE_NAME);
             nodesText=Util.loadFromDisk(DATA_DIR + File.separator + NODE_DATA_FILE_NAME);
             configText =Util.loadFromDisk(DATA_DIR + File.separator + CONFIG_DATA_FILE_NAME);
-            configBindText=Util.loadFromDisk(DATA_DIR + File.separator + CONFIG_BIND_DATA_FILE_NAME);
         }catch (IOException e){
             throw new IllegalStateException("MonitorManager init error",e);
         }
@@ -71,9 +67,6 @@ public class MonitorManager {
         }
         if(configText!=null&&!configText.isEmpty()){
             this.configMap = JSON.parseObject(configText, ConcurrentHashMap.class);
-        }
-        if(configBindText!=null&&!configBindText.isEmpty()){
-            this.configBindMap = JSON.parseObject(configBindText, ConcurrentHashMap.class);
         }
         //先把所有节点状态重置为false
         for(MonitorNode node:allNodeMap.values()){
@@ -90,10 +83,6 @@ public class MonitorManager {
 
     public Map<String, String> getConfigMap() {
         return configMap;
-    }
-
-    public Map<String, Set<String>> getConfigBindMap() {
-        return configBindMap;
     }
     public MonitorNode register(ISession session,String[] groups, String host, int port) throws Exception{
         String group=groups[0];
@@ -186,10 +175,6 @@ public class MonitorManager {
                     Util.saveToDisk(text, DATA_DIR + File.separator + CONFIG_DATA_FILE_NAME);
 
                     break;
-                case CONFIG_BIND:
-                    text = JSON.toJSONString(configBindMap,JSON_SERIALIZERFEATURES);
-                    Util.saveToDisk(text, DATA_DIR + File.separator + CONFIG_BIND_DATA_FILE_NAME);
-                    break;
                 default:
                     break;
             }
@@ -209,15 +194,11 @@ public class MonitorManager {
     public void updateConfig(String configKey, String configValue) {
         configMap.put(configKey, configValue);
         log.info("Monitor server update config:key={},config={}", configKey, configValue);
-        Set<String> nodes=configBindMap.get(configKey);
-        if(nodes!=null&&!nodes.isEmpty()){
-            for(String nodeKey:nodes){
-                MonitorNode node= getRpcNode(nodeKey);
-                if(node!=null){
-                    ConfigEvent event=new ConfigEvent();
-                    event.addConfigEntity(configKey,configValue);
-                    node.notifyEvent(event);
-                }
+        for(MonitorNode node:getAllNodeMap().values()){
+            if(node.getBindConfigKeySet().contains(configKey)) {
+                ConfigEvent event = new ConfigEvent();
+                event.addConfigEntity(configKey, configValue);
+                node.notifyEvent(event);
             }
         }
         save(SaveType.CONFIG);
@@ -225,23 +206,14 @@ public class MonitorManager {
 
     public void updateConfigBind(String nodeKey, Set<String> configKeySet) {
         log.info("Update config bind:nodeKey={},configKeySet={}", nodeKey, configKeySet);
-        for(String configKey:configKeySet){
-            Set<String> bindNodes = configBindMap.get(configKey);
-            if (bindNodes == null) {
-                bindNodes = new HashSet<>();
-                configBindMap.put(configKey, bindNodes);
-            }
-            bindNodes.add(nodeKey);
-        }
         MonitorNode monitorNode=allNodeMap.get(nodeKey);
         monitorNode.setBindConfigKeySet(configKeySet);
         ConfigEvent configEvent=new ConfigEvent();
         for(String configKey:configKeySet){
-            String configValue= MonitorManager.getInstance().getConfig(configKey);
+            String configValue= getConfig(configKey);
             configEvent.addConfigEntity(configKey,configValue);
         }
         monitorNode.notifyEvent(configEvent);
-        save(SaveType.CONFIG_BIND);
         save(SaveType.NODES);
     }
 
@@ -282,12 +254,16 @@ public class MonitorManager {
     public void deleteConfig(String configKey){
         if(configKey!=null){
             log.info("Delete config:{}", configKey);
-            Set<String> bindSet=configBindMap.get(configKey);
-            if(bindSet==null||bindSet.isEmpty()){
-                configMap.remove(configKey);
-            }else{
-                throw new IllegalStateException("There is no release of configuration binding relationship:{}");
+            Set<String> nodeSet=new HashSet<>();
+            for(MonitorNode node:allNodeMap.values()){
+                if(node.getBindConfigKeySet().contains(configKey)){
+                    nodeSet.add(node.getKey());
+                }
             }
+            if(!nodeSet.isEmpty()){
+                throw new ConfigBindNotReleaseException("You must release the config bind first configKey="+configKey+",bindNodes="+nodeSet.toString());
+            }
+            configMap.remove(configKey);
             save(SaveType.CONFIG);
         }
 
