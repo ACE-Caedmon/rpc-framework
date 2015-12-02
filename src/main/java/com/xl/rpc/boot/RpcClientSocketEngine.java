@@ -32,7 +32,7 @@ public class RpcClientSocketEngine extends SocketEngine{
         this.connect(((TCPClientSettings) settings).host, settings.port);
     }
     public void connect(String host, int port) throws Exception{
-        log.info("RpcClientSocketEngine connect to {}:{}",host,port);
+        log.info("RpcClientSocketEngine connect to {}:{}", host, port);
         ChannelFuture f =this.bootstrap.connect(host,port);
         ChannelFuture future=f.sync();
         future.get();
@@ -47,14 +47,20 @@ public class RpcClientSocketEngine extends SocketEngine{
         }else{
             workerGroup=this.eventExecutors;
         }
-            ChannelInitializer<SocketChannel> initializer=new TCPClientInitializer(this.rpcMethodDispatcher,(TCPClientSettings)settings);
-            this.bootstrap= new Bootstrap();
-            this.bootstrap.group(workerGroup)
-                    .channel(NioSocketChannel.class)
-                    .handler(initializer);
+        ChannelInitializer<SocketChannel> initializer=new TCPClientInitializer(this.rpcMethodDispatcher,(TCPClientSettings)settings);
+        this.bootstrap= new Bootstrap();
+        this.bootstrap.group(workerGroup)
+                .channel(NioSocketChannel.class)
+                .handler(initializer);
+        try{
             connect();
-            log.debug("Worker thread : {}",settings.workerThreadSize);
-            log.debug("Logic thread:{}",settings.cmdThreadSize);
+        }catch (Exception e){
+            log.info("ClientSocketEngine connect to {} error!",((TCPClientSettings) settings).host+":"+settings.port);
+            throw e;
+        }
+
+        log.debug("Worker thread : {}",settings.workerThreadSize);
+        log.debug("Logic thread:{}",settings.cmdThreadSize);
         log.info("ClientSocketEngine connect to {} success!",((TCPClientSettings) settings).host+":"+settings.port);
     }
     public Channel getChannel(){

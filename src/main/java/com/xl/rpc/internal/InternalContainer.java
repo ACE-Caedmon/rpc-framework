@@ -22,23 +22,16 @@ public class InternalContainer {
     private RpcClientApi rpcClientApi;
     private RpcServerApi rpcServerApi;
     private ApplicationContext springContext;
+    private Properties properties;
     private InternalContainer() {
 
     }
     public static InternalContainer getInstance(){
         return instance;
     }
-    public synchronized void startRpcMonitorClient(Properties properties){
-        if(this.rpcMonitorApi==null){
-            this.rpcMonitorApi=SimpleRpcMonitorApi.getInstance();
-            rpcMonitorApi.bind(properties);
-        }
-    }
-    public synchronized void startRpcClient(Properties properties){
-        if(this.rpcClientApi==null){
-            this.rpcClientApi=SimpleRpcClientApi.getInstance().load(properties);
-            this.rpcClientApi.bind();
-        }
+    public synchronized void startRpc(String config){
+        Properties properties=PropertyKit.loadProperties(config);
+        startRpc(properties);
     }
     public synchronized void startRpcServer(Properties properties){
         if(this.rpcServerApi==null){
@@ -48,20 +41,25 @@ public class InternalContainer {
             this.rpcServerApi.bind();
         }
     }
-    public synchronized void startRpcClient(String config){
-        Properties properties=PropertyKit.getProperties(config);
-        startRpcClient(properties);
-    }
     public synchronized void startRpc(Properties properties){
-        startRpcServer(properties);
-        startRpcMonitorClient(properties);
-        startRpcClient(properties);
-
-    }
-    public synchronized void startRpcServer(String config){
-        if(this.rpcServerApi==null){
-            startRpcServer(PropertyKit.getProperties(config));
+        if(this.properties==null){
+            this.properties=properties;
         }
+        if(this.rpcServerApi==null){
+            this.rpcServerApi=new SimpleRpcServerApi(properties);
+            //添加monitor的扫描包
+            this.rpcServerApi.addScanPackage("com.xl.rpc.monitor.client");
+            this.rpcServerApi.bind();
+        }
+        if(this.rpcMonitorApi==null){
+            this.rpcMonitorApi=SimpleRpcMonitorApi.getInstance();
+            rpcMonitorApi.bind(properties);
+        }
+        if(this.rpcClientApi==null){
+            this.rpcClientApi=SimpleRpcClientApi.getInstance().load(properties);
+            this.rpcClientApi.bind();
+        }
+
     }
     public synchronized void initSpringContext(String activeProfile,String... config){
         if(springContext==null){

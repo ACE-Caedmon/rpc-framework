@@ -19,8 +19,7 @@ public class BasicTest {
     public void init(){
         SysPropertyConfig.doConfig(PropertyKit.getProperties("rpc.properties"));
         InternalContainer container=InternalContainer.getInstance();
-        container.startRpcServer(SysPropertyConfig.getProperties());
-        container.startRpcClient(SysPropertyConfig.getProperties());
+        container.startRpc(SysPropertyConfig.getProperties());
         syncServerControl =container.getSyncRemoteCallProxy(IServerControl.class);
         asyncServerControl=container.getAsyncRemoteCallProxy(IServerControl.class);
         IRpcMonitorClientService =container.getSyncRemoteCallProxy(IRpcMonitorClientService.class);

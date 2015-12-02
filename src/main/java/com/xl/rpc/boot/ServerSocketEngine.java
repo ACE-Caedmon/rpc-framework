@@ -30,8 +30,7 @@ public class ServerSocketEngine extends SocketEngine{
     /**
      * 启动网络服务
      * */
-    public void startSocket(){
-        log.info("ServerSocketEngine Init!");
+    public void startSocket() throws Exception{
         final EventLoopGroup bossGroup = new NioEventLoopGroup(settings.bossThreadSize);
         final EventLoopGroup workerGroup = new NioEventLoopGroup(settings.workerThreadSize);
         try {
@@ -50,19 +49,18 @@ public class ServerSocketEngine extends SocketEngine{
                     .childHandler(initializer);
             ChannelFuture f =  b.bind(settings.port).sync();
             log.info("Boss thread : {}",settings.bossThreadSize);
-            log.info("Worker thread : {}",settings.workerThreadSize);
-            log.info("Logic thread:{}",settings.cmdThreadSize);
-            log.info("Socket port :{}",settings.port);
+            log.info("Worker thread : {}", settings.workerThreadSize);
+            log.info("Logic thread:{}", settings.cmdThreadSize);
+            log.info("Socket port :{}", settings.port);
 
             //f.channel().closeFuture().sync();
         } catch (Exception e) {
-            e.printStackTrace();
             if(log.isErrorEnabled()){
-                log.error("<<<<<<<ServerSocketEngine Start Error!>>>>>>", e);
+                log.error("ServerSocketEngine Start Error:port={}",this.settings.port,e);
             }
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
-            return;
+            throw  e;
         }
         log.info("ServerSocketEngine Start OK!");
     }

@@ -10,4 +10,5 @@ import java.lang.annotation.*;
 @Documented
 public @interface RpcMethod {
     String value();
+    float version() default 1.0f;
 }
