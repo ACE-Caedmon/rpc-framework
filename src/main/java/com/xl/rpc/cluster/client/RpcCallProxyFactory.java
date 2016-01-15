@@ -10,6 +10,6 @@ public interface RpcCallProxyFactory {
         T syncProxy;
         T asyncProxy;
     }
-    <T> T getRpcCallProxy(boolean sync,Class<T> clazz);
+    <T> T getRpcCallProxy(boolean sync, Class<T> clazz);
     <T> CallProxyEntry<T> createCallProxyEntry(Class<T> clazz);
 }

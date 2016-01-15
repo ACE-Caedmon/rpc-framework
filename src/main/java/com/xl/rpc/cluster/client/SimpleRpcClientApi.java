@@ -35,6 +35,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
     private static SimpleRpcClientApi instance=new SimpleRpcClientApi();
     private Properties routeTable=new Properties();
     private MonitorEventWatcher monitorEventWatcher;
+    private List<Class> rpcControlClassList=new ArrayList<>(100);
     private SimpleRpcClientApi(){
     }
     public SimpleRpcClientApi load(String config){
@@ -57,6 +58,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
                 if(rpcControl!=null&&clazz.isInterface()){
                     String clusterName=rpcControl.value();
                     rpcCallProxyFactory.getRpcCallProxy(true, clazz);
+                    rpcControlClassList.add(clazz);
                     log.info("Rpc create call proxy : clusterName = {},class = {}", clusterName,StringUtil.simpleClassName(clazz));
                 }
             }
@@ -95,7 +97,7 @@ public class SimpleRpcClientApi implements RpcClientApi {
             for(String s:template.getMonitorService()){
                 clusterNames.add(s);
                 serverManager.addClusterGroup(s);
-                log.info("Zookeeper add monitor service :clusterName = {}",s);
+                log.info("Add monitor service :clusterName = {}",s);
             }
         }
 
@@ -243,5 +245,9 @@ public class SimpleRpcClientApi implements RpcClientApi {
             node=serverManager.getOptimalServerNode(clusterName);
         }
         return node;
+    }
+
+    public List<Class> getRpcControlClassList() {
+        return rpcControlClassList;
     }
 }

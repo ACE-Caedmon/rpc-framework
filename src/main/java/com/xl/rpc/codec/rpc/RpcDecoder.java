@@ -4,6 +4,7 @@ import com.xl.rpc.annotation.MsgType;
 import com.xl.rpc.boot.EngineSettings;
 import com.xl.rpc.codec.*;
 import com.xl.rpc.exception.VersionMisMatchException;
+import com.xl.rpc.monitor.MonitorConstant;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import org.slf4j.Logger;
@@ -66,7 +67,9 @@ import java.util.List;
         String[] classNameArray=new String[classNameList.size()];
         classNameList.toArray(classNameArray);
         rpcPacket.setClassNameArray(classNameArray);
-        log.debug("Rpc decode {}:{}",ctx.channel(),rpcPacket.toString());
+        if(!cmd.equals(MonitorConstant.MonitorServerMethod.HEART_BEAT)){
+            log.debug("Rpc decode {}:{}", ctx.channel(), rpcPacket.toString());
+        }
         out.add(rpcPacket);
     }
 

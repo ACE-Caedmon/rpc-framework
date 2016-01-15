@@ -43,8 +43,9 @@ public class MonitorManager {
     public static MonitorManager getInstance(){
         return instance;
     }
-    private MonitorManager(){
+    public void start(){
         if(started){
+            log.warn("MonitorManager has already started");
             return;
         }
         String nodesText=null;
@@ -75,6 +76,9 @@ public class MonitorManager {
         threadPool.scheduleAtFixedRate(new MonitorTask(),0,MonitorTask.TIME_OUT_PERIOD, TimeUnit.SECONDS);
         started=true;
         log.info("Init monitor server data");
+    }
+    private MonitorManager(){
+
     }
 
     public Map<String, MonitorNode> getAllNodeMap() {

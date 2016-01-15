@@ -124,5 +124,7 @@ public class ReflectRpcMethodDispatcher extends RpcMethodDispatcher {
         responseToClient(session, packet);
     }
 
-
+    public Map<String, MethodInvoker> getMethodInvokerMap() {
+        return methodInvokerMap;
+    }
 }

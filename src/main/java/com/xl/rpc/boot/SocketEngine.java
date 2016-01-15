@@ -1,11 +1,9 @@
 package com.xl.rpc.boot;
 
 import com.xl.rpc.annotation.RpcControl;
-import com.xl.rpc.annotation.Extension;
 import com.xl.rpc.dispatch.RpcMethodInterceptor;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xl.utils.ClassUtils;
-import io.netty.util.internal.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,12 +47,7 @@ public abstract class SocketEngine {
             String[] scanPackage=settings.scanPackage;
             List<Class> allClasses=ClassUtils.getClasssFromPackage(scanPackage);
             for(Class clazz:allClasses){
-                if(ClassUtils.hasAnnotation(clazz,Extension.class)){
-                    ModuleExtension extension=(ModuleExtension)clazz.newInstance();
-                    extensions.add(extension);
-                    log.info("Load extension:{}", StringUtil.simpleClassName(extension));
-                    extension.init();
-                }
+
                 Class[] controlInterfaceList=clazz.getInterfaces();
                 if(!clazz.isInterface()){
                     for(Class controlInterface:controlInterfaceList){

@@ -3,6 +3,7 @@ package com.xl.rpc.codec.rpc;
 
 import com.xl.rpc.boot.EngineSettings;
 import com.xl.rpc.codec.*;
+import com.xl.rpc.monitor.MonitorConstant;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -44,7 +45,9 @@ public class RpcEncoder extends MessageToMessageEncoder<RpcPacket> {
             }
             BinaryPacket nextPacket=new BinaryPacket(buf);
             out.add(nextPacket);
-            log.debug("Rpc encode {}:{}",ctx.channel(),packet.toString());
+            if(!packet.getCmd().equals(MonitorConstant.MonitorServerMethod.HEART_BEAT)) {
+                log.debug("Rpc encode {}:{}", ctx.channel(), packet.toString());
+            }
         }catch (Error e){
             e.printStackTrace();
             log.error("Rpc encode error {}",ctx.channel(),e);

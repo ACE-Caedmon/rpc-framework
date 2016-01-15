@@ -44,7 +44,6 @@ public class RpcCallInfo {
             rpcCallRecordMap.put(cmd, records);
         }
         try{
-            log.error("Record Size {}", records.size());
             while(records.size()>=maxRecordSize){
                 records.poll();
             }

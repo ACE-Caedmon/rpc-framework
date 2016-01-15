@@ -1,7 +1,5 @@
 package com.xl.rpc.monitor.client;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
 import com.xl.rpc.cluster.client.RpcClientTemplate;
 import com.xl.rpc.cluster.client.ServerNode;
 import com.xl.rpc.cluster.client.SimpleRpcClientApi;
@@ -10,14 +8,15 @@ import com.xl.rpc.dispatch.RpcCallInfo;
 import com.xl.rpc.monitor.MonitorConstant;
 import com.xl.rpc.monitor.MonitorInformation;
 import com.xl.rpc.monitor.MonitorNode;
-import com.xl.rpc.monitor.event.ConfigEvent;
 import com.xl.rpc.monitor.event.MonitorEvent;
 import com.xl.session.SessionFire;
+import com.xl.utils.NetworkUtil;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
+import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -42,6 +41,7 @@ public class SimpleRpcMonitorApi {
     private List<MonitorEventWatcher> watchers =new ArrayList<>();
     private static final long RECONNECT_PERIOD=10000;
     public static final String MONITOR_SERVER_ADDRESS ="rpc.monitor.address";
+    public static final String MONITOR_AUTO_LOCAL_HOST ="rpc.monitor.auto.local.host";
     private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
@@ -85,12 +85,22 @@ public class SimpleRpcMonitorApi {
             watcher.process(event);
         }
     }
+
     private void load(Properties properties){
         this.monitorAddress=properties.getProperty(MONITOR_SERVER_ADDRESS);
         if(monitorAddress==null){
             throw new NullPointerException("Monitor server address not specified");
         }
         this.groups=properties.getProperty(SimpleRpcServerApi.RPC_SERVER_CLUSTER_NAMES).split(",");
+        String autoHost=properties.getProperty(MONITOR_AUTO_LOCAL_HOST);
+        if(null!=autoHost&&Boolean.valueOf(autoHost)){
+            try{
+                this.selfHost= NetworkUtil.getLocalHost();
+            }catch (SocketException e){
+                e.printStackTrace();
+                this.selfHost=null;
+            }
+        }
         this.selfPort=Integer.parseInt(properties.getProperty(SimpleRpcServerApi.RPC_SERVER_PORT_PROPERTY));
     }
     public void bind(Properties properties){
@@ -141,10 +151,20 @@ public class SimpleRpcMonitorApi {
         return serverNode.syncCall(MonitorConstant.MonitorServerMethod.GET_ALL_NODE_MAP,Map.class);
     }
 
-    
     public void register() throws Exception {
-        MonitorNode registerNode=serverNode.syncCall(MonitorConstant.MonitorServerMethod.REGISTER,MonitorNode.class,new Object[]{groups,selfPort});
-        this.selfHost=registerNode.getHost();
+        MonitorNode registerNode=null;
+        //
+        if(this.selfHost!=null){
+            registerNode=serverNode.syncCall(MonitorConstant.MonitorServerMethod.REGISTER_WITH_HOST,
+                    MonitorNode.class,new Object[]{
+                    groups,this.selfHost,selfPort
+            });
+        }else{
+            registerNode=serverNode.syncCall(MonitorConstant.MonitorServerMethod.REGISTER,MonitorNode.class,new Object[]{groups,selfPort});
+            this.selfHost=registerNode.getHost();
+        }
+
+
         SimpleRpcClientApi.getInstance().setRouteTable(registerNode.getRouteTable());
         this.registed=true;
         //注册成功才能开始心跳

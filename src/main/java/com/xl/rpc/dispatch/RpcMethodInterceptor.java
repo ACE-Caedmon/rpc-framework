@@ -9,5 +9,5 @@ import com.xl.session.ISession;
 public interface RpcMethodInterceptor {
     boolean beforeExecuteCmd(ISession session, RpcPacket packet);
     void afterExecuteCmd(ISession session, RpcPacket packet);
-    void exceptionCaught(ISession session,RpcPacket packet,Throwable cause);
+    void exceptionCaught(ISession session, RpcPacket packet, Throwable cause);
 }

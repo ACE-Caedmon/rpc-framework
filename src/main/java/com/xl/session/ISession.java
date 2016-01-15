@@ -84,10 +84,10 @@ public interface ISession {
 	 * */
 	void clear();
 	Future<?> writeAndFlush(RpcPacket packet);
-	void asyncRpcSend(RpcPacket packet,RpcCallback callback) ;
+	void asyncRpcSend(RpcPacket packet, RpcCallback callback) ;
 	/**
 	 * 发送同步消息，并等待结果返回
 	 * @return 返回结果
 	 * */
-	<T> T syncRpcSend(RpcPacket packet,Class<T> resultType,long timeout,TimeUnit unit)throws InterruptedException,ExecutionException, TimeoutException;
+	<T> T syncRpcSend(RpcPacket packet, Class<T> resultType, long timeout, TimeUnit unit)throws InterruptedException,ExecutionException, TimeoutException;
 }

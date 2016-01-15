@@ -14,7 +14,7 @@ public class SyncMethodExecutor extends NoOpMethodExecutor {
     private static final Logger log= LoggerFactory.getLogger(SyncMethodExecutor.class);
     @Override
     public void execute(ISession session, RpcPacket packet) {
-        log.debug("Sync method execute:cmd = {}",packet.getCmd());
+        //log.debug("Sync method execute:cmd = {}",packet.getCmd());
         //根据消息ID查找Future
         SyncRpcCallBack callBack=session.getAttribute(Session.SYNC_CALLBACK_MAP).get(packet.getUuid());
         if(callBack!=null){

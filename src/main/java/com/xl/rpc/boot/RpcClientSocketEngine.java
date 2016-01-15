@@ -32,15 +32,16 @@ public class RpcClientSocketEngine extends SocketEngine{
         this.connect(((TCPClientSettings) settings).host, settings.port);
     }
     public void connect(String host, int port) throws Exception{
-        log.info("RpcClientSocketEngine connect to {}:{}", host, port);
         ChannelFuture f =this.bootstrap.connect(host,port);
         ChannelFuture future=f.sync();
         future.get();
         this.channel=f.channel();
-
     }
     @Override
     public void startSocket() throws Exception{
+        String host=((TCPClientSettings) settings).host;
+        int port=settings.port;
+        log.info("=========Rpc client connect to {}:{}===========", host, port);
         EventLoopGroup workerGroup=null;
         if(this.eventExecutors==null){
             workerGroup= new NioEventLoopGroup(settings.workerThreadSize);
@@ -55,13 +56,12 @@ public class RpcClientSocketEngine extends SocketEngine{
         try{
             connect();
         }catch (Exception e){
-            log.info("ClientSocketEngine connect to {} error!",((TCPClientSettings) settings).host+":"+settings.port);
+            log.info("Rpc client connect to {} error!",host+":"+settings.port);
             throw e;
         }
-
         log.debug("Worker thread : {}",settings.workerThreadSize);
         log.debug("Logic thread:{}",settings.cmdThreadSize);
-        log.info("ClientSocketEngine connect to {} success!",((TCPClientSettings) settings).host+":"+settings.port);
+        log.info("================Rpc client connect complete !===============");
     }
     public Channel getChannel(){
         return this.channel;

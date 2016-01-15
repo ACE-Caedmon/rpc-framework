@@ -46,7 +46,7 @@ public class SimpleRpcServerApi implements RpcServerApi {
     public static final String SCAN_PACKAGE_NAME_PROPERTY="rpc.server.scanPackage";
     public static final String BEAN_ACCESS_PROPERTY="rpc.server.beanAccessClass";
     public static final String JAVASSIT_WRITE_CLASS="javassit.writeClass";
-
+    public static final String RPC_CLIENT_HOST_PROPERTY="rpc.client.host";
     public SimpleRpcServerApi(String configPath){
         Properties properties= PropertyKit.loadProperties(configPath);
         init(properties);

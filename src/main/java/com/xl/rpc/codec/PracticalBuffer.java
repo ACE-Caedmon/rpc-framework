@@ -30,7 +30,7 @@ public interface PracticalBuffer {
 	void writeLong(long l);
 	void writeDouble(double d);
 	void writeString(String s);
-	void writeProtoBuf(Message.Builder  builder);
+	void writeProtoBuf(Message.Builder builder);
 	void writeJSON(Object bean);
 	void writeBytes(PracticalBuffer buffer);
 	ByteBuf getByteBuf();

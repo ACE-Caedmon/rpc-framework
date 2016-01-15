@@ -26,6 +26,7 @@ public class MonitorServer {
         properties.setProperty(SimpleRpcServerApi.BEAN_ACCESS_PROPERTY,"com.xl.rpc.internal.SpringBeanAccess");
         SessionFire.getInstance().registerEvent(SessionFire.SessionEvent.SESSION_DISCONNECT, new ServerSessionEventHandler());
         container.startRpcServer(properties);
+        MonitorManager.getInstance().start();
         log.info("Monitor Server Start Complete,bind port "+port);
     }
 }

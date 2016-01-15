@@ -16,8 +16,10 @@ import java.util.Map;
 public interface IRpcMonitorServerService {
     @RpcMethod(MonitorConstant.MonitorServerMethod.GET_ALL_NODE_MAP)
     Map<String,MonitorNode> getAllNodeMap();
+    @RpcMethod(MonitorConstant.MonitorServerMethod.REGISTER_WITH_HOST)
+    MonitorNode registerWithHost(ISession session, String[] groups, String host, int port) throws Exception;
     @RpcMethod(MonitorConstant.MonitorServerMethod.REGISTER)
-    MonitorNode register(ISession session,String[] groups, int port) throws Exception;
+    MonitorNode register(ISession session, String[] groups, int port) throws Exception;
     @RpcMethod(MonitorConstant.MonitorServerMethod.DELETE)
     void deleteNode(String key);
     @RpcMethod(MonitorConstant.MonitorServerMethod.UPDATE_CONFIG)
@@ -25,7 +27,7 @@ public interface IRpcMonitorServerService {
     @RpcMethod(MonitorConstant.MonitorServerMethod.GET_CONFIG)
     String getConfig(String key);
     @RpcMethod(MonitorConstant.MonitorServerMethod.HEART_BEAT)
-    String heartBeat(ISession session,MonitorInformation information) throws Exception;
+    String heartBeat(ISession session, MonitorInformation information) throws Exception;
     @RpcMethod(MonitorConstant.MonitorServerMethod.BIND_CONFIG)
     String bindNodeConfig(String nodeKey, String configKey);
 

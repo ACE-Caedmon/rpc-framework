@@ -13,6 +13,7 @@ public class MonitorConstant {
     public static final class MonitorServerMethod{
         public static final String GET_ALL_NODE_MAP="monitorServer.getAllNodeMap";
         public static final String REGISTER="monitorServer.register";
+        public static final String REGISTER_WITH_HOST ="monitorServer.registerWithHost";
         public static final String DELETE="monitorServer.deleteNode";
         public static final String UPDATE_CONFIG="monitorServer.updateConfig";
         public static final String GET_CONFIG="monitorServer.getConfig";

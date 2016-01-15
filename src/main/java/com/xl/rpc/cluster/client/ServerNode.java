@@ -10,6 +10,7 @@ import com.xl.rpc.dispatch.method.RpcCallback;
 import com.xl.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xl.rpc.exception.ClusterNodeException;
 import com.xl.rpc.exception.EngineException;
+import com.xl.rpc.monitor.MonitorConstant;
 import com.xl.session.ISession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,10 @@ public class ServerNode implements Comparable<ServerNode>{
         RpcPacket packet=new RpcPacket(cmd,params);
         packet.setSync(false);
         getSession().asyncRpcSend(packet, callback);
-        log.info("Rpc async call:server = {},cmd ={}",getKey(),cmd);
+        if(!cmd.equals(MonitorConstant.MonitorServerMethod.HEART_BEAT)) {
+            log.info("Rpc async call:server = {},cmd ={}",getKey(),cmd);
+        }
+
     }
     public String getKey(){
         return clusterName+"-"+host+":"+port;
@@ -82,7 +86,10 @@ public class ServerNode implements Comparable<ServerNode>{
         long after=System.currentTimeMillis();
         syncCallNumber++;
         this.averageResponseTime=(totalResponseTime+(after-before))/syncCallNumber;
-        log.info("Rpc sync call:server = {},cmd ={},responseTime = {}",getKey(),cmd,this.averageResponseTime);
+        if(!cmd.equals(MonitorConstant.MonitorServerMethod.HEART_BEAT)){
+            log.info("Rpc sync call:server = {},cmd ={},responseTime = {}",getKey(),cmd,this.averageResponseTime);
+        }
+
         return result;
     }
     public boolean isActive(){
