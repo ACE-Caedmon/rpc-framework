@@ -1,6 +1,6 @@
 package com.xiaoluo.rpc.boot;
 
-import com.xiaoluo.rpc.annotation.RpcControl;
+import com.xiaoluo.rpc.annotation.RpcService;
 import com.xiaoluo.rpc.dispatch.RpcMethodInterceptor;
 import com.xiaoluo.rpc.dispatch.method.RpcMethodDispatcher;
 import com.xiaoluo.utils.ClassUtils;
@@ -51,7 +51,7 @@ public abstract class SocketEngine {
                 Class[] controlInterfaceList=clazz.getInterfaces();
                 if(!clazz.isInterface()){
                     for(Class controlInterface:controlInterfaceList){
-                        if(ClassUtils.hasAnnotation(controlInterface,RpcControl.class)){
+                        if(ClassUtils.hasAnnotation(controlInterface,RpcService.class)){
                             rpcMethodDispatcher.loadClasses(clazz);
                             log.info("Load control "+clazz.getName());
                             break;

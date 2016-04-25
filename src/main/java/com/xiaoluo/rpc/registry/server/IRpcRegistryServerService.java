@@ -1,6 +1,6 @@
 package com.xiaoluo.rpc.registry.server;
 
-import com.xiaoluo.rpc.annotation.RpcControl;
+import com.xiaoluo.rpc.annotation.RpcService;
 import com.xiaoluo.rpc.annotation.RpcMethod;
 import com.xiaoluo.rpc.registry.RegistryConstant;
 import com.xiaoluo.rpc.registry.RegistryNodeInformation;
@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Created by Administrator on 2015/9/22.
  */
-@RpcControl(RegistryConstant.MONITOR_SERVER_NAME)
+@RpcService(RegistryConstant.MONITOR_SERVER_NAME)
 public interface IRpcRegistryServerService {
     @RpcMethod(RegistryConstant.MonitorServerMethod.GET_ALL_NODE_MAP)
     Map<String,RegistryNode> getAllNodeMap();

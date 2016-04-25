@@ -1,6 +1,6 @@
 package common.server;
 
-import com.xiaoluo.rpc.annotation.RpcControl;
+import com.xiaoluo.rpc.annotation.RpcService;
 import com.xiaoluo.rpc.annotation.RpcMethod;
 import com.xiaoluo.rpc.dispatch.ISession;
 import common.Command;
@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * Created by Administrator on 2015/7/20.
  */
-@RpcControl("test")
+@RpcService("test")
 public interface IServerControl {
     @RpcMethod(Command.Test_Protobuf)
     LoginProtoBuffer.Login.Builder testProtobuf(LoginProtoBuffer.Login.Builder login);

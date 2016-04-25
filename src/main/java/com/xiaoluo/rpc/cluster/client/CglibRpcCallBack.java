@@ -1,6 +1,6 @@
 package com.xiaoluo.rpc.cluster.client;
 
-import com.xiaoluo.rpc.annotation.RpcControl;
+import com.xiaoluo.rpc.annotation.RpcService;
 import com.xiaoluo.rpc.annotation.RpcMethod;
 import com.xiaoluo.rpc.dispatch.method.AsyncRpcCallBack;
 import com.xiaoluo.utils.ClassUtils;
@@ -26,16 +26,16 @@ public class CglibRpcCallBack implements MethodInterceptor {
         Class[] interfaces=o.getClass().getInterfaces();
         Class controlInterface=null;
         for(Class i:interfaces){
-            if(ClassUtils.hasAnnotation(i,RpcControl.class)){
+            if(ClassUtils.hasAnnotation(i,RpcService.class)){
                 controlInterface=i;
                 break;
             }
         }
         if(controlInterface==null){
-            throw new IllegalArgumentException("Interface has no @RpcControl annotation:class = "+o.getClass());
+            throw new IllegalArgumentException("Interface has no @RpcService annotation:class = "+o.getClass());
         }
-        RpcControl rpcControl = (RpcControl) controlInterface.getAnnotation(RpcControl.class);
-        String clusterName= rpcControl.value();
+        RpcService rpcService = (RpcService) controlInterface.getAnnotation(RpcService.class);
+        String clusterName= rpcService.value();
         RpcMethod cmdMethod=method.getAnnotation(RpcMethod.class);
         if(cmdMethod==null){
             return  null;

@@ -1,6 +1,6 @@
 package com.xiaoluo.rpc.cluster.client;
 
-import com.xiaoluo.rpc.annotation.RpcControl;
+import com.xiaoluo.rpc.annotation.RpcService;
 import com.xiaoluo.rpc.boot.EngineSettings;
 import com.xiaoluo.rpc.dispatch.RpcMethodInterceptor;
 import com.xiaoluo.rpc.dispatch.method.AsyncRpcCallBack;
@@ -48,9 +48,9 @@ public class SimpleRpcClientApi implements RpcClientApi {
         try{
             List<Class> allClasses=ClassUtils.getClasssFromPackage(template.getScanPackage());
             for(Class clazz:allClasses){
-                RpcControl rpcControl= ClassUtils.getAnnotation(clazz,RpcControl.class);
-                if(rpcControl!=null&&clazz.isInterface()){
-                    String clusterName=rpcControl.value();
+                RpcService rpcService = ClassUtils.getAnnotation(clazz,RpcService.class);
+                if(rpcService !=null&&clazz.isInterface()){
+                    String clusterName= rpcService.value();
                     rpcCallProxyFactory.getRpcCallProxy(true, clazz);
                     rpcControlClassList.add(clazz);
                     log.info("Rpc create call proxy : clusterName = {},class = {}", clusterName,StringUtil.simpleClassName(clazz));

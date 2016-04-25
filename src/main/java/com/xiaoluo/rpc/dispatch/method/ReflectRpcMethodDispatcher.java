@@ -1,6 +1,6 @@
 package com.xiaoluo.rpc.dispatch.method;
 
-import com.xiaoluo.rpc.annotation.RpcControl;
+import com.xiaoluo.rpc.annotation.RpcService;
 import com.xiaoluo.rpc.annotation.RpcMethod;
 import com.xiaoluo.rpc.codec.RpcPacket;
 import com.xiaoluo.rpc.exception.MethodInterceptException;
@@ -37,7 +37,7 @@ public class ReflectRpcMethodDispatcher extends RpcMethodDispatcher {
     private void loadClass(Class controlClass){
         Class controlInterface=null;
         for(Class c:controlClass.getInterfaces()){
-            if(ClassUtils.hasAnnotation(c, RpcControl.class)){
+            if(ClassUtils.hasAnnotation(c, RpcService.class)){
                 controlInterface=c;
                 break;
             }
