@@ -1,9 +1,9 @@
 package rpc;
 
-import com.xl.rpc.internal.InternalContainer;
-import com.xl.rpc.monitor.client.IRpcMonitorClientService;
-import com.xl.utils.PropertyKit;
-import com.xl.utils.SysPropertyConfig;
+import com.xiaoluo.rpc.internal.InternalContainer;
+import com.xiaoluo.rpc.registry.client.IRpcRegistryClientService;
+import com.xiaoluo.utils.PropertyKit;
+import com.xiaoluo.utils.SysPropertyConfig;
 import common.server.IServerControl;
 import org.junit.Before;
 
@@ -14,7 +14,7 @@ public class BasicTest {
     protected static final InternalContainer container=InternalContainer.getInstance();
     protected static IServerControl syncServerControl;
     protected static IServerControl asyncServerControl;
-    protected static IRpcMonitorClientService IRpcMonitorClientService;
+    protected static IRpcRegistryClientService IRpcRegistryClientService;
     @Before
     public void init(){
         SysPropertyConfig.doConfig(PropertyKit.getProperties("rpc.properties"));
@@ -22,7 +22,7 @@ public class BasicTest {
         container.startRpc(SysPropertyConfig.getProperties());
         syncServerControl =container.getSyncRemoteCallProxy(IServerControl.class);
         asyncServerControl=container.getAsyncRemoteCallProxy(IServerControl.class);
-        IRpcMonitorClientService =container.getSyncRemoteCallProxy(IRpcMonitorClientService.class);
+        IRpcRegistryClientService =container.getSyncRemoteCallProxy(IRpcRegistryClientService.class);
     }
 
 }

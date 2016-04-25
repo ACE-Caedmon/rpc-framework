@@ -1,8 +1,8 @@
 package scan;
 
-import com.xl.rpc.annotation.RpcControl;
-import com.xl.rpc.annotation.RpcMethod;
-import com.xl.utils.ClassUtils;
+import com.xiaoluo.rpc.annotation.RpcControl;
+import com.xiaoluo.rpc.annotation.RpcMethod;
+import com.xiaoluo.utils.ClassUtils;
 import org.junit.Assert;
 import org.junit.Test;
 

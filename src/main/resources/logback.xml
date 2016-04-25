@@ -6,7 +6,7 @@
         </encoder>
     </appender>
 
-    <!--<appender name="socket" class="com.xl.rpc.log.RpcAppender">-->
+    <!--<appender name="socket" class="com.xiaoluoaoluo.rpc.log.RpcAppender">-->
         <!--<remoteHost>localhost</remoteHost>-->
         <!--<port>8082</port>-->
         <!--<includeCallerData>true</includeCallerData>-->

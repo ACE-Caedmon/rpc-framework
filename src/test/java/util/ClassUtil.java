@@ -1,6 +1,6 @@
 package util;
 
-import com.xl.utils.ClassUtils;
+import com.xiaoluo.utils.ClassUtils;
 import org.junit.Test;
 
 import java.util.List;

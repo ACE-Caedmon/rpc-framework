@@ -1,8 +1,8 @@
 package common.server;
 
-import com.xl.rpc.annotation.RpcControl;
-import com.xl.rpc.annotation.RpcMethod;
-import com.xl.session.ISession;
+import com.xiaoluo.rpc.annotation.RpcControl;
+import com.xiaoluo.rpc.annotation.RpcMethod;
+import com.xiaoluo.rpc.dispatch.ISession;
 import common.Command;
 import common.UserInfo;
 import message.LoginProtoBuffer;

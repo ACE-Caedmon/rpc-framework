@@ -1,6 +1,5 @@
 package rpc;
 
-import com.xl.rpc.monitor.MonitorInformation;
 import message.LoginProtoBuffer;
 import common.Command;
 import common.UserInfo;

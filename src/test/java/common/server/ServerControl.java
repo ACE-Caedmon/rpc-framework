@@ -1,13 +1,10 @@
 package common.server;
 
-import com.xl.rpc.annotation.RpcRequest;
-import com.xl.rpc.annotation.RpcSession;
 import message.LoginProtoBuffer;
-import com.xl.session.ISession;
+import com.xiaoluo.rpc.dispatch.ISession;
 import common.UserInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

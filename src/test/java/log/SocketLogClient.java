@@ -1,16 +1,7 @@
 package log;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.joran.JoranConfigurator;
-import ch.qos.logback.core.joran.spi.JoranException;
-import ch.qos.logback.core.util.StatusPrinter;
-import com.xl.rpc.internal.InternalContainer;
-import common.server.IServerControl;
-import common.server.Name;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.security.MessageDigest;
 
 /**
  * Created by Administrator on 2015/8/26.
