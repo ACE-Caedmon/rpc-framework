@@ -24,9 +24,9 @@ public class RegistryNode {
     private RegistryNodeInformation registryNodeInformation;
     private String key;
     private Set<String> bindConfigKeySet=new HashSet<>();
-    //RpcServer调用MonitorServer的客户端连接
+    //RpcServer调用RegistryServer的客户端连接
     private transient ISession session;
-    //MonitorServerr作为RpcServer的客户端连接
+    //RegistryrServerr作为RpcServer的客户端连接
     private transient ServerNode notifyNode;
     private Properties routeTable=new Properties();
     private static RpcClientTemplate shareClientTemplate=RpcClientTemplate.newDefault();
